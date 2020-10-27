@@ -1,0 +1,138 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>김형복</creator> 
+///<createDate>2011.2011.01.14</createDate> 
+///<lastModifyDate>2011.2011.01.14</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///스크립트에서 사용되는 공용상수 정의(Prefix "_")
+///</summary>
+///<ModifySpc>
+///2013.11.18(김형복) : ie11에 대한 체크 추가 및 OS정보(Win8.1) 수정 
+///</ModifySpc>
+*/
+
+// 브라우져/OS 객체 확인
+/* window.navigator.userAgent
+-- IE : Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.3; .NET4.0C; .NET4.0E; Tablet PC 2.0)
+-- Chrome : Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.106 Safari/535.2
+-- Firefox : Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0
+-- Safari : Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.51.22(KHTML, like Gecko) Version/5.11 Safari/534.51.22
+if (window.ActiveXObject !== undefined) {
+}
+
+*/
+//alert(window.navigator.userAgent)
+// IE 브라우져 여부
+var _ie = ((window.navigator.userAgent.indexOf("MSIE") != -1) ? true : ((window.navigator.userAgent.indexOf("Trident") != -1) ? true : false));
+// IE 버젼
+var _ieVer = ((window.navigator.userAgent.indexOf("MSIE 6") != -1) ? 6 : ((window.navigator.userAgent.indexOf("MSIE 7") != -1) ? 7 : ((window.navigator.userAgent.indexOf("Trident/4.0") != -1) ? 8 : ((window.navigator.userAgent.indexOf("Trident/5.0") != -1) ? 9 : ((window.navigator.userAgent.indexOf("Trident/6.0") != -1) ? 10 : ((window.navigator.userAgent.indexOf("Trident/7.0") != -1) ? 11 : 12))))));
+// IE의 호환성 보기와 상관없는 IE의 원버젼 정보
+var _ieOrgVer = ((window.navigator.userAgent.indexOf("Trident/4.0") != -1) ? 8 : ((window.navigator.userAgent.indexOf("Trident/5.0") != -1) ? 9 : ((window.navigator.userAgent.indexOf("Trident/6.0") != -1) ? 10 : ((window.navigator.userAgent.indexOf("Trident/7.0") != -1) ? 11 : _ieVer))));
+// Firefox
+var _firefox = ((window.navigator.userAgent.indexOf("Firefox") != -1) ? true : false);
+// Safari
+var _safari = ((window.navigator.userAgent.indexOf("Safari") != -1 && window.navigator.userAgent.indexOf("Chrome") == -1 && window.navigator.userAgent.indexOf("Mobile") == -1) ? true : false);
+// Chrome
+var _chrome = ((window.navigator.userAgent.indexOf("Chrome") != -1) ? true : false);
+// Opera
+var _opera = ((window.navigator.userAgent.indexOf("Opera") != -1) ? true : false);
+// Android
+var _android = ((window.navigator.userAgent.toLowerCase().indexOf("android") != -1) ? true : false);
+// iPhone
+var _iphone = ((window.navigator.userAgent.toLowerCase().indexOf("iphone") != -1) ? true : false);
+// iPad
+var _ipad = ((window.navigator.userAgent.toLowerCase().toLowerCase().indexOf("ipad") != -1) ? true : false);
+// Mac
+var _mac = ((window.navigator.userAgent.indexOf("Macintosh") != -1) ? true : false);
+// coviHybrid
+var _coviHybrid = ((window.navigator.userAgent.indexOf("COVI_HYBRID") != -1) ? true : false);
+
+// Mobile 여부
+var _mobile = ((window.navigator.userAgent.indexOf("Mobile") != -1) ? true : (_android ? true : (_iphone ? true : (_ipad ? true : ((window.navigator.userAgent.indexOf("COVI_HYBRID") != -1) ? true : false)))));
+
+// 운영체제
+var _OS = ((window.navigator.userAgent.indexOf("Windows NT 5.1") != -1) ? "WinXp" : ((window.navigator.userAgent.indexOf("Windows NT 5.2") != -1) ? "Win2003Svr" : ((window.navigator.userAgent.indexOf("Windows NT 5") != -1) ? "Win2000" : ((window.navigator.userAgent.indexOf("Windows NT 6.0") != -1) ? "Win2008" : ((window.navigator.userAgent.indexOf("Windows NT 6.1") != -1) ? "Win7" : ((window.navigator.userAgent.indexOf("Windows NT 6.2") != -1) ? "Win8" : ((window.navigator.userAgent.indexOf("Windows NT 6.3") != -1) ? "Win8.1" : ((window.navigator.userAgent.indexOf("Windows NT 10") != -1) ? "Win10" : "OrderOS"))))))))
+
+// 표준만 지원 여부(IE의 기능 비지원 여부) IE => false, Chrome/Firefox/Safari = true
+var _dom = (document.getElementById && !document.all) ? true : false;
+// HTML5 지원 여부(HTML5에서 sessionStorage를 지원함)
+var _html5 = (window.sessionStorage) ? true : false;
+// 네스케이프 브라우져 여부
+var _nn4 = (document.layers) ? true : false;
+/*
+Screen 객체의 속성
+availHeight : 인터페이스가 차지한 범위를 제외한 실질적인 공간의 높이를 픽셀로 구한다.
+availWidth : 인터페이스가 차지한 범위를 제외한 실질적인 공간의 넓이를 픽셀로 구한다.
+colorDepth : 컴퓨터에서 사용되는 컬러 수를 표시
+height : 모니터상에 보여주는 즉, 디스플레이 화면의 높이를 픽셀로 구한다.
+width : 모니터상에 보여주는 즉, 디스플레이 하면의 넓이를 구한다.
+pixelDepth : 하나의 픽셀당 비드 수를 표시(넷스케이프 전용)
+*/
+/* window.screen 모든 브라우져 동일
+-- IE : availHeight=1050, availWidth=1920, colorDepth=24, height=1080, width=1920, pixelDepth=24 (주모니터)
+-- Chrome : availHeight=800, availWidth=1280, colorDepth=32, height=800, width=1280, pixelDepth=32 (브라우져가 뜬 모니터)
+-- Firefox : availHeight=800, availWidth=1280, colorDepth=24, height=800, width=1280, pixelDepth=24 (브라우져가 뜬 모니터)
+-- Safari  : availHeight=1050, availWidth=1920, colorDepth=24, height=1080, width=1920, pixelDepth=24 (주모니터)
+*/
+// 해상도 정보
+var _screenW = window.screen.width;
+var _screenH = window.screen.height;
+var _fixedWidth = 1024; //Width 최소고정값
+
+// 웹 사이트 경로 정보
+var _HostName = window.location.hostname;             // 사이트 도메인  ex) www.No1.com
+var _HostFullName = document.location.protocol + "//" + document.location.hostname;  //사이트 호스트 네임 Full ex) http://www.No1.com
+var _DocPath = window.document.location.pathname;     // 현재 페이지 경로 ex) /Main.aspx
+var _QueryString = window.document.location.search;   // 현재 페이지 쿼리 스트링 ex) ?System=Portal
+var _WebRoot = _DocPath.substring(0, _DocPath.indexOf("/", 2)).toUpperCase().replace("/", ""); // 현재 웹사이트 Root Name ex) WebSite
+
+// ko(0)-한국어, en(1)-영어, ja(2)-일본어, zh(3)-중국어, e1(4)-추가 언어1, e2(5)-추가 언어2, e3(6)-추가 언어3, e4(7)-추가 언어4, e5(8)-추가 언어5, e6(9)-추가 언어6
+var _LanguageIndex = { "ko": 0, "en": 1, "ja": 2, "za": 3, "e1": 4, "e2": 5, "e3": 6, "e4": 7, "e5": 8, "e6": 9, "e7": 10, "e8": 11, "e9": 12, "e10": 13, "e11": 14, "e12": 15, "e13": 16, "e14": 17, "e15": 18, "e16": 19 }; // 다국어 인덱스 값
+
+// 사용자의 액션 수행 최종시간(특정 시간이 지난 후 화면을 잠그거나 하기 위함.) 
+var _ActionTime = new Date();
+
+// ==== 공용자원 객체 ====> 값을 가져온 상태면 다시 가져오지 않게 사용자 세션/다국어 정보를 전역에 저장함.
+//(스크립트에서 여러번 정보를 호출할때 계속 웹서비스를 호출하지 않고 객체를 먼져 뒤저서 있으면 보내줌)
+var _Session = {};      // 세션정보
+var _Dictionary = {};   // 다국어 정보
+var _PgModule = {};     // 프로그램 모듈 정보
+var _AppConfig = {};    // 어플리 케이션 설정정보
+var _BaseConfig = {};   // 기초 설정 정보
+var _BaseCode = {};     // 기초 코드 정보
+var _MenuInfo = {};     // 메뉴 정보
+var _TimeZoneTimeDiff = {}; // 타임존 코드에 대한 차이 시간
+var _MobileScroll = {}; // 모바일 스크롤 객체
+var _ShowLayerSize = {}; // 레이어 팝업원 원래 사이즈
+var _ShowLayerPosition = {}; // 레이어 팝업원 원래 위치
+
+var _RiseAjaxError = false; // Ajax호출시 네트워크/인증에 문제가 발생하였을 경우 Ajax 서비스가 호출되지 않도록 확인하는 처리를 위해
+
+// ==== 컨트롤 전역 ====>
+// 컨트롤 관련 
+var _controlsPath = "/Images/Images/Controls/";
+var _lodingImage = "loding10.gif";
+var _lodingImageHtml = "<center><img src='/Images/Images/Controls/Progress/loding10.gif' alt='Loading...' /></center>";
+var _progressImage = "loding10.gif";
+var _IndicatorImage = "loding10.gif";
+
+if (typeof _SystemBaseDic != "undefined") {
+    try {
+        for (var i = 0; i < _SystemBaseDic.length; i++) {
+            // 다국어가 존재하지 않을 경우에만 사전에 추가
+            if (_Dictionary[_SystemBaseDic[i].Key] == "undefined" || _Dictionary[_SystemBaseDic[i].Key] == null) {
+                _Dictionary[_SystemBaseDic[i].Key] = _SystemBaseDic[i].Value;
+            }
+        }
+    } catch (e) { }
+}

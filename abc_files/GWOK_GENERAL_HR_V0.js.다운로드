@@ -1,0 +1,225 @@
+//양식별 다국어 정의 부분
+var LabelMessage = ""
+LabelMessage += "lbl_Board_Regist;";
+LabelMessage += "msg_apv_CooperDate_Input;";
+
+var localLang = {
+    localLangItems:
+        //localLangItems 영역에 Common.GetDicAll 함수를 통하여 양식에 필요한 다국어 정보를 미리 읽어들인다.
+        //
+        Common.GetDicAll(LabelMessage)
+};
+
+//양식별 후처리를 위한 필수 함수 - 삭제 시 오류 발생
+function postRenderingForTemplate() {
+    if (getInfo("templatemode") == "Write" || getInfo("editmode") == "M") {
+        //기본설정 셋팅
+        DefaultSet();
+    }
+
+    // 체크박스, radio 등 공통 후처리
+    postJobForDynamicCtrl();
+
+    //읽기 모드 일 경우
+    if (getInfo("templatemode") == "Read") {
+        $('*[data-mode="writeOnly"]').each(function () {
+            //$(this).hide();
+            if (getInfo("editmode") == "M") {
+                if ($(this).find('[data-element-mode="modify"]'));
+                else $(this).hide();
+            } else {
+                $(this).hide();
+            }
+        });
+        //$("#INITIATED_DATE").text(CFN_TransLocalTime(formJson.oFormData.INITIATED_DATE, _UR_DateFormat));
+
+        if ($("#RecLine").length > 0)
+            document.getElementById("RecLine").innerHTML = initConsultList();        
+    }
+    else {
+        $('*[data-mode="readOnly"]').each(function () {
+            $(this).hide();
+        });
+
+        // 에디터 처리
+        LoadEditor("divWebEditorContainer");
+
+        if (formJson.oFormData.mode == "DRAFT" || formJson.oFormData.mode == "TEMPSAVE") {
+            document.getElementById("INITIATOR_OU_DP").value = m_oFormMenu.getLngLabel(getInfo("dpdn"), false);
+            document.getElementById("INITIATOR_DP").value = m_oFormMenu.getLngLabel(getInfo("usdn"), false) + " " + m_oFormMenu.getLngLabel(getInfo("uspn"), false);
+            document.getElementById("INITIATOR_INFO").value = m_oFormMenu.getLngLabel(getInfo("usdn"), false);
+            //document.getElementById("INITIATED_DATE").value = CFN_TransLocalTime(getInfo("svdt"), _UR_DateFormat);
+        }
+
+        if (formJson.oFormData.mode == "TEMPSAVE") {
+            $("#DOCLEVEL").val(formJson.BODY_CONTEXT.DOCLEVEL).attr('selected', 'selected');
+            $("#DOC_LEVEL").val(formJson.BODY_CONTEXT.DOCLEVEL);
+            $("#SAVETERM").val(formJson.BODY_CONTEXT.SAVETERM).attr('selected', 'selected');
+            $("#SAVE_TERM").val(formJson.BODY_CONTEXT.SAVETERM);
+            $("#DOC_DIVISION").val(formJson.BODY_CONTEXT.DOC_DIVISION).attr('selected', 'selected');
+        }
+        changeSAVETERM_STATE(document.getElementById("DOCLEVEL"));
+
+        if ($("#RecLine").length > 0)
+            document.getElementById("RecLine").innerHTML = initConsultList();
+
+        if (formJson.oFormData.mode == "DRAFT") {
+            setApvlistCallback("check");
+        }
+    }
+
+    buttonControl();
+    ObjectEventSet();
+}
+
+
+//결재선 적용 버튼 눌렀을 시점에 검사하는 로직.
+function setApvlistCallback(mode) {
+    var today = new Date();
+    //var today = new Date("2017-12-04");
+
+    var holiydaycheck = 0;
+    for (var i = 1; i <= 5; i++) {
+        today.setDate(today.getDate() + 1);
+        if (0 < today.getDay() && today.getDay() < 6) {
+            //평일
+        } else {
+            //holiydaycheck = +1; //기존 로직
+            //2017-11-27 추가 토요일인 경우 2일
+            if (today.getDay() == 0 && holiydaycheck == 0)
+                holiydaycheck = 1;
+            else
+                holiydaycheck = 2;
+        }
+    }
+    today.setDate(today.getDate() + holiydaycheck);
+
+    var mm = today.getMonth() + 1;
+    var dd = today.getDate();
+    var yyyy = today.getFullYear();
+    if (today.getDate() < 10) {
+        dd = '0' + today.getDate()
+    }
+    if (mm < 10) {
+        mm = '0' + mm
+    }
+    var dataChange = CFN_TransLocalTime(yyyy + "-" + mm + "-" + dd);
+
+    if (mode == undefined) {
+        //기존 결재선 적용 버튼 호출시 
+        if (($('#CONSULT_LIST').val() != '') && ($('#CONSULT_DATE').val() == '')) {
+            $('#CONSULT_DATE').val(dataChange);
+        }
+        else if ($('#CONSULT_LIST').val() == '' && $('#CONSULT_DATE').val() != '') {
+            //2017-11-28 추가 - 협조처 없을 경우 협조기한 날짜 초기화
+            $('#CONSULT_DATE').val('');
+        }
+    }
+    else if (mode == "check") {
+        //2017-11-28 추가 - 재작성, 템플릿 선택시 협조기간 재세팅 
+        if ($('#CONSULT_LIST').val() != '') {
+            //협조처 있을 경우 협조기한 날짜 +5일 세팅
+            $('#CONSULT_DATE').val(dataChange);
+        }
+        else if ($('#CONSULT_LIST').val() == '') {
+            //협조처 없을 경우 협조기한 날짜 초기화
+            $('#CONSULT_DATE').val('');
+        }
+    }
+}
+
+
+function DefaultSet() {
+    GetSaveTerm();                  //보존연한
+    GetDocLevel();                  //보안등급
+    GetDocGuBun("Doc_GuBnu_Form");  //문서구분
+}
+
+function buttonControl() {
+    //게시판에 등록 : 결재완료시만 버튼 보이게
+    if (getInfo("loct") == "COMPLETE") {
+        $("#boardformadd").show();
+    }
+    else {
+        $("#boardformadd").hide();
+    }
+}
+function setLabel() {
+}
+
+function setFormInfoDraft() {
+}
+
+function checkForm(bTempSave) {
+    //협조처 선택하지 않았을시 협조 기한 초기화
+    if ($('#CONSULT_LIST').val() == "") {
+        $("#CONSULT_DATE").val("");
+    }
+    else {
+        if ($('#CONSULT_LIST').val() != "" && $("#CONSULT_DATE").val() == "") {
+            alert(Common.GetDic("msg_apv_CooperDate_Input"));
+            return false;
+        }
+    }
+
+    if (bTempSave) {
+        return true;
+    } else {
+        // 필수 입력 필드 체크
+        return CFN_ValidationRequiredCheck();
+    }
+}
+
+function setBodyContext(sBodyContext) {
+}
+
+//본문 XML로 구성
+function makeBodyContext() {
+    var sBodyContext = "";
+  sBodyContext = "<BODY_CONTEXT>" + "<tbContentElement><![CDATA[" + document.getElementById("dhtml_body").value + "]]></tbContentElement>" + getFields("mField") + "</BODY_CONTEXT>";
+
+    return sBodyContext;
+}
+
+//*************************************개체 이벤트 할당[S]
+//HTML 개체 이벤트 할당
+function ObjectEventSet() {
+    $(document).on("click", "#boardformadd", function () {
+
+        var id = this.id;
+
+        boardform();
+    });
+}
+
+function boardform() {
+    var CompanyCode = _DN_Code;
+    var CreatorID = getInfo("FORM_INST_ID");
+    var UserID = _UR_Code;
+    var ProcessInstanceID = getInfo("piid");
+    var ParentProcessInstanceID = getInfo("piid_parent");
+
+    var url = String.format("/Approval/Forms/Templates/popup/GLOVIS/BoardFormAdd.aspx?CompanyCode={0}&CreatorID={1}&UserID={2}&ProcessInstanceID={3}&ParentProcessInstanceID{4}",
+                    escape(CompanyCode),
+                    escape(CreatorID),
+                    escape(UserID),
+                    escape(ProcessInstanceID),
+                    escape(ParentProcessInstanceID)
+                    );
+
+    //var Title = "게시판에 등록";
+    var Title = Common.GetDic("lbl_Board_Regist");
+
+    Common.ShowDialog("BoardFormAdd", "1", Title, url, "600px", "230px", "iframe-ifNoScroll");
+    Common.ReturnValue = function (jsonValue) {
+        var ResultCode = jsonValue.sResultCode;
+        var ResultMassage = jsonValue.sResultMassage;
+
+        if (ResultCode != "1000") {
+            delete alert;
+            alert(Common.GetDic("msg_apv_glovis_038"));  //게시에 실패하였습니다.
+        }
+    }
+
+    return false;
+}

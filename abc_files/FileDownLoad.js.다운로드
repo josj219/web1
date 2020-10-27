@@ -1,0 +1,93 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>황선희</creator> 
+///<createDate>2011.12.26</createDate> 
+///<lastModifyDate>2014.06.26</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+/// 파일 다운로드 공용함수
+///</summary>
+///<ModifySpc>
+///2014.06.26 ( 임소희 ) : Copyright, ID Block 추가
+///</ModifySpc>
+*/
+
+// 단일 파일 다운로드 처리(공통)
+function PopListSingle(sServiceType, iObjectID, sObjectType, iMessageID, iFIleID) {
+    var l_sHost = document.location.protocol + "//" + _HostName + "/";
+    var l_sDownURL = "";
+    var l_sParam = "?pServiceType=" + sServiceType + "&pObjectID=" + iObjectID + "&pObjectType=" + sObjectType + "&pMessageID=" + iMessageID + "&pFileID=" + iFIleID;
+    l_sDownURL = "Common/ExControls/FileDownload/Filedownload.aspx"; // 단일 다운로드
+    if (l_sDownURL != "") {
+        window.open(l_sHost + l_sDownURL + l_sParam);
+    }
+}
+
+// 단일파일 다운로드(전자결재)
+//function PopListSingle_Approval(sFileName, sLocation) {
+//    //var l_sHost = "http://" + _HostName + "/";
+//    var l_sHost = document.location.protocol + "//" + _HostName + "/";
+//    var l_sDownURL = "";
+
+//    //[2015-07-20 modi kh] 특수문자 중 파일이름 허용 문자 escape 처리
+//    //var l_sParam = "?filename=" + encodeURI(sFileName.replace(/\+/g, '%2B')) + "&location=" + encodeURI(sLocation);
+
+//    //var tmpFileName = fn_ChangeEscapeChar(sFileName);
+//    //var tmpLocation = fn_ChangeEscapeChar(sLocation);
+    
+//    //var l_sParam = "?filename=" + encodeURI(tmpFileName) + "&location=" + encodeURI(tmpLocation);
+
+//    var tmpFileLocation = sLocation.split('/')[sLocation.split('/').length - 1];
+//    var fileId = tmpFileLocation.split('_')[0] + '_' + tmpFileLocation.split('_')[1] + '_';
+
+//    var l_sParam = '?pFileID=' + fileId;
+//    l_sParam += '&pFiid=' + sLocation;
+
+//    l_sDownURL = "Common/ExControls/FileDownload/FileDownload_Approval.aspx"; // 단일 다운로드
+
+//    if (l_sDownURL != "") {
+//        window.open(l_sHost + l_sDownURL + l_sParam);
+//    }
+//}
+
+
+
+//[2015-07-20 modi kh] prevent XSS
+//Single File Download - Approval
+function PopListSingle_Approval(argFiid, argLocation) {
+    var l_sHost = document.location.protocol + '//' + _HostName;
+    var l_sDownURL = '';
+
+    var tmpFileLocation = argLocation.split('/')[argLocation.split('/').length - 1];
+    var fileId = tmpFileLocation.split('_')[0] + '_' + tmpFileLocation.split('_')[1] + '_';
+
+    var l_sParam = '?pFileID=' + fileId;
+    l_sParam += '&pFiid=' + argFiid;
+
+    //[2015-09-02 modi kh] 기안 및 편집 시 신규 추가 파일 링크 다운로드 s --------------------
+    //l_sParam += '&al=' + fn_ChangeEscapeChar(argLocation);
+    //covifiletrans = 파일네임분리요청
+    l_sParam += '&al=' + fn_ChangeEscapeChar(argLocation.substring(0,argLocation.lastIndexOf("/")+1));
+    l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+
+    window.open(l_sHost + l_sDownURL + l_sParam);
+}
+
+// Get Parameter 특수문자 변환
+function fn_ChangeEscapeChar(argStr) {
+    var retValue = argStr;
+
+    retValue = retValue.replace(/&/g, '%26');
+    retValue = retValue.replace(/#/g, '%23');
+
+    return retValue;
+}

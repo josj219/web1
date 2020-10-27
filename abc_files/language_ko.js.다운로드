@@ -1,0 +1,19 @@
+﻿var commonLang = {
+    commonLangItems: {
+        vacationType: "휴가명",
+        DOC_LEVEL_10: "일반문서",
+        DOC_LEVEL_20: "보안문서",
+        DOC_LEVEL_30: "3등급",
+        gLabel_year_1m: "1개월",
+        gLabel_year_6m: "6개월",
+        gLabel_year_1: "1년",
+        gLabel_year_3: "3년",
+        gLabel_year_5: "5년",
+        gLabel_year_7: "7년",
+        gLabel_year_10: "10년",
+        gLabel_year_20: "20년",
+        gLabel_permanence: "영구"
+
+
+    }
+};

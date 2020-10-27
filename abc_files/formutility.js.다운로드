@@ -1,0 +1,164 @@
+﻿/*-----------------------------------
+  code refactoring from formedit.js 
+  -----------------------------------*/
+//moved from formedit.js : KJW : XFORM PRJ.
+function tblAllDelRow(objName, index) {
+    var tblObj = document.getElementById(objName);
+    var i = index;
+    while (i < tblObj.rows.length) {
+        tblObj.deleteRow(index);
+    }
+}
+
+//moved from formedit.js : KJW 2014.04.21 : XFORM PRJ.
+// 한글을 포함한 문자열에서 문자열의 길이를 반환한다. 
+function getLengthOfString(str) {
+    var len = str.length;
+    var han = 0;
+    var res = 0;
+
+    for (i = 0; i < len; i++) {
+        var a = str.charCodeAt(i);
+        if (a > 128) han++;
+    }
+    res = (len - han) + (han * 2);
+    return res;
+}
+
+//moved from formedit.js : KJW 2014.04.21 : XFORM PRJ.
+//첨부파일 읽기 확인시 사용
+function makearray(n) {
+    this.length = n;
+    for (var i = 0; i < n; i++)
+        this[i] = 0;
+    return this;
+}
+
+//moved from formedit.js : KJW 2014.04.21 : XFORM PRJ.
+function handleResize(elm, offset) {
+    var intHeight = document.body.clientHeight - offset;
+    if (intHeight <= 0) intHeight = 25;
+    elm.style.height = intHeight + "px";
+}
+
+//moved from formedit.js : KJW 2014.04.21 : XFORM PRJ.
+function getSplitted(src, delim, idx) { var aSrc = src.split(delim); return (aSrc.length > idx ? aSrc[idx] : ""); }
+
+//moved from formedit.js : KJW 2014.04.21 : XFORM PRJ.
+function changeStFieldsSEL(obj) {
+    $("#" + obj.id).parent().find("input").val(obj.value);
+}
+//moved from formmenu.js : KJW 2014.04.21 : XFORM PRJ.
+function delay(gap) {/*gap is in milisecs*/
+    var then, now;
+    then = new Date().getTime();
+    now = then;
+    while ((now - then) < gap) {
+        now = new Date().getTime();
+    }
+}
+
+//2015.09.11 B.K. 기간계 연동 추가
+//XML에서 CDATA형식 제거
+function setCDataSection(formJson_body) {
+    for (var x in formJson_body) {
+        if (formJson_body[x] != null) {
+            if (x == 'tbContentElement') continue; //에디터 양식은 cdatasection을 그대로 둔다.
+            if (formJson_body[x].toString() == "[object Object]" || formJson_body[x].toString() == "[object Object],[object Object]" || formJson_body[x].length > 0) {
+                if (formJson_body[x]["#cdata-section"] != undefined) {
+                    formJson_body[x] = formJson_body[x]["#cdata-section"];
+                } else {
+                    for (var i in formJson_body[x]) {
+                        if (formJson_body[x][i] != null) {
+                            if (formJson_body[x][i]["#cdata-section"] != undefined) {
+                                formJson_body[x][i] = formJson_body[x][i]["#cdata-section"];
+                            }
+                            for (var j in formJson_body[x][i]) {
+                                if (formJson_body[x][i][j] != null) {
+                                    if (formJson_body[x][i][j]["#cdata-section"] != undefined) {
+                                        formJson_body[x][i][j] = formJson_body[x][i][j]["#cdata-section"];
+                                    } else {
+                                        for (var k in formJson_body[x][i][j]) {
+                                            if (formJson_body[x][i][j][k] != null) {
+                                                if (formJson_body[x][i][j][k]["#cdata-section"] != undefined) {
+                                                    formJson_body[x][i][j][k] = formJson_body[x][i][j][k]["#cdata-section"];
+                                                } else {
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+//Legacy에서 양식을 오픈할 경우 첨부파일, 문서제목, 양식명을 세팅한다.
+function initLegacyData() {
+
+    //Legacy Data mField세팅
+    if ($('#lkey').val() != '') $('#mKey').val($('#lkey').val());
+    if ($('#lsubject').val() != '') $('#mSubject').val($('#lsubject').val());
+    if ($('#llegacy_form').val() != '') $('#mLegacy_form').val($('#llegacy_form').val());
+    if ($('#lattachfile').val() != '') $('#mAttachfile').val($('#lattachfile').val());
+    
+    //첨부파일 세팅
+    if ($('#lattachfile').val() != '') {
+        var count = 0;
+        $($.parseXML($('#lattachfile').val())).find("ATTACHFILES > ATTACHFILE").each(function () {
+            var filePath = $(this).find("PATH").text();
+            var fileName = $(this).find("NAME").text();
+            var downloadURL = filePath;
+            if (count != 0) $('#AttFileInfo').append("<br />"); count++;
+            $('#AttFileInfo').append("<a href=\"" + downloadURL + "\" target=\"_blank\">" + fileName + "</a>");
+        });
+    }
+    
+    //제목세팅
+    if ($('#lsubject').val() != '') {
+        $('#SUBJECT').val($('#lsubject').val());
+    }
+}
+
+
+var json2xml = (function (undefined) {
+    "use strict";
+    var tag = function (name, closing) {
+        return "<" + (closing ? "/" : "") + name + ">";
+    };
+    return function (obj, rootname) {
+        var xml = "";
+        for (var i in obj) {
+            if (obj.hasOwnProperty(i)) {
+                var value = obj[i],
+                    type = typeof value;
+                if (value instanceof Array && type == 'object') {
+                    for (var sub in value) {
+                        xml += json2xml(value[sub]);
+                    }
+                } else if (value instanceof Object && type == 'object') {
+                    xml += tag(i) + json2xml(value) + tag(i, 1);
+                } else {
+                    xml += tag(i) + value + tag(i, {
+                        closing: 1
+                    });
+                }
+            }
+        }
+
+        return rootname ? tag(rootname) + xml + tag(rootname, 1) : xml;
+    };
+})(json2xml || {});
+//DEXT5 에디터 값 확인
+function DEXT5EditorTextValue() {
+    return document.getElementById('dext5Frame').contentWindow.GetBodyTextValue().trim();
+}
+
+function DEXT5EditorImageValue() {
+    return document.getElementById('dext5Frame').contentWindow.DEXT5.GetImages();
+}

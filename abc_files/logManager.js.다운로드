@@ -1,0 +1,471 @@
+﻿/// <reference path="jquery-1.10.2.min.js" />
+
+var accessLog = {
+    CompanyCode: "",
+    UserID: "",
+    SystemID: "102",
+    LogType: 0,
+    OccurLocation: 0,
+    OccurDatetime: null,
+    UserIP: "",
+    ServerIP: "",
+    RuntimeKey: "",
+    MenuID: "",
+    MenuName: "",
+    ScreenCode: "",
+    ScreenName: "",
+    AccessURL: "",
+    AccessTarget: 0,
+    EventCode: 0,
+    UserField1: "",
+    UserField2: ""
+}
+
+var collaborationLog = {
+    CompanyCode: "",
+    UserID: "",
+    SystemID: "102",
+    LogType: 0,
+    OccurLocation: 0,
+    OccurDatetime: null,
+    OrgID: "",
+    RankCode: "",
+    From: "",
+    To: "",
+    CommunityInfo: "",
+    EventCode: 0,
+    UserField1: "",
+    UserField2: ""
+}
+
+var interfaceLog = {
+    CompanyCode: "",
+    UserID: "",
+    SystemID: "102",
+    LogType: 3,
+    OccurLocation: 0,
+    OccurDatetime: null,
+    UserIP: "",
+    ServerIP: "",
+    TargetSystemID: "",
+    TargetSystemIP: "",
+    ServiceAddr: "",
+    RequestMessage: "",
+    ResponseMessage: "",
+    EventCode: 0,
+    ResultCode: 0,
+    RunTime: "",
+    UserField1: "",
+    UserField2: ""
+}
+
+var systemLog = {
+    CompanyCode: "",
+    UserID: "",
+    SystemID: "102",
+    LogType: 4,
+    OccurLocation: 0,
+    OccurDatetime: null,
+    UserIP: "",
+    ServerIP: "",
+    MenuID: "",
+    MenuName: "",
+    ScreenCode: "",
+    ScreenName: "",
+    ClassName: "",
+    LogFlag: 0,
+    LogMessage: "",
+    UserField1: "",
+    UserField2: "",
+    UserField3: ""
+}
+
+//LogType
+var LogType = {
+    Access: 0, //접근로그
+    Event: 1, //이벤트로그
+    Email: 2, //이메일로그
+    Interface: 3, //인터페이스로그
+    System: 4, //시스템로그
+    Conference: 5, //회의관리로그
+    Messenger: 6, //메신저로그
+    SMS: 7 //SMS로그
+}
+
+//All
+var OccurLocationType = {
+    Client: 0, //사용자
+    Server: 1 //서버
+}
+
+//AccessLog
+var AccessTargetType = {
+    Document: 0, //문서
+    Board: 1, //게시판
+    Page: 2 // 페이지
+}
+
+//AccessEventCodeType
+var AccessEventCodeType = {
+    Login: 0, //로그인
+    LogOut: 1, //로그아웃
+    Regist: 2, // 등록
+    Read: 3, // 보기
+    Update: 4, // 수정
+    Delete: 5, // 삭제
+    Print: 6, // 출력
+    Upload: 7, // 업로드
+    Download: 8, // 다운로드
+    Search: 9, // 검색
+    Move: 10, // 이동
+    Execute: 11, // 결재활동
+    Attribute: 12, // 결재속성
+    Common: 13, // 공통
+    Etc: 14, // 기타
+    Copy: 15, // 복사
+    Save: 16, // 저장
+    Open: 17, // 첨부 열기
+    Push: 18, // 밀어내기
+    Lock: 19, // 잠금
+    Release: 20 // 해제
+}
+
+
+//CollaborationEventCodeType
+var CollaborationEventCodeType = {
+    Send: 0, //발송
+    Forwarding: 1, //전달
+    Sangsin: 2, // 상신
+    Accept: 3, // 승인
+    Talk: 4, // 대화
+    Meeting: 5, // 회의
+    Execute: 6, // 결재활동
+    Attribute: 7 // 결재속성
+}
+
+//SystemLogFlagType
+var SystemLogFlagType = {
+    I: 0, //Information
+    W: 1, //Warning
+    E: 2, // Error
+    V: 3, // Verbose
+    D: 4 // Debug
+}
+
+//BizCode
+var BizCode = {
+    Notifications: 213, //통합알림
+    WebMail: 218, //메일
+    Main : 229, //메인
+    ApprovalBox : 231, //결재함
+    WorkView : 232, //업무뷰
+    ApprovalForm : 233, //양식
+    ApprovalCommon : 234, //공통
+    ApprovalAdmin : 235, //관리자 화면
+    MailMemo : 236, //메일 메모
+    MailBox : 237, //메일 보관함
+    MailSetting : 238, //메일 환경 설정
+    MailToDo : 239, //메일 할 일
+    MailContact : 240, //메일 연락처
+    AddressBook : 241 //주소록
+}
+
+//var SelectParameters = {
+//    UserID : "",
+//    SystemID: "",
+//    LogType: 0,
+//    Date: "",
+//    BizCode: "",
+//    MenuID: "",
+//    EventCode:0
+//}
+
+var logManager = function (apiUrl) {
+    this.logApiUrl = apiUrl;
+    var root = this;
+    var errReturns = {
+        xhr: "",
+        status: "",
+        p3: "",
+        p4: ""
+    }
+    this.onSuccess = function (result) { };
+    this.onError = function (errReturns) { };
+    this.constructor = function (apiUrl) {
+        root.logApiUrl = apiUrl
+    };
+
+    this.info = function (log) {
+        send("Info", log);
+    };
+
+    this.collaboration = function (log) {
+        send("Collaboration", log);
+    };
+
+    this.interface = function (log) {
+        send("Interface", log);
+    };
+
+    this.system = function (log) {
+        send("System", log);
+    };
+
+    this.exception = function (log) {
+        send("Exception", log);
+    };
+    this.GetAccessLog = function (param) {
+        send("GetAccessLog", param);
+    };
+    this.GetCollaborationLog = function (param) {
+        send("GetCollaborationLog", param);
+    };
+    this.GetInterfaceLog = function (param) {
+        send("GetInterfaceLog", param);
+    };
+    this.GetSystemLog = function (param) {
+        send("GetSystemLog", param);
+    };
+    var send = function (methord, param) {
+        $.ajax({
+            url: root.logApiUrl + methord,
+            type: "POST",
+            data: param,
+            success: function (result) {
+                root.onSuccess(result);
+            },
+            error: function (xhr, status, p3, p4) {
+
+                errReturns.xhr = xhr;
+                errReturns.status = status;
+                errReturns.p3 = p3;
+                errReturns.p4 = p4;
+
+                root.onError(errReturns);
+            }
+        });
+    };
+}
+
+var _logManager = null;
+/*
+pSystemID - 결재: 102, 메일 : 103  
+pLogType  - LogType (Enum)
+pRuntimeKey - 결재일 경우 PIID
+pMenuID - ForderID 또는 fmpf
+pMenuName - 메뉴 명
+pScreenCode - EventCode로는 부족한 경우 자유롭게 기입
+pScreenName - 상세 내용
+pBizCode    - BizCode (Enum)
+pAccessTarget - AccessTargetType (Enum)
+pEventCode - AccessEventCodeType (Enum)
+*/
+function XFN_AccessLogWrite(pSystemID, pLogType, pRuntimeKey, pMenuID, pMenuName, pScreenCode, pScreenName, pBizCode, pAccessTarget, pEventCode, pUserField1, pUserField2) {
+    try {
+        if (_logManager == null) {
+            _logManager = new logManager(_LoggingServerURL);
+        }
+
+        if(pSystemID == "" || pSystemID == undefined || pSystemID == null || pSystemID == "undefined")
+            pSystemID = "102";
+        if(pLogType == "" || pLogType == undefined || pLogType == null || pLogType == "undefined")
+            pLogType = LogType.Access;
+        if (pRuntimeKey == undefined || pRuntimeKey == null || pRuntimeKey == "undefined")
+            pRuntimeKey = "";
+        if (pMenuID == undefined || pMenuID == null || pMenuID == "undefined")
+            pMenuID = "";
+        if (pMenuName == undefined || pMenuName == null || pMenuName == "undefined")
+            pMenuName = "";
+        if (pScreenCode == undefined || pScreenCode == null || pScreenCode == "undefined")
+            pScreenCode = "";
+        if (pScreenName == undefined || pScreenName == null || pScreenName == "undefined")
+            pScreenName = "";
+        if (pBizCode == "" || pBizCode == undefined || pBizCode == null || pBizCode == "undefined")
+            pBizCode = BizCode.ApprovalCommon;
+        if (pAccessTarget == "" || pAccessTarget == undefined || pAccessTarget == null || pAccessTarget == "undefined")
+            pAccessTarget = AccessTargetType.Page;
+        if (pEventCode == "" || pEventCode == undefined || pEventCode == null || pEventCode == "undefined")
+            pEventCode = AccessEventCodeType.Read;
+        if (pUserField1 == undefined || pUserField1 == null || pUserField1 == "undefined")
+            pUserField1 = "";
+        if (pUserField2 == undefined || pUserField2 == null || pUserField2 == "undefined")
+            pUserField2 = "";
+
+        var dtNow = new Date();
+        var sNow = dtNow.getUTCFullYear();
+        if ((dtNow.getUTCMonth() + 1) < 10) {
+            sNow += "-0" + (dtNow.getUTCMonth() + 1);
+        } else {
+            sNow += "-" + (dtNow.getUTCMonth() + 1);
+        }
+        if (dtNow.getUTCDate() < 10) {
+            sNow += "-0" + dtNow.getUTCDate();
+        } else {
+            sNow += "-" + dtNow.getUTCDate();
+        }
+        if (dtNow.getUTCHours() < 10) {
+            sNow += " 0" + dtNow.getUTCHours();
+        } else {
+            sNow += " " + dtNow.getUTCHours();
+        }
+
+        if (dtNow.getUTCMinutes() < 10) {
+            sNow += ":0" + dtNow.getUTCMinutes();
+        } else {
+            sNow += ":" + dtNow.getUTCMinutes();
+        }
+
+        if (dtNow.getUTCSeconds() < 10) {
+            sNow += ":0" + dtNow.getUTCSeconds();
+        } else {
+            sNow += ":" + dtNow.getUTCSeconds();
+        }
+
+        var l_accessLog = accessLog;
+
+        l_accessLog.CompanyCode = _DN_Code;
+        l_accessLog.UserID = _UR_Code;
+        l_accessLog.SystemID = pSystemID;
+        l_accessLog.LogType = pLogType;
+        l_accessLog.OccurLocation = 0;
+        l_accessLog.OccurDatetime = sNow;
+        l_accessLog.RuntimeKey = pRuntimeKey;
+        l_accessLog.UserIP = _RemoteAddr;
+        l_accessLog.ServerIP = _REMOTE_HOST;
+        l_accessLog.MenuID = pMenuID;
+        l_accessLog.MenuName = pMenuName;
+        l_accessLog.ScreenCode = pScreenCode;
+        l_accessLog.ScreenName = pScreenName;
+        l_accessLog.BizCode = pBizCode;
+        l_accessLog.AccessURL = location.href;
+        l_accessLog.AccessTarget = pAccessTarget;
+        l_accessLog.EventCode = pEventCode;
+        l_accessLog.UserField1 = pUserField1;
+        l_accessLog.UserField2 = pUserField2;
+
+        _logManager.info(l_accessLog);
+    } catch (e) {
+        //alert(e.stack);
+    }
+}
+
+
+/*
+pSystemID - 결재: 102, 메일 : 103  
+pLogType  - LogType (Enum)
+pFrom     - 협업관련 발신자
+pTo       - 협업관련 수신자
+pEventCode - CollaborationEventCodeType (Enum)
+pUserField1  - 메일일 경우 403
+*/
+function XFN_CollaborationLogWrite(pSystemID, pLogType,pFrom,pTo, pEventCode, pUserField1) {
+    try {
+        if (_logManager == null) {
+            _logManager = new logManager(_LoggingServerURL);
+        }
+
+        if (pSystemID == "" || pSystemID == undefined || pSystemID == null || pSystemID == "undefined")
+            pSystemID = "102";
+        if (pLogType == "" || pLogType == undefined || pLogType == null || pLogType == "undefined")
+            pLogType = LogType.Email;
+        if (pFrom == undefined || pFrom == null || pFrom == "undefined")
+            pFrom = "";
+        if (pTo == undefined || pTo == null || pTo == "undefined")
+            pTo = "";
+        
+        if (pEventCode == "" || pEventCode == undefined || pEventCode == null || pEventCode == "undefined")
+            pEventCode = CollaborationEventCodeType.Send;
+        if (pUserField1 == undefined || pUserField1 == null || pUserField1 == "undefined")
+            pUserField1 = "";
+
+        var dtNow = new Date();
+        var sNow = dtNow.getUTCFullYear();
+        if ((dtNow.getUTCMonth() + 1) < 10) {
+            sNow += "-0" + (dtNow.getUTCMonth() + 1);
+        } else {
+            sNow += "-" + (dtNow.getUTCMonth() + 1);
+        }
+        if (dtNow.getUTCDate() < 10) {
+            sNow += "-0" + dtNow.getUTCDate();
+        } else {
+            sNow += "-" + dtNow.getUTCDate();
+        }
+        if (dtNow.getUTCHours() < 10) {
+            sNow += " 0" + dtNow.getUTCHours();
+        } else {
+            sNow += " " + dtNow.getUTCHours();
+        }
+
+        if (dtNow.getUTCMinutes() < 10) {
+            sNow += ":0" + dtNow.getUTCMinutes();
+        } else {
+            sNow += ":" + dtNow.getUTCMinutes();
+        }
+
+        if (dtNow.getUTCSeconds() < 10) {
+            sNow += ":0" + dtNow.getUTCSeconds();
+        } else {
+            sNow += ":" + dtNow.getUTCSeconds();
+        }
+        
+        var ㅣ_collaborationLog = collaborationLog;
+        ㅣ_collaborationLog.CompanyCode = _DN_Code;
+        ㅣ_collaborationLog.UserID = _UR_Code;
+        ㅣ_collaborationLog.SystemID = pSystemID;
+        ㅣ_collaborationLog.LogType = pLogType;
+        ㅣ_collaborationLog.OccurLocation = 0;
+        ㅣ_collaborationLog.OccurDatetime = sNow;
+        ㅣ_collaborationLog.OrgID = _DeptCode;
+        ㅣ_collaborationLog.RankCode = _UR_JobPositionCode;
+        ㅣ_collaborationLog.From = pFrom;
+        ㅣ_collaborationLog.To = pTo;
+        ㅣ_collaborationLog.EventCode = pEventCode;
+        ㅣ_collaborationLog.UserField1 = pUserField1;
+
+        _logManager.collaboration(ㅣ_collaborationLog);
+    } catch (e) {
+        //alert(e.stack);
+    }
+}
+
+//샘플코드
+//function sample() {
+//    var log = new logManager("http://localhost:11754/Log/")
+//    log.onSuccess = function (data) {
+//        alert("hihi");
+//        //alert(data);
+//    };
+
+//    log.onError = function (errReturns) {
+//        alert(errReturns.xhr);
+//        alert(errReturns.status);
+//        alert(errReturns.p3);
+//        alert(errReturns.p4);
+//    };
+
+//    function setLog() {
+
+//        var log;
+//        log = {
+//            CompanyCode: "11",
+//            UserID: "abc",
+//            SystemID: "PT",
+//            LogType: "Access",
+//            OccurLocation: "Clinet",
+//            OccurDatetime: null,
+//            UserIP: "100.100.100.1",
+//            ServerIP: "100.100.100.1",
+//            RuntimeKey: "111",
+//            MenuID: "111",
+//            MenuName: "111",
+//            ScreenCode: "111",
+//            ScreenName: "111",
+//            AccessURL: "111",
+//            AccessTarget: 0,
+//            EventCode: 0,
+//            UserField1: "",
+//            UserField2: ""
+//        }
+//        log.Info(req);
+//    };
+//}

@@ -1,0 +1,1418 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>김형복</creator> 
+///<createDate>2011.2011.01.14</createDate> 
+///<lastModifyDate>2011.2011.01.14</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///Framework 제공되는 컨트롤에 사용되는 스크립트(Prefix "CFN_")
+///</summary>
+///<ModifySpc>
+///여기에 변경내역을 변경일자(변경자) : 변경내용으로 기록합니다. 
+///</ModifySpc>
+*/
+
+
+/////////////////////////////////////////// CoviGridView /////////////////////////
+var mouseOverBGColor = "#f5f5f5";
+var mouseOutBGColor = "#FFFFFF";
+var prevBgColor = "";
+var selectedBgColor = "";
+
+// List에 마우스 오버시 Row컬러 변경
+function CFN_GrvOnMouseOverBG() {
+    var el = event.srcElement.parentElement;
+    while (el.tagName != 'TR') { el = el.parentElement; }
+    prevBgColor = el.style.backgroundColor;
+    el.style.backgroundColor = mouseOverBGColor;
+}
+
+// List에 마우스 아웃시 원래의 Row컬러로 변경
+function CFN_GrvOnMouseOutBG() {
+    var el = event.srcElement.parentElement;
+    while (el.tagName != 'TR') { el = el.parentElement; }
+    el.style.backgroundColor = prevBgColor
+}
+
+// List에서 전체 아이템 체크
+function CFN_GrvSelectAllChk() {
+    var l_ParentTable = $(event.srcElement.parentElement).parentsUntil(".ztable_list"); // 관리자 스타일
+    if (l_ParentTable == null) {
+        l_ParentTable = $(event.srcElement.parentElement).parentsUntil(".table_list"); // 사용자 스타일
+    }
+    if (!$(l_ParentTable).find('[name="CheckBoxHeader"]').children().prop("checked")) {
+        $(l_ParentTable).find('[name="CheckBoxItem"]').each(function (i, e) {
+            $(this).children().prop("checked", false);
+        });
+    } else {
+        $(l_ParentTable).find('[name="CheckBoxItem"]').each(function (i, e) {
+            $(this).children().prop("checked", true);
+        });
+    }
+    try {
+        if (typeof Grv_SelectAllChk == "function") {
+            eval("Grv_SelectAllChk()");
+        }
+    } catch (e) { }
+}
+
+// 리스트에서 1개 아이템 체크
+function CFN_GrvSelectSingleChk(pObj) {
+    try {
+        if (Grv_SelectSingleCheck) {
+            eval("Grv_SelectSingleCheck(pObj)");
+        }
+    } catch (e) { }
+}
+
+///////////////////////////////////////// Covi Pageing Start /////////////////////////
+
+// 페이지 수 입력 제한
+function CFN_PagingInputGoPage(pThisObj, pTotalCnt) {
+    CFN_OnKeyUpIsNum(pThisObj);
+    if (parseInt(pThisObj.value, 10) > pTotalCnt) {
+        if (pThisObj.value.length == 1) {
+            pThisObj.value = pTotalCnt;
+        } else {
+            pThisObj.value = pThisObj.value.substr(0, pThisObj.value.length - 1);
+        }
+        Common.Warning(Common.GetDic("lbl_enterWithinScope")); // 범위내에서 페이지수 를 입력하세요.
+    }
+}
+///////////////////////////////////////// Covi Pageing End /////////////////////////
+
+/////////////////////////////////////////// CoviTreeView /////////////////////////
+
+function treenode_onmouseover(e) {
+    $(e).attr("bgcolor", "gray");
+}
+
+function treenode_onmouseout(e) {
+    $(e).removeAttr("bgcolor");
+}
+
+//line image resize for render ui
+function treenode_render(id) {
+    $("#" + id + " div").each(function (e, i) {
+        var w = $(this).css("width");
+        var h = $(this).css("height");
+        if (w === "20px" && h === "1px") {
+            var inner = $(this).html();
+            $(this).replaceWith("<div style='width:20px;'>" + inner + "</div>");
+        }
+    });
+}
+
+/////////////////////////////////////////// CoviTreeView /////////////////////////
+
+////////////////////////////////////// CoviTextBox Start //////////////////////
+// 입력수 제한(fnCheckMaxLength)
+function CFN_CheckMaxLength(obj, num) {
+    var strLen = obj.value.length;
+    var strText = obj.value;
+    var eCode = ('which' in event) ? event.which : event.keyCode;
+    if (eCode == 8 || eCode == 46 || (eCode > 20 && eCode < 40)) { }
+    else if (strLen > parseInt(num, 10)) {
+        alert(Common.GetDic("msg_CanNotEnterLimite").replace("{0}", num));
+        obj.value = CFN_AdjustLen(strText, parseInt(num, 10) + 1);
+        obj.focus();
+        return false;
+    }
+}
+
+// 알파벳과 숫자만 입력하도록(아이디 등을 만들때 사용)
+function CFN_OnKeyUpAlpabatNum(pObj) {
+    var strValue = pObj.value;
+    var strChangeValue = strValue;
+    var strAllow = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_."
+    for (var i = 0; i < pObj.value.length; i++) {
+        if (strAllow.indexOf(pObj.value.substring(i, i + 1)) < 0) {
+            strValue = strValue.replace(pObj.value.substring(i, i + 1), "");
+        }
+    }
+    if (strChangeValue != strValue) $(pObj).val(strValue);
+}
+
+// 통화(돈)만 입력(다른 브라우져 용)
+function CFN_OnKeyUpIsCurrency(pObj) {
+    var strValue = "";
+    var strValueDotAfter = "";
+    var strChangeValueDotAfter = "";
+    var strChangeValue = "";
+
+    if (pObj.value.split(".").length > 2) {
+        $(pObj).val(pObj.value.substring(0, pObj.value.length - 1));
+        return;
+    }
+    if (pObj.value == ".") {
+        $(pObj).val("0.");
+        return;
+    }
+
+    if (pObj.value.indexOf(".") > -1) {
+        strValue = pObj.value.split(".")[0];
+        strChangeValue = strValue;
+        strValueDotAfter = pObj.value.split(".")[1];
+        strChangeValueDotAfter = strValueDotAfter;
+    } else {
+        strValue = pObj.value;
+        strChangeValue = strValue;
+    }
+
+    for (var idx = 0; idx < strValue.length; idx++) {
+        if (idx > 0 && strValue.charAt(idx) == "-") { // -를 나중에 붙인다 하더라도 앞으로 보냄.
+            strValue = strValue.replace(/-/g, "");
+            strValue = "-" + strValue;
+        }
+        if (strValue.charAt(idx) == "," || strValue.charAt(idx) == "-" || strValue.charAt(idx) == ".") {
+        } else if (strValue.charAt(idx) < '0' || strValue.charAt(idx) > '9') {
+            strValue = strValue.replace(strValue.charAt(idx), "");
+        }
+    }
+    for (var idx = 0; idx < strValueDotAfter.length; idx++) {
+        if (strValueDotAfter.charAt(idx) < '0' || strValueDotAfter.charAt(idx) > '9') {
+            strValueDotAfter = strValueDotAfter.replace(strValueDotAfter.charAt(idx), "");
+        }
+    }
+    if (strChangeValue != CFN_AddComma(strValue) || strChangeValueDotAfter != strValueDotAfter) {
+        if (strValueDotAfter != "") {
+            $(pObj).val(CFN_AddComma(strValue) + "." + strValueDotAfter);
+        } else {
+            $(pObj).val(CFN_AddComma(strValue));
+        }
+    }
+}
+
+// 숫자인지 체크
+function CFN_CheckIsNum() {
+    var eCode = ('which' in event) ? event.which : event.keyCode;
+    if (!CFN_IsNum(eCode)) {
+        event.returnValue = false;
+    } else {
+        event.returnValue = true;
+    }
+}
+
+// 숫자만 입력(다른 브라우져 용)
+function CFN_OnKeyUpIsNum(pObj) {
+    var strValue = pObj.value;
+    var strChangeValue = strValue;
+    for (var idx = 0; idx < strValue.length; idx++) {
+        if (strValue.charAt(idx) < '0' || strValue.charAt(idx) > '9') {
+            strValue = strValue.replace(strValue.charAt(idx), "");
+        }
+    }
+    if (strChangeValue != strValue) $(pObj).val(strValue);
+}
+
+// 날짜만 입력(다른 브라우져 용)
+function CFN_OnKeyUpIsDate(pObj) {
+    var strValue = pObj.value;
+    var strChangeValue = strValue;
+    for (var idx = 0; idx < strValue.length; idx++) {
+        if (strValue.charAt(idx) == "." || strValue.charAt(idx) == "/" || strValue.charAt(idx) == "-") {
+        } else if (strValue.charAt(idx) < '0' || strValue.charAt(idx) > '9') {
+            strValue = strValue.replace(strValue.charAt(idx), "");
+        }
+    }
+    if (strChangeValue != strValue) $(pObj).val(strValue);
+}
+
+//날짜 입력 값 체크
+function CFN_CheckIsDateNum(DateFormat) {
+    var eCode = ('which' in event) ? event.which : event.keyCode;
+    if (!CFN_IsNum(eCode)) {
+        event.returnValue = false;
+    } else {
+        var kCode = ('which' in event) ? event.which : event.keyCode;
+        if (CFN_CheckIsDateInput(kCode)) {
+            event.returnValue = true;
+        } else {
+            event.returnValue = false;
+        }
+    }
+}
+
+// 날짜 입력키 체크
+function CFN_CheckIsDateInput(keyCodeNum) {
+    var oElement = event.srcElement;
+    var dateLength = oElement.value.length;
+
+    if (dateLength > 7) {
+        if (keyCodeNum == 8 || keyCodeNum == 46 || (keyCodeNum >= 37 && keyCodeNum <= 40)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return true;
+    }
+}
+
+// 날자 포멧 제거
+function CFN_RemoveDateFromat(DateFormat) {
+    var oElement = event.srcElement;
+    var l_dispalyDay = eval($(oElement).attr("DisplayDay"));
+
+    //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+    if ($(oElement).data("format")) {
+        oElement.value = oElement.value.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+    } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+        if (DateFormat == 'dot') {
+            oElement.value = oElement.value.replace(/\./g, '');
+        } else if (DateFormat == 'dash') {
+            oElement.value = oElement.value.replace(/\-/g, '');
+        } else if (DateFormat == 'slash' || DateFormat == 'enslash') {
+            oElement.value = oElement.value.replace(/\//g, '');
+        } else {
+            oElement.value = oElement.value.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+        }
+    if (l_dispalyDay && oElement.value.indexOf("(") > -1) {
+        oElement.value = oElement.value.replace(oElement.value.substr(oElement.value.indexOf("("), (oElement.value.length - 1)), "");
+    }
+}
+
+// 날짜 포멧 적용
+var g_DayOfWeek = null;
+function CFN_ConvertDate(DateFormat) {
+    var oElement = event.srcElement;
+    var l_dispalyDay = eval($(oElement).attr("DisplayDay"));
+    var dateValue = oElement.value;
+    var dateLength = oElement.value.length;
+    var dateYear;
+    var dateMonth;
+    var dateDay;
+    var dateTempDay;
+    var dateTempDate;
+
+    if (DateFormat == "") {
+        if (typeof _CalenderDateFormat == "undefined") {
+            DateFormat = Common.GetSession("UR_DateFormat");
+        } else {
+            DateFormat = _CalenderDateFormat;
+        }
+    }
+
+    //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+    var tempFormat = $(oElement).data("format");
+    if (tempFormat) {
+        if (tempFormat.indexOf(".") >= 0) DateFormat = "dot";
+        else if (tempFormat.indexOf("-") >= 0) DateFormat = "dash";
+        else if (tempFormat.indexOf("/") >= 0) DateFormat = "slash";
+    }
+
+    if (g_IdOrName == "Name") {
+        var vDateFormatSplitChar = "";
+        if (DateFormat == 'dot') {
+            vDateFormatSplitChar = ".";
+        } else if (DateFormat == 'dash') {
+            vDateFormatSplitChar = "-";
+        } else if (DateFormat == 'slash' || DateFormat == 'enslash') {
+            vDateFormatSplitChar = "/";
+        }
+
+        dateValue = oElement.value;
+        dateLength = dateValue.length;
+    }
+
+    if (dateLength != 0) {
+        //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+        var format = $(oElement).data("format");
+        if (format) {//지정된 날짜형식이 있는 경우. 지정 형식으로 날짜값 받아오기
+            var str = oElement.value.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+            format = format.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+            dateDay = str.substr(format.indexOf("dd"), 2);
+            dateMonth = str.substr(format.indexOf("MM"), 2);
+            if (format.indexOf("yyyy") >= 0) dateYear = str.substr(format.indexOf("yyyy"), 4);
+            else dateYear = str.substr(format.indexOf("yy"), 2);
+        } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+            if (DateFormat == 'enslash') {
+                dateValue = oElement.value.replace(vDateFormatSplitChar, "").replace(vDateFormatSplitChar, "");
+                dateLength = dateValue.length;
+                if (dateLength == 8) {
+                    dateDay = dateValue.substr(0, 2);
+                    dateMonth = dateValue.substr(2, 2);
+                    dateYear = dateValue.substr(4, 4);
+                } else {
+                    alert(Common.GetDic("msg_InValidDateInput"));
+                    oElement.value = '';
+                    oElement.focus();
+                    return false;
+                }
+            } else if (DateFormat == 'dot' || DateFormat == 'dash' || DateFormat == 'slash') {
+                dateValue = oElement.value.replace(vDateFormatSplitChar, "").replace(vDateFormatSplitChar, "");
+                dateLength = dateValue.length;
+                if (dateLength == 6) {
+                    dateYear = dateValue.substr(0, 4);
+                    dateMonth = dateValue.substr(4, 1);
+                    dateDay = dateValue.substr(5, 1);
+                } else if (dateLength == 7) {
+                    dateYear = dateValue.substr(0, 4);
+                    dateMonth = dateValue.substr(4, 1);
+                    dateDay = dateValue.substr(5, 2);
+                } else if (dateLength == 8) {
+                    dateYear = dateValue.substr(0, 4);
+                    dateMonth = dateValue.substr(4, 2);
+                    dateDay = dateValue.substr(6, 2);
+                } else {
+                    alert(Common.GetDic("msg_InValidDateInput"));
+                    oElement.value = '';
+                    oElement.focus();
+                    return false;
+                }
+            } else {
+                var l_DateFormat = DateFormat.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                var l_dateValue = dateValue.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                dateYear = l_dateValue.substr(l_DateFormat.indexOf("yyyy"), 4);
+                dateMonth = l_dateValue.substr(l_DateFormat.indexOf("MM"), 2);
+                dateDay = l_dateValue.substr(l_DateFormat.indexOf("dd"), 2);
+            }
+        dateTempDay = CFN_GetDaysInMonth(dateMonth, dateYear);
+
+        if (parseInt(dateTempDay, 10) >= parseInt(dateDay, 10)) {
+            if (dateDay.length == 1) {
+                dateDay = '0' + dateDay;
+            }
+        } else {
+            alert(Common.GetDic("msg_InValidDateInput"));
+            oElement.value = "";
+            oElement.focus();
+            return false;
+        }
+
+        if (parseInt(dateMonth, 10) <= 12) {
+            if (dateMonth.length == 1) {
+                dateMonth = '0' + dateMonth;
+            }
+        } else {
+            alert(Common.GetDic("msg_InValidDateInput"));
+            oElement.value = "";
+            oElement.focus();
+            return false;
+        }
+
+        //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+        var oFormat = $(oElement).data("format");
+        if (oFormat) {//지정된 날짜형식이 있는 경우. 지정 형식으로 날짜값 받아오기
+            oElement.value = oFormat.replace("yyyy", dateYear).replace("yy", dateYear.toString().substr(2, 2)).replace("MM", dateMonth).replace("dd", dateDay);
+            dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+        } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+            if (DateFormat == 'dot') {
+                oElement.value = dateYear + '.' + dateMonth + '.' + dateDay;
+                dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+            } else if (DateFormat == 'dash') {
+                oElement.value = dateYear + '-' + dateMonth + '-' + dateDay;
+                dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+            } else if (DateFormat == 'slash') {
+                oElement.value = dateYear + '/' + dateMonth + '/' + dateDay;
+                dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+            } else if (DateFormat == 'enslash') {
+                oElement.value = dateDay + '/' + dateMonth + '/' + dateYear;
+                dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+            } else {
+                oElement.value = DateFormat.replace("yyyy", dateYear).replace("MM", dateMonth).replace("dd", dateDay);
+                dateTempDate = dateYear + '-' + dateMonth + '-' + dateDay;
+            }
+
+        if (oElement.value != "") {
+            var l_ValidationFunc = oElement.onclick.toString();
+            l_ValidationFunc = l_ValidationFunc.substring(l_ValidationFunc.indexOf("CFN_CalenderPopup("), l_ValidationFunc.indexOf(");"));
+            l_ValidationFunc = l_ValidationFunc.replace("CFN_CalenderPopup(this", "" + dateYear + ", " + dateMonth + ", " + dateDay + ", '" + oElement.id + "'").replace(")", "").replace(/'/gi, "").replace(/ /gi, "");
+            g_FormatConvertSetTime = setTimeout("CFN_ReturnCalFromatTransDateConvert('" + l_ValidationFunc + "')", 200);
+        }
+
+        // 요일 삽입
+        if (l_dispalyDay) {
+            if (g_DayOfWeek == null) {
+                g_DayOfWeek = Common.GetDicAll("lbl_sch_sun;lbl_sch_mon;lbl_sch_tue;lbl_sch_wed;lbl_sch_thr;lbl_sch_fri;lbl_sch_sat")
+            }
+
+            // ie8에서 "yyyy-mm-dd"형식의 문자열 파라미터로 Date 생성시 값이 "NaN"으로 출력되서 년,월,일 파라미터로 생성
+            var date = new Date(dateYear, dateMonth - 1, dateDay);
+            var weekday = new Array(Common.GetDic("lbl_sch_sun"), Common.GetDic("lbl_sch_mon"), Common.GetDic("lbl_sch_tue"), Common.GetDic("lbl_sch_wed"), Common.GetDic("lbl_sch_thr"), Common.GetDic("lbl_sch_fri"), Common.GetDic("lbl_sch_sat"));
+            var wkd = date.getDay();
+            oElement.value = oElement.value + "(" + weekday[wkd] + ")";
+        }
+    }
+}
+
+//해당년월에 일수 가져오기
+function CFN_GetDaysInMonth(month, year) {
+    var days;
+
+    if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) {
+        days = 31;
+    } else if (month == 4 || month == 6 || month == 9 || month == 11) {
+        days = 30;
+    } else if (month == 2) {
+        if (CFN_CheckLeapYear(year)) {
+            days = 29;
+        } else {
+            days = 28;
+        }
+    }
+    return days;
+}
+
+// 윤년 확인
+function CFN_CheckLeapYear(year) {
+    if (((year % 4) == 0) && ((year % 100) != 0) || ((year % 400) == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function CFN_FocusOnOff(obj, type) {
+    if (type == "On") {
+        $(obj).addClass("input_must_hover");
+    } else {
+        $(obj).removeClass("input_must_hover");
+    }
+    if ($(obj).val() != "") {
+        $("#ValidCheck_" + $(obj).attr("id")).remove();
+    }
+}
+
+// 필수 입력 필드에 대한 벨리데이션 체크
+function CFN_ValidationRequiredCheck() {
+    var l_ObjFirstTarget = "";
+    var l_LableAlt = "Validation Check";
+    var l_ObjID = "";
+    var l_Message = "";
+    $("input[required], textarea[required], select[required]").each(function () {
+        if ($(this).val().trim() == "") {
+            l_ObjID = $(this).attr("id");
+            if (l_ObjFirstTarget == "") {
+                l_ObjFirstTarget = l_ObjID;
+            }
+            if (document.getElementById("ValidCheck_" + l_ObjID) == null) {
+                $("body").append("<div id='ValidCheck_" + l_ObjID + "' style='position:absolute;display:none;z-index:49;background-color:gray;' class='IndicatorLayer'><label class='valid-error'>" + Common.GetDic("lbl_ValidCheckRequired") + "<a class='close' onclick='$(this).parent().parent().remove(); return false;'></a><div class='arrow_t'></div></label></div>");
+                $("#ValidCheck_" + l_ObjID).show();
+                $(this).bind("mousedown", CFN_ValidationRequiredCheckFocus);
+            } else {
+                $("#ValidCheck_" + l_ObjID).show();
+            }
+            CFN_SetVaildLayerPosition(document.getElementById(l_ObjID), "ValidCheck_" + l_ObjID, 0, -31);
+        }
+    });
+
+    if (l_ObjFirstTarget != "") {
+        document.getElementById(l_ObjFirstTarget).focus();
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// 벨리데이션 체크에 걸린 객체에 마우스 클릭시 레이어 숨김
+function CFN_ValidationRequiredCheckFocus(event) {
+    var l_oElement = event.srcElement;
+    $("#ValidCheck_" + $(l_oElement).attr("id")).hide();
+}
+
+// 레이어 위치 잡기(지정 객체 위에 올려놓음.)
+function CFN_SetVaildLayerPosition(pObj, pLayerId, xOffset, yOffset) {
+    var newX = 0;
+    var newY = 0;
+    var targetObj = pObj;
+    if (pObj.offsetParent) {
+        // if called from href="CFN_SetLayerPosition(this,'example')" then obj will
+        // have no offsetParent properties. Use onClick= instead.
+        while (pObj.offsetParent) {
+            newX += pObj.offsetLeft;
+            newY += pObj.offsetTop;
+            pObj = pObj.offsetParent;
+        }
+    } else if (pObj.x) {
+        // nn4 - only works with "a" tags
+        newX += pObj.x;
+        newY += pObj.y;
+    }
+
+    // apply the offsets
+    newX += xOffset;
+    newY += yOffset;
+
+    // 높이계산(실제 Body 사이즈의 계산)
+    var bodyHeight = $("body").height();
+    $(targetObj).parentsUntil("body").each(function () {
+        var thisHeight = $(this).height();
+        if (thisHeight > bodyHeight) {
+            bodyHeight = thisHeight;
+        }
+    });
+    //if ((newY + 216) > bodyHeight) { newY = newY - ((newY + 218) - bodyHeight); }
+    // 넓이계산
+    //if ((newX + 197) > $("body").width()) { newX = newX - ((newX + 199) - $("body").width()); }
+
+    // apply the new positions to our layer
+    //var layer = new CFN_GetLayerById(id);
+    var layer = document.getElementById(pLayerId);
+    if (_nn4) {
+        layer.style.left = newX;
+        layer.style.top = newY;
+    } else {
+        // the px avoids errors with doctype strict modes
+        layer.style.left = newX + 'px';
+        layer.style.top = newY + 'px';
+    }
+}
+
+// 벨리데이션 레이어 일괄 닫기
+function CFN_ValidationLayerClose() {
+    $(".IndicatorLayer").each(function () {
+        $(this).remove();
+    });
+}
+
+/////////////////////////////////////////// CoviTextBox End /////////////////////////
+
+/////////////////////////////////////////// CoviCalender Start /////////////////////////
+var g_CalPopups = new Array(); // keeps track of popup windows we create
+var g_CalHtml = '';
+var g_wStart = 0;
+var g_CalDic = true; // 다국어 처리
+var g_CalInputId = ""; // 달력 컨트롤 아이디
+
+var _wDay, _wDayAbbrev, _wMonth, _wOrder;
+var g_IdOrName = "";  //ID로할건지 Name으로할건지의 구분(HIW)
+
+// 달력 팝업 호출
+function CFN_CalenderPopup(pThisObj, pValidationScript, pStartInput, pEndInput, pIdOrName) {  //pIdOrName:ID로할건지 Name으로할건지의 구분
+    var l_ObjInput;
+    if (pIdOrName == "Name") {  //HIW
+        g_IdOrName = pIdOrName;
+        g_CalInputId = pThisObj.name;  // 재호출을 위해 아이디 저장(Html input)
+        var tempObj = document.getElementsByName(g_CalInputId);
+        for (var i = 0; i < tempObj.length; i++) {
+            //if ($(pThisObj).prop("uniqueNumber") == $(tempObj[i]).prop("uniqueNumber")) {
+            //멀티 로우시 크롬에서 해당 배열을 찾지 못하는 현상 수정 2018/02/23 KBW
+            if (tempObj[i] == pThisObj) {
+                g_uniqueNumber = i;
+            }
+        }
+        l_ObjInput = 'document.getElementsByName(g_CalInputId)[' + g_uniqueNumber + ']'; // 입력하는 현재 객체
+
+    } else {
+        g_CalInputId = pThisObj.id;  // 재호출을 위해 아이디 저장(Html input)
+        l_ObjInput = 'document.getElementById(g_CalInputId)';  // 입력하는 현재 객체
+    }
+
+    var l_LayerId = "LaryeCalenderPop", l_xOffset = 0, l_yOffset = 22
+    var l_CurrentYear, l_CurrentMonth, l_CurrentDay
+
+    if (g_CalDic) {
+        Common.GetDicAll('lbl_Sunday;lbl_Monday;lbl_Tuesday;lbl_Wednesday;lbl_Thursday;lbl_Friday;lbl_Saturday;lbl_Month_min;lbl_year_min;lbl_FollYear;lbl_PreMonth;lbl_NextMonth;lbl_GotoToday;');
+        g_CalDic = false;
+    }
+    _wDay = new Array(_Dictionary['lbl_Sunday'], _Dictionary['lbl_Monday'], _Dictionary['lbl_Tuesday'], _Dictionary['lbl_Wednesday'], _Dictionary['lbl_Thursday'], _Dictionary['lbl_Friday'], _Dictionary['lbl_Saturday']);
+    _wMonth = eval(_Dictionary['lbl_Month_min']);
+    // 달력 레이어 생성
+    if (document.getElementById("LaryeCalenderPop") == null) {
+        $("body").append("<div id='LaryeCalenderPop' style='position:absolute;display:none;z-index:150;'></div>");
+    } else {
+        $("#LaryeCalenderPop").css("zIndex", 150);
+    }
+
+    // 입력값이 없을 경우 현재 날짜를 셋팅
+    if (eval(l_ObjInput).value == "") {
+        var now = new Date();
+        l_CurrentYear = now.getFullYear();
+        l_CurrentMonth = CFN_PadLeft(now.getMonth() + 1, 2, "0");
+        l_CurrentDay = CFN_PadLeft(now.getDate(), 2, "0");
+    }
+    CFN_CalenderAttachHideListener(l_LayerId);
+    CFN_RegisterCalenderPopup(l_LayerId);
+    g_CalHtml = CFN_MakeCalenderHtml(l_LayerId, l_CurrentYear, l_CurrentMonth, l_CurrentDay, l_ObjInput, pValidationScript, pStartInput, pEndInput);
+    CFN_WriteLayer(l_LayerId, g_CalHtml);
+    CFN_SetLayerPosition(pThisObj, l_LayerId, l_xOffset, l_yOffset);
+    CFN_ShowLayerById(l_LayerId);
+    return true;
+}
+
+// 달력 HTML 작성
+function CFN_MakeCalenderHtml(id, calYear, calMonth, calDay, pObjInput, validationScript, pStartInput, pEndInput) {
+
+    // ie8에서오늘로 이동시 pStartInput와 pEndInput의 값이 undefined라서 ""으로 초기화 함
+    if (pStartInput == undefined) pStartInput = "";
+    if (pEndInput == undefined) pEndInput = "";
+
+    var l_date = "";
+    var l_DateFormat = $(eval(pObjInput)).attr("DateFormat");
+
+    if (l_DateFormat == "") {
+        if (typeof _CalenderDateFormat == "undefined") {
+            l_DateFormat = Common.GetSession("UR_DateFormat");
+        } else {
+            l_DateFormat = _CalenderDateFormat;
+        }
+    }
+
+    l_DateFormat = l_DateFormat.replace(/\./g, "").replace(/\//g, "").replace(/\-/g, "");
+    l_date = eval(pObjInput).value.replace(/\./g, "").replace(/\//g, "").replace(/\-/g, "");
+
+    //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+    var format = $(eval(pObjInput)).data("format");
+    if (format) {//지정된 날짜형식이 있는 경우. 지정 형식으로 날짜값 받아오기
+        format = format.replace(/\./g, "").replace(/\//g, "").replace(/\-/g, "");
+        if (calDay == null || calDay == "") calDay = l_date.substr(format.indexOf("dd"), 2);
+        if (calMonth == null || calMonth == "") calMonth = l_date.substr(format.indexOf("MM"), 2);
+        if (calYear == null || calYear == "") {
+            if (format.indexOf("yyyy") >= 0) calYear = l_date.substr(format.indexOf("yyyy"), 4);
+            else calYear = l_date.substr(format.indexOf("yy"), 2);
+        }
+    } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+        // 영문 포멧(11/10/2013)
+        if (l_DateFormat == 'enslash') {
+            l_date = l_date.replace(/\./g, "").replace(/\//g, "").replace(/\-/g, "");
+            if (calDay == null || calDay == "") calDay = l_date.substr(0, 2);
+            if (calMonth == null || calMonth == "") calMonth = l_date.substr(2, 2);
+            if (calYear == null || calYear == "") calYear = l_date.substr(4, 4);
+        } else if (l_DateFormat == 'dot' || l_DateFormat == 'dash' || l_DateFormat == 'slash') {
+            l_date = l_date.replace(/\./g, "").replace(/\//g, "").replace(/\-/g, "");
+            if (calYear == null || calYear == "") calYear = l_date.substr(0, 4);
+            if (calMonth == null || calMonth == "") calMonth = l_date.substr(4, 2);
+            if (calDay == null || calDay == "") calDay = l_date.substr(6, 2);
+        } else {
+            if (calYear == null || calYear == "") calYear = l_date.substr(l_DateFormat.indexOf("yyyy"), 4);
+            if (calMonth == null || calMonth == "") calMonth = l_date.substr(l_DateFormat.indexOf("MM"), 2);
+            if (calDay == null || calDay == "") calDay = l_date.substr(l_DateFormat.indexOf("dd"), 2);
+        }
+
+    var daysInMonth = new Array(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+    if ((calYear % 4 == 0 && calYear % 100 != 0) || calYear % 400 == 0) {
+        daysInMonth[2] = 29;
+    }
+
+    var calDate;
+    try {
+        calDate = new Date(calYear, calMonth - 1, calDay);
+        if (calDate == "Invalid Date") {
+            calDate = new Date();
+            calYear = calDate.getFullYear();
+            calMonth = CFN_PadLeft(calDate.getMonth() + 1, 2, "0");
+            calDay = CFN_PadLeft(calDate.getDate(), 2, "0");
+        }
+    } catch (e) {
+        calDate = new Date();
+        calYear = calDate.getFullYear();
+        calMonth = CFN_PadLeft(calDate.getMonth() + 1, 2, "0");
+        calDay = CFN_PadLeft(calDate.getDate(), 2, "0");
+    }
+
+    //-----------------------------------------
+    // check if the currently selected day is
+    // more than what our target month has
+    //-----------------------------------------
+    if (calMonth < calDate.getMonth() + 1) {
+        calDay = calDay - calDate.getDate();
+        calDate = new Date(calYear, calMonth - 1, calDay);
+    }
+
+    var calNextYear = calDate.getMonth() == 11 ? calDate.getFullYear() + 1 : calDate.getFullYear();
+    var calLastYear = calDate.getMonth() == 0 ? calDate.getFullYear() - 1 : calDate.getFullYear();
+
+    var calNextMonth = calDate.getMonth() == 11 ? 1 : calDate.getMonth() + 2;
+    var calLastMonth = calDate.getMonth() == 0 ? 12 : calDate.getMonth();
+
+    var calNextYear2 = calDate.getMonth() == 11 ? calDate.getFullYear() + 1 : calDate.getFullYear() + 1;
+    var calLastYear2 = calDate.getMonth() == 0 ? calDate.getFullYear() - 1 : calDate.getFullYear() - 1;
+
+    var calNextMonth2 = calDate.getMonth() + 1;
+    var calLastMonth2 = calDate.getMonth() + 1;
+
+    var todayDate = new Date();
+
+    //---------------------------------------------------------
+    // this relies on the javascript bug-feature of offsetting
+    // values over 31 days properly. Negative day offsets do NOT
+    // work with Netscape 4.x, and negative months do not work
+    // in Safari. This works everywhere.
+    //---------------------------------------------------------
+    var calStartOfThisMonthDate = new Date(calYear, calMonth - 1, 1);
+    var calOffsetToFirstDayOfLastMonth = calStartOfThisMonthDate.getDay() >= g_wStart ? calStartOfThisMonthDate.getDay() - g_wStart : 7 - g_wStart - calStartOfThisMonthDate.getDay()
+    if (calOffsetToFirstDayOfLastMonth > 0) {
+        var calStartDate = new Date(calLastYear, calLastMonth - 1, 1); // we start in last month
+    } else {
+        var calStartDate = new Date(calYear, calMonth - 1, 1); // we start in this month
+    }
+    var calStartYear = calStartDate.getFullYear();
+    var calStartMonth = calStartDate.getMonth();
+    var calCurrentDay = calOffsetToFirstDayOfLastMonth ? daysInMonth[calStartMonth + 1] - (calOffsetToFirstDayOfLastMonth - 1) : 1;
+
+    var html = '';
+    // writing the <html><head><body> causes some browsers (Konquerer) to fail
+    if (_ie && _ieVer == 8) {
+        html += '<div id="Cal_hideDiv" style="position:absolute;top:0px;left:0px;opacity:0;z-index:-1;"><iframe id="Cal_hideIfram" width="193px" height="212px"></iframe></div>'
+    } else {
+        html += '<div id="Cal_hideDiv" style="position:absolute;top:-2px;left:-2px;opacity:0;z-index:-1;"><iframe id="Cal_hideIfram" width="193px" height="235px"></iframe></div>'
+    }
+    html += '<div class="calendar_box_n" width="175px" height="183px"><table class="calendar_box_table" border=0 cellpadding=0 cellspacing=0 bgcolor="#EEEEFF" width="175px" height="183px" bordercolor="#6e7882">';
+    html += '<tr>';
+    html += '<td valign="top">';
+    // inner
+    html += '<table width=170px  cellpadding="0" cellspacing="1" border="0" bgcolor="#FFFFFF" style="padding:5px 7px 7px 7px;">';
+    html += '<tr>\n';
+    html += '<td valign="top">';
+    html += '<table width="100%" cellpadding="0" cellspacing="1" border="0">';
+    html += '	<tbody>';
+    html += '		<tr>';
+    html += '			<td align="center">';
+    html += '                <a href="#" onClick="CFN_UpdateCalenderHtml(\'' + id + '\',' + calLastYear2 + ',' + calLastMonth2 + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_prev_cal.gif" alt="' + _Dictionary['lbl_preYear'] + '" title="' + _Dictionary['lbl_preYear'] + '" class="img_align16"></a>';
+    html += '                <span style="cursor: pointer;" class="cal_month" onclick="CFN_ShowYearLayer(this,' + '\'' + id + '\',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\''
+                                + validationScript + '\',\'' + pStartInput + '\',\'' + pEndInput + '\'); return false;">' + calDate.getFullYear() + _Dictionary['lbl_year_min'] + '</span>\n';
+    html += '                <a href="#" onClick="CFN_UpdateCalenderHtml(\'' + id + '\',' + calNextYear2 + ',' + calNextMonth2 + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_next_cal.gif" alt="' + _Dictionary['lbl_FollYear'] + '" title="' + _Dictionary['lbl_FollYear'] + '" class="img_align16"></a>';
+    html += '            </td>\n';
+    html += '			<td align="center">';
+    html += '                <a href="#"  onClick="CFN_UpdateCalenderHtml(\'' + id + '\',' + calLastYear + ',' + calLastMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_prev_cal.gif" alt="' + _Dictionary['lbl_PreMonth'] + '" title="' + _Dictionary['lbl_PreMonth'] + '" class="img_align16"></a>';
+    html += '                <span style="cursor: pointer;" class="cal_month" onclick="CFN_ShowMonthLayer(this,' + '\'' + id + '\',' + calYear + ',' + calDay + ',\'' + pObjInput + '\',\''
+                                + validationScript + '\',\'' + pStartInput + '\',\'' + pEndInput + '\'); return false;">' + _wMonth[calDate.getMonth()] + '</span>\n';
+    html += '                <a href="#"onClick="CFN_UpdateCalenderHtml(\'' + id + '\',' + calNextYear + ',' + calNextMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_next_cal.gif" alt="' + _Dictionary['lbl_NextMonth'] + '" title="' + _Dictionary['lbl_NextMonth'] + '" class="img_align16"></a>';
+    html += '            </td>';
+    html += '		</tr>';
+    html += '	</tbody>';
+    html += '</table>';
+    html += '<table class="cal_body" cellpadding="0" cellspacing="1" border="0" bgcolor="#d7d7d7">';
+    html += '<tbody>';
+    for (var row = 1; row <= 7; row++) {
+        // check if we started a new month at the beginning of this row
+        upcomingDate = new Date(calStartYear, calStartMonth, calCurrentDay);
+        //if (upcomingDate.getDate() <= 8 && row > 6) { // 날짜가 6줄이 나오게 처리
+        //continue; // skip this row
+        //}
+
+        html += '<tr height="18px" >';
+        for (var col = 0; col < 7; col++) {
+            var tdColor = '"c_day"'
+            var overClass = 'row_on_a';
+            var outClass = 'row_off';
+            var spanColor = "";
+            if (col == 0) { //일요일
+                spanColor = "txt_sun";
+            } else if (col == 6) { //토요일
+                spanColor = "txt_sat";
+            }
+            if (row == 1) {
+                html += '<td class="w_day"><img src="/Images/Images/Controls/Layer/day' + (col + 1) + '.gif" alt="' + _wDay[col] + '" title="' + _wDay[col] + '"></td>\n';
+            } else {
+                var hereDate = new Date(calStartYear, calStartMonth, calCurrentDay);
+                var hereDay = hereDate.getDate();
+                var aClass = '"stylecal"';
+                // 오늘 날짜 배경색 변경
+                if (hereDate.getYear() == todayDate.getYear() && hereDate.getMonth() == todayDate.getMonth() && hereDate.getDate() == todayDate.getDate()) {
+                    tdColor = '"trow_off"';
+                    overClass = 'trow_on_a';
+                    outClass = 'trow_off';
+                }
+                // 입력날짜 색 변경
+                if (hereDate.getYear() == calDate.getYear() && hereDate.getMonth() == calDate.getMonth() && hereDate.getDate() == calDate.getDate()) {
+                    tdColor = '"srow_off"';
+                    overClass = 'srow_on_a';
+                    outClass = 'srow_off';
+                    aClass = '"ttday"';
+                    spanColor = '"txt_today"';
+                }
+                // 현재 달이 아닌 경우 색변경
+                if (hereDate.getMonth() != calDate.getMonth()) {
+                    tdColor = '"row_off"';
+                    aClass = '"notmonth"';
+                    spanColor = "";
+                }
+
+                html += '<td class=' + tdColor + ' onClick="CFN_ReturnCalFromatTransDate(' + hereDate.getFullYear() + ',' + (hereDate.getMonth() + 1) + ',' + hereDate.getDate() + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); hideLayer(\'' + id + '\'); return false;" onMouseOver="this.className=\'' + overClass + '\'" onMouseOut="this.className=\'' + outClass + '\'"><a class=' + aClass + ' href="javascript:return false;"><span class=' + spanColor + '>' + hereDay + '</span></a></td>\n';
+                calCurrentDay++;
+            }
+        }
+        html += '</tr>\n';
+    }
+    html += '	</tbody>\n';
+    html += '</table>\n';
+    html += '<table width="100%" height="25px" cellpadding="0" cellspacing="1" border="0" bgcolor="#d7d7d7">\n';
+    html += '	<tbody>\n';
+    html += '		<tr>\n';
+    html += '		    <td align="center" style="font-size:12px;cursor:pointer;" bgcolor="#FFFFFF" colspan="7" onClick="CFN_UpdateCalenderHtml(\'' + id + '\',' + todayDate.getFullYear() + ',' + (todayDate.getMonth() + 1) + ',' + todayDate.getDate() + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;">' + _Dictionary['lbl_GotoToday'] + '&gt;</td>\n';
+    html += '		</tr>\n';
+    html += '	</tbody>\n';
+    html += '</table>\n';
+
+    html += '</td></tr>\n';
+    html += '</table>\n';
+    // end of inner
+    html += '</td>\n';
+    html += '</tr>\n';
+    html += '</table></div>\n';
+
+    return html;
+}
+
+function CFN_ShowYearLayer(obj, id, calMonth, calDay, pObjInput, validationScript, pStartInput, pEndInput) {
+    var curYear = $(obj).text().substring(0, $(obj).text().length - 1);
+    $("#LayerMonthPop").remove();
+    var i = 0, j = 0;
+    if (document.getElementById("LayerYearPop") == null) {
+        $(".calendar_box_n").append("<div id='LayerYearPop' style='width:165px;height:170px;top:8px;left:7px;position:absolute;z-index:100;'></div>");
+    } else {
+        $("#LayerYearPop").toggle();
+    }
+
+    var html = '<table style="width:165px;height:170px; text-align: center; background: white;" colspan="0" celspan="0">';
+    html += '<tr><td style="cursor:pointer;text-align:left;" onclick="CFN_MoveYearLayer(\'' + (Number(curYear) - 16) + '\',\'' + id + '\',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_prev_cal.gif" class="img_align16"></td>'
+         + '<td colspan="2"><span class="cal_month" >' + (Number(curYear) - 8) + ' ~ ' + (Number(curYear) + 7) + '</span></td>'
+         + '<td style="cursor:pointer;text-align:right;"  onclick="CFN_MoveYearLayer(\'' + (Number(curYear) + 16) + '\',\'' + id + '\',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_next_cal.gif" class="img_align16"></td></tr>'
+    for (i = Number(curYear) - 8; i < Number(curYear) + 7; i += 4) {
+        html += '<tr>'
+        for (j = i; j < i + 4; j++) {
+            if (j == Number(curYear)) {
+                html += '<td style="background:lightgrey;cursor:pointer;"  onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\''
+                    + id + '\',' + j + ',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month" >' + j + ' </span>';
+            } else {
+                html += '<td style="cursor:pointer;"  onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\''
+                    + id + '\',' + j + ',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month" >' + j + ' </span>';
+            }
+        }
+        html += '</tr>'
+    }
+    html += '</table>';
+
+    CFN_WriteLayer('LayerYearPop', html);
+}
+
+function CFN_MoveYearLayer(mYear, id, calMonth, calDay, pObjInput, validationScript, pStartInput, pEndInput) {
+    var curYear = mYear;
+    var i = 0, j = 0;
+    var html = '<table style="width:165px;height:170px; text-align: center; background: white;" colspan="0" celspan="0">';
+    html += '<tr><td style="cursor:pointer;text-align:left;" onclick="CFN_MoveYearLayer(\'' + (Number(curYear) - 16) + '\',\'' + id + '\',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_prev_cal.gif" class="img_align16"></td>'
+         + '<td colspan="2"><span class="cal_month" >' + (Number(curYear) - 8) + ' ~ ' + (Number(curYear) + 7) + '</span></td>'
+         + '<td style="cursor:pointer;text-align:right;"  onclick="CFN_MoveYearLayer(\'' + (Number(curYear) + 16) + '\',\'' + id + '\',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><img src="/Images/Images/Controls/Layer/btn_next_cal.gif" class="img_align16"></td></tr>'
+    for (i = Number(curYear) - 8; i < Number(curYear) + 7; i += 4) {
+        html += '<tr>'
+        for (j = i; j < i + 4; j++) {
+            if (j == Number(curYear)) {
+                html += '<td style="background:lightgrey;cursor:pointer;"  onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\''
+                    + id + '\',' + j + ',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month" >' + j + ' </span>';
+            } else {
+                html += '<td style="cursor:pointer;"  onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\''
+                    + id + '\',' + j + ',' + calMonth + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month" >' + j + ' </span>';
+            }
+        }
+        html += '</tr>'
+    }
+    html += '</table>';
+
+    CFN_WriteLayer('LayerYearPop', html);
+}
+
+function CFN_ShowMonthLayer(obj, id, calYear, calDay, pObjInput, validationScript, pStartInput, pEndInput) {
+    var curMonth = $(obj).text().substring(0, $(obj).text().length - 1);
+    $("#LayerYearPop").remove();
+    var i = 0, j = 0;
+    if (document.getElementById("LayerMonthPop") == null) {
+        $(".calendar_box_n").append("<div id='LayerMonthPop' style='width:165px;height:150px;top:30px;left:7px;position:absolute;z-index:100;'></div>");
+    } else {
+        $("#LayerMonthPop").toggle();
+    }
+
+    var tempMonth = "";
+
+    var html = '<table style="width:165px;height:150px; text-align: center; background: white;"  colspan="0" celspan="0">';
+    for (i = 1; i <= 12; i += 4) {
+        html += '<tr>'
+        for (j = i; j < i + 4; j++) {
+            if (j < 10) {
+                tempMonth = '0' + j;
+            } else {
+                tempMonth = j;
+            }
+            if (j == Number(curMonth)) {
+                html += '<td style="background:lightgrey;cursor:pointer;" onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\'' + id + '\','
+                    + calYear + ',' + j + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month" >' + tempMonth + ' </span>';
+            } else {
+                html += '<td style="cursor:pointer;" onmouseover="CFN_ColumOnMouseOverBG()" onmouseout="CFN_ColumOnMouseOutBG()" onclick="CFN_UpdateCalenderHtml(\'' + id + '\','
+                    + calYear + ',' + j + ',' + calDay + ',\'' + pObjInput + '\',\'' + validationScript + '\', \'' + pStartInput + '\',\'' + pEndInput + '\'); return false;"><span class="cal_month">' + tempMonth + ' </span>';
+            }
+        }
+        html += '</tr>'
+    }
+    html += '</table>';
+
+    CFN_WriteLayer('LayerMonthPop', html);
+}
+
+var mouseOverBGColorColum = "#f5f5f5";
+var prevBgColorColum = "";
+
+// List에 마우스 오버시 Row컬러 변경
+function CFN_ColumOnMouseOverBG() {
+    var el = event.srcElement;
+    while (el.tagName != 'TD') { el = el.parentElement; }
+    prevBgColorColum = el.style.backgroundColor;
+    el.style.backgroundColor = mouseOverBGColorColum;
+}
+
+// List에 마우스 아웃시 원래의 Row컬러로 변경
+function CFN_ColumOnMouseOutBG() {
+    var el = event.srcElement;
+    while (el.tagName != 'TD') { el = el.parentElement; }
+    el.style.backgroundColor = prevBgColorColum
+}
+
+// 년/월 오늘로 이동시 달력 HTML 다시 그리기
+function CFN_UpdateCalenderHtml(id, calYear, calMonth, calDay, pObjInput, validationScript, pStartInput, pEndInput) {
+    //if (g_FormatConvertSetTime != null) {
+    //    clearTimeout(g_FormatConvertSetTime);
+    //    $(eval(pObjInput)).focus();
+    //}
+    g_CalHtml = CFN_MakeCalenderHtml(id, calYear, calMonth, calDay, pObjInput, validationScript, pStartInput, pEndInput);
+    CFN_WriteLayer(id, g_CalHtml);
+}
+
+// document에 달력창 닫는 이벤트 연결
+function CFN_CalenderAttachHideListener(id) {
+    var layer = new CFN_GetLayerById(id)
+    if (layer.obj.listening == null || (document.onmouseup.toString()).indexOf("CFN_HideCalenderLayerAfterClicked") == -1) {
+        document.oldMouseupEvent = document.onmouseup;
+        if (document.oldMouseupEvent != null) {
+            document.onmouseup = new Function("document.oldMouseupEvent(); CFN_HideCalenderLayerAfterClicked();");
+        } else {
+            document.onmouseup = CFN_HideCalenderLayerAfterClicked;
+        }
+        layer.obj.listening = true;
+    }
+}
+
+// 달력 레이어 팝업 등록
+function CFN_RegisterCalenderPopup(id) {
+    // register this popup window with the g_CalPopups array
+    var layer = new CFN_GetLayerById(id);
+    if (layer.obj.registered == null) {
+        var index = g_CalPopups.length ? g_CalPopups.length : 0;
+        g_CalPopups[index] = layer;
+        layer.obj.registered = 1;
+    }
+}
+
+// 다른곳 클릭시 달력 레이어 감춤 이벤트
+function CFN_HideCalenderLayerAfterClicked(e) {
+    if (!e) var e = window.event;
+    e.cancelBubble = true;
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.target) {
+        var clicked = e.target;
+    } else if (e.srcElement) {
+        var clicked = e.srcElement;
+    }
+
+    if (navigator.userAgent.match(/iPhone/i) ||
+        navigator.userAgent.match(/iPod/i) ||
+        navigator.userAgent.match(/iPad/i)) {
+        // IOS에서 버튼 클릭이 안되는 현상 처리
+        $("#LaryeCalenderPop").css("z-index", "");
+    }
+
+    // go through each popup window,
+    // checking if it has been clicked
+    for (var i = 0; i < g_CalPopups.length; i++) {
+        if (_nn4) {
+            if ((g_CalPopups[i].style.left < e.pageX) &&
+             (g_CalPopups[i].style.left + g_CalPopups[i].style.clip.width > e.pageX) &&
+             (g_CalPopups[i].style.top < e.pageY) &&
+             (g_CalPopups[i].style.top + g_CalPopups[i].style.clip.height > e.pageY)) {
+                return true;
+            } else {
+                hideLayer(g_CalPopups[i].obj.id);
+                return true;
+            }
+        } else if (_ie) {
+            while (clicked.parentElement != null) {
+                if (g_CalPopups[i].obj.id == clicked.id) {
+                    return true;
+                }
+                clicked = clicked.parentElement;
+            }
+            hideLayer(g_CalPopups[i].obj.id);
+            return true;
+        } else if (_dom) {
+            while (clicked.parentNode != null) {
+                if (g_CalPopups[i].obj.id == clicked.id) {
+                    return true;
+                }
+                clicked = clicked.parentNode;
+            }
+            hideLayer(g_CalPopups[i].obj.id);
+            return true;
+        }
+        return true;
+    }
+    return true;
+}
+
+//멀티로우 선택 된 위치값 가져오는 함수
+var checkIndex = 0;
+function CFN_CheckIndex(index) {
+    checkIndex = index;
+}
+
+var g_FormatConvertSetTime = null;
+
+// 날짜 포멧 변환 후 입력박스에 값 리턴
+function CFN_ReturnCalFromatTransDate(changeYear, changeMonth, changeDay, pObjInput, validationScript, pStartInput, pEndInput) {
+    if (g_FormatConvertSetTime != null) {
+        clearTimeout(g_FormatConvertSetTime);
+    }
+    var l_DateTempDate, l_LocalFormat;
+    l_LocalFormat = $(eval(pObjInput)).attr("DateFormat")
+
+    //if (l_LocalFormat == "") {
+    if (l_LocalFormat == "" || typeof l_LocalFormat == "undefined") {
+        if (typeof _CalenderDateFormat == "undefined") {
+            l_LocalFormat = Common.GetSession("UR_DateFormat");
+        } else {
+            l_LocalFormat = _CalenderDateFormat;
+        }
+    }
+
+    if (changeDay.toString().length == 1) {
+        changeDay = "0" + changeDay;
+    }
+    if (changeMonth.toString().length == 1) {
+        changeMonth = "0" + changeMonth;
+    }
+
+    // 시작입력 지정시 벨리데이션 체크
+    if (pStartInput != "") {
+        var l_StartInput;
+        if (document.getElementById(pStartInput) == null) {
+            if (g_IdOrName == "Name") {  //HIW
+                l_StartInput = document.getElementsByName(pStartInput)[checkIndex];
+            } else {
+                l_StartInput = CFN_GetCtrlById(pStartInput);
+            }
+        } else {
+            l_StartInput = document.getElementById(pStartInput);
+        }
+
+        if (l_StartInput.value != "") {
+            var l_DateFormat = l_LocalFormat.toString();
+            var l_date = l_StartInput.value;
+            var l_Day, l_Month, l_Year;
+            //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+            var format = $(l_StartInput).data("format");
+            if (format) {//지정된 날짜형식이 있는 경우. 지정 형식으로 날짜값 받아오기
+                format = format.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                l_date = l_date.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                l_Day = l_date.substr(format.indexOf("dd"), 2);
+                l_Month = l_date.substr(format.indexOf("MM"), 2);
+                if (format.indexOf("yyyy") >= 0) l_Year = l_date.substr(format.indexOf("yyyy"), 4);
+                else l_Year = l_date.substr(format.indexOf("yy"), 2);
+            } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+                if (l_DateFormat == 'enslash') {
+                    l_date = l_date.replace(".", "").replace(".", "").replace(".", "").replace("-", "").replace("-", "").replace("-", "");
+                    l_Day = l_date.substr(0, 2);
+                    l_Month = l_date.substr(2, 2);
+                    l_Year = l_date.substr(4, 4);
+                } else if (l_DateFormat == 'dot' || l_DateFormat == 'dash' || l_DateFormat == 'slash') {
+                    l_date = l_date.replace(".", "").replace(".", "").replace(".", "").replace("-", "").replace("-", "").replace("-", "");
+                    l_Year = l_date.substr(0, 4);
+                    l_Month = l_date.substr(4, 2);
+                    l_Day = l_date.substr(6, 2);
+                } else {
+                    l_Year = l_date.substr(l_DateFormat.indexOf("yyyy"), 4);
+                    l_Month = l_date.substr(l_DateFormat.indexOf("MM"), 2);
+                    l_Day = l_date.substr(l_DateFormat.indexOf("dd"), 2);
+                }
+            if (CFN_CheckDateStartEnd(l_Year + "-" + l_Month + "-" + l_Day, changeYear + "-" + changeMonth + "-" + changeDay)) {
+                Common.Warning(Common.GetDic("msg_EndDateCannotBeforeStartDate"), "", function () { eval(pObjInput).focus(); });
+                return false;
+            }
+        }
+    }
+
+    // 종료입력 지정시 벨리데이션 체크
+    if (pEndInput != "") {
+        var l_EndInput;
+        if (document.getElementById(pEndInput) == null) {
+            if (g_IdOrName == "Name") {  //HIW
+                l_EndInput = document.getElementsByName(pEndInput)[checkIndex];
+            } else {
+                l_EndInput = CFN_GetCtrlById(pEndInput);
+            }
+        } else {
+            l_EndInput = document.getElementById(pEndInput);
+        }
+
+        if (l_EndInput.value != "") {
+            var l_DateFormat = l_LocalFormat.toString();
+            var l_date = l_EndInput.value;
+            var l_Day, l_Month, l_Year;
+            //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+            var format = $(l_EndInput).data("format");
+            if (format) {//지정된 날짜형식이 있는 경우. 지정 형식으로 날짜값 받아오기
+                format = format.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                l_date = l_date.replace(/\//g, '').replace(/\./g, '').replace(/\-/g, '');
+                l_Day = l_date.substr(format.indexOf("dd"), 2);
+                l_Month = l_date.substr(format.indexOf("MM"), 2);
+                if (format.indexOf("yyyy") >= 0) l_Year = l_date.substr(format.indexOf("yyyy"), 4);
+                else l_Year = l_date.substr(format.indexOf("yy"), 2);
+            } else //<-- 여기까지 : 날짜형식 표기오류로 구문 추가
+                if (l_DateFormat == 'enslash') {
+                    l_date = l_date.replace(".", "").replace(".", "").replace(".", "").replace("-", "").replace("-", "").replace("-", "");
+                    l_Day = l_date.substr(0, 2);
+                    l_Month = l_date.substr(2, 2);
+                    l_Year = l_date.substr(4, 4);
+                } else if (l_DateFormat == 'dot' || l_DateFormat == 'dash' || l_DateFormat == 'slash') {
+                    l_date = l_date.replace(".", "").replace(".", "").replace(".", "").replace("-", "").replace("-", "").replace("-", "");
+                    l_Year = l_date.substr(0, 4);
+                    l_Month = l_date.substr(4, 2);
+                    l_Day = l_date.substr(6, 2);
+                } else {
+                    l_Year = l_date.substr(l_DateFormat.indexOf("yyyy"), 4);
+                    l_Month = l_date.substr(l_DateFormat.indexOf("MM"), 2);
+                    l_Day = l_date.substr(l_DateFormat.indexOf("dd"), 2);
+                }
+            if (CFN_CheckDateStartEnd(changeYear + "-" + changeMonth + "-" + changeDay, l_Year + "-" + l_Month + "-" + l_Day)) {
+                Common.Warning(Common.GetDic("msg_EndDateCannotBeforeStartDate"), "", function () { eval(pObjInput).focus(); });
+                return false;
+            }
+        }
+    }
+
+    //2018-12-18 : 이상현(날짜형식 표기오류로 구문 추가)
+    var format = $(eval(pObjInput)).data("format");
+    if (format) {
+        var str = format.replace("yyyy", changeYear).replace("yy", changeYear.toString().substr(2, 2));
+        str = str.replace("MM", changeMonth);
+        eval(pObjInput).value = str.replace("dd", changeDay);
+    } else
+        // 표시 유형에 따라 다시 포멧을 맞춤
+        if (l_LocalFormat == 'dot') {
+            eval(pObjInput).value = changeYear + "." + changeMonth + "." + changeDay;
+        } else if (l_LocalFormat == 'dash') {
+            eval(pObjInput).value = changeYear + "-" + changeMonth + "-" + changeDay;
+        } else if (l_LocalFormat == 'slash') {
+            eval(pObjInput).value = changeYear + "/" + changeMonth + "/" + changeDay;
+        } else if (l_LocalFormat == 'enslash') {
+            eval(pObjInput).value = changeDay + "/" + changeMonth + "/" + changeYear;
+        } else {
+            var l_DateFormat = l_LocalFormat.toString();
+            eval(pObjInput).value = l_DateFormat.replace("yyyy", changeYear).replace("MM", changeMonth).replace("dd", changeDay);
+        }
+
+    // 요일 삽입
+    var l_dispalyDay = eval($(eval(pObjInput)).attr("DisplayDay"));
+    if (l_dispalyDay) {
+        l_DateTempDate = changeYear + "-" + changeMonth + "-" + changeDay;
+        if (g_DayOfWeek == null) {
+            g_DayOfWeek = Common.GetDicAll("lbl_sch_sun;lbl_sch_mon;lbl_sch_tue;lbl_sch_wed;lbl_sch_thr;lbl_sch_fri;lbl_sch_sat")
+        }
+
+        // ie8에서 "yyyy-mm-dd"형식의 문자열 파라미터로 Date 생성시 값이 "NaN"으로 출력되서 년,월,일 파라미터로 생성
+        var date = new Date(changeYear, changeMonth - 1, changeDay);
+        var weekday = new Array(Common.GetDic("lbl_sch_sun"), Common.GetDic("lbl_sch_mon"), Common.GetDic("lbl_sch_tue"), Common.GetDic("lbl_sch_wed"), Common.GetDic("lbl_sch_thr"), Common.GetDic("lbl_sch_fri"), Common.GetDic("lbl_sch_sat"));
+        var wkd = date.getDay();
+        eval(pObjInput).value = eval(pObjInput).value + "(" + weekday[wkd] + ")";
+    }
+
+    // 추가 벨리데이션 체크 함수 호출
+    if (validationScript) {
+        eval(validationScript + "('" + pObjInput + "','" + pStartInput + "','" + pEndInput + "')"); // to update the other selection boxes in the form
+    }
+}
+
+//function CFN_ReturnCalFromatTransDateConvert(changeYear, changeMonth, changeDay, inputObjID, validationScript, pStartInput, pEndInput) {
+function CFN_ReturnCalFromatTransDateConvert(pParams) {
+    var changeYear, changeMonth, changeDay, inputObjID, validationScript, pStartInput, pEndInput, pObjInput;
+    changeYear = pParams.split(",")[0];
+    changeMonth = pParams.split(",")[1];
+    changeDay = pParams.split(",")[2];
+    inputObjID = pParams.split(",")[3];
+    validationScript = pParams.split(",")[4];
+    pStartInput = pParams.split(",")[5];
+    pEndInput = pParams.split(",")[6];
+
+    if (document.getElementById(inputObjID) == null) {
+        pObjInput = CFN_GetCtrlById(inputObjID);
+    } else {
+        pObjInput = document.getElementById(inputObjID);
+    }
+    CFN_ReturnCalFromatTransDate(changeYear, changeMonth, changeDay, pObjInput, validationScript, pStartInput, pEndInput);
+}
+
+// 이미지 캘린더 클릭시 이벤트
+function CFN_ImgCalendarBtnClick(pCalenderIDs) {
+    //달력 내용 삭제
+    document.getElementById(pCalenderIDs).click();
+}
+
+// 멀티로우 이미지 캘린더 클릭시 이벤트
+function CFN_ImgCalendarBtnClick_MultiRow(obj, pCalenderName) {
+    $(obj).parent().parent().find("input[name=" + pCalenderName + "]").click();
+}
+/////////////////////////////////////////// CoviCalender END /////////////////////////
+
+
+
+
+
+
+/////////////////////////////////////////// CoviColorPicker Start ////////////////////
+var g_InitColor = null; // 이전 선택값 기억을 위해
+// pObjId - 선택한 컬러를 입력할 Input ID, pCallBackMethod - 선택 후 추가적인 이벤트가 필요시 콜백메써드 지정
+function CFN_ColorPickerPopup(pObjId, pCallBackMethod, e) {
+
+    if (g_InitColor == null) {
+        if ($("#" + pObjId).val() != "") {
+            g_InitColor = $("#" + pObjId).val();
+        }
+    }
+
+    // 컨트롤 삽입
+    if (_ie) {
+        if (document.getElementById("dlgHelper") == null) {
+            $("body").append("<div id='dlgHelper' style='display:;position:absolute;top:100px;left:100px;width:0px;height:0px'><object id='CoviColorHelper' classid='clsid:3050f819-98b5-11cf-bb82-00aa00bdce0b' width='0'height='0'></object></div>");
+        }
+
+        if (g_InitColor == null) {
+            var sColor = CoviColorHelper.ChooseColorDlg();
+        } else {
+            var sColor = CoviColorHelper.ChooseColorDlg(g_InitColor);
+        }
+
+        if (sColor != "0") {
+            sColor = sColor.toString(16);
+
+            if (sColor.length < 6) {
+                var sTempString = "000000".substring(0, 6 - sColor.length);
+                sColor = sTempString.concat(sColor);
+            }
+
+            document.execCommand("ForeColor", false, sColor);
+            g_InitColor = sColor;
+            $("#" + pObjId).val('#' + g_InitColor);
+            // 콜백 메써드 호출
+            if (pCallBackMethod != "" && pCallBackMethod != undefined) {
+                eval(pCallBackMethod + "()");
+            }
+        }
+    } else {
+        var l_pickerList = "";
+        l_pickerList += '<ul>';
+        l_pickerList += '<li style="background-color:#212121;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#212121", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#212121"></a></li>';
+        l_pickerList += '<li style="background-color:#5b5b5b;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#5b5b5b", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#5b5b5b"></a></li>';
+        l_pickerList += '<li style="background-color:#7c7c7c;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#7c7c7c", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#7c7c7c"></a></li>';
+        l_pickerList += '<li style="background-color:#9c9c9c;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#9c9c9c", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#9c9c9c"></a></li>';
+        l_pickerList += '<li style="background-color:#a60000;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#a60000", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#a60000"></a></li>';
+        l_pickerList += '<li style="background-color:#d4171e;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#d4171e", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#d4171e"></a></li>';
+        l_pickerList += '<li style="background-color:#d27f69;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#d27f69", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#d27f69"></a></li>';
+        l_pickerList += '<li style="background-color:#f7941d;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#f7941d", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#f7941d"></a></li>';
+        l_pickerList += '<li style="background-color:#22438e;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#22438e", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#22438e"></a></li>';
+        l_pickerList += '<li style="background-color:#3760ae;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3760ae", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3760ae"></a></li>';
+        l_pickerList += '<li style="background-color:#4e7cc1;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#4e7cc1", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#4e7cc1"></a></li>';
+        l_pickerList += '<li style="background-color:#6999d2;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#6999d2", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#6999d2"></a></li>';
+        l_pickerList += '<li style="background-color:#154855;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#154855", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#154855"></a></li>';
+        l_pickerList += '<li style="background-color:#267589;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#267589", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#267589"></a></li>';
+        l_pickerList += '<li style="background-color:#3e91a6;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3e91a6", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3e91a6"></a></li>';
+        l_pickerList += '<li style="background-color:#3da9c4;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3da9c4", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3da9c4"></a></li>';
+        l_pickerList += '<li style="background-color:#73850b;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#73850b", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#73850b"></a></li>';
+        l_pickerList += '<li style="background-color:#82a723;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#82a723", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#82a723"></a></li>';
+        l_pickerList += '<li style="background-color:#a1bf37;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#a1bf37", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#a1bf37"></a></li>';
+        l_pickerList += '<li style="background-color:#bdd44a;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#bdd44a", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#bdd44a"></a></li>';
+        l_pickerList += '<li style="background-color:#494fac;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#494fac", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#494fac"></a></li>';
+        l_pickerList += '<li style="background-color:#6b71c4;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#6b71c4", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#6b71c4"></a></li>';
+        l_pickerList += '<li style="background-color:#8e94e2;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#8e94e2", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#8e94e2"></a></li>';
+        l_pickerList += '<li style="background-color:#abb0ec;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#abb0ec", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#abb0ec"></a></li>';
+        l_pickerList += '</ul>';
+        Common.ShowBalloon("ColorPicker", "CoviColorPicker", "", "<div class='CoviColorPicker' id='CoviColorPickerList'>" + l_pickerList + "</div>", "60px", "97px", null, null, "center", e);
+    }
+}
+
+function CFN_ColorPickerPopupLayerOnly(pObjId, pCallBackMethod, e) {
+
+    if (g_InitColor == null) {
+        if ($("#" + pObjId).val() != "") {
+            g_InitColor = $("#" + pObjId).val();
+        }
+    }
+
+    var l_pickerList = "";
+    l_pickerList += '<ul>';
+    l_pickerList += '<li style="background-color:#212121;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#212121", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#212121"></a></li>';
+    l_pickerList += '<li style="background-color:#5b5b5b;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#5b5b5b", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#5b5b5b"></a></li>';
+    l_pickerList += '<li style="background-color:#7c7c7c;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#7c7c7c", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#7c7c7c"></a></li>';
+    l_pickerList += '<li style="background-color:#9c9c9c;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#9c9c9c", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#9c9c9c"></a></li>';
+    l_pickerList += '<li style="background-color:#a60000;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#a60000", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#a60000"></a></li>';
+    l_pickerList += '<li style="background-color:#d4171e;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#d4171e", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#d4171e"></a></li>';
+    l_pickerList += '<li style="background-color:#d27f69;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#d27f69", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#d27f69"></a></li>';
+    l_pickerList += '<li style="background-color:#f7941d;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#f7941d", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#f7941d"></a></li>';
+    l_pickerList += '<li style="background-color:#22438e;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#22438e", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#22438e"></a></li>';
+    l_pickerList += '<li style="background-color:#3760ae;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3760ae", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3760ae"></a></li>';
+    l_pickerList += '<li style="background-color:#4e7cc1;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#4e7cc1", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#4e7cc1"></a></li>';
+    l_pickerList += '<li style="background-color:#6999d2;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#6999d2", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#6999d2"></a></li>';
+    l_pickerList += '<li style="background-color:#154855;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#154855", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#154855"></a></li>';
+    l_pickerList += '<li style="background-color:#267589;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#267589", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#267589"></a></li>';
+    l_pickerList += '<li style="background-color:#3e91a6;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3e91a6", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3e91a6"></a></li>';
+    l_pickerList += '<li style="background-color:#3da9c4;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#3da9c4", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#3da9c4"></a></li>';
+    l_pickerList += '<li style="background-color:#73850b;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#73850b", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#73850b"></a></li>';
+    l_pickerList += '<li style="background-color:#82a723;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#82a723", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#82a723"></a></li>';
+    l_pickerList += '<li style="background-color:#a1bf37;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#a1bf37", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#a1bf37"></a></li>';
+    l_pickerList += '<li style="background-color:#bdd44a;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#bdd44a", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#bdd44a"></a></li>';
+    l_pickerList += '<li style="background-color:#494fac;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#494fac", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#494fac"></a></li>';
+    l_pickerList += '<li style="background-color:#6b71c4;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#6b71c4", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#6b71c4"></a></li>';
+    l_pickerList += '<li style="background-color:#8e94e2;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#8e94e2", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#8e94e2"></a></li>';
+    l_pickerList += '<li style="background-color:#abb0ec;"><a href="javascript:void(0);" onclick=\'CFN_ColorPickerPost("#abb0ec", "' + pObjId + '", "' + pCallBackMethod + '")\'><img src="/Images/Images/common/trn.gif" alt="#abb0ec"></a></li>';
+    l_pickerList += '</ul>';
+    Common.ShowBalloon("ColorPicker", "CoviColorPicker", "", "<div class='CoviColorPicker' id='CoviColorPickerList'>" + l_pickerList + "</div>", "60px", "97px", null, null, "center", e);
+}
+
+// Ie를 제외한 다른 부라우져에서 값을 넘김.(사용자가 호출하는 값 아님.)
+function CFN_ColorPickerPost(pColor, pObjId, pCallBackMethod) {
+    $("#" + pObjId).val(pColor);
+    if (pCallBackMethod != "" && pCallBackMethod != undefined) {
+        eval(pCallBackMethod + "()");
+    }
+    $("#CoviColorPicker_p").detach();
+}
+
+/////////////////////////////////////////// CoviColorPicker END ////////////////////
+
+////////////////////////////////////////// 에디터 //////////////////////////////////////////////
+function XFN_NamoWebEditorType() { // true : ActiveSquare , false : CrossEditor 
+    var l_Return = false; //CrossEditor
+    if (_ie) {
+        if (window.localStorage.getItem("EditorType") == "Active") {
+            try {
+                var Installx = new ActiveXObject("NamoWeCtl.2301100001.7.0"); //신세계 ProgID
+                if (Installx) Installed = true; else Installed = false;
+            }
+            catch (ex) { Installed = false; }
+
+            if (Installed) {
+                l_Return = true;
+            } else {
+                l_Return = false;
+            }
+        } else {
+            l_Return = false;
+        }
+    } else {
+        l_Return = false;
+    }
+    return l_Return;
+}
+
+//달력 컨트롤 Click Event 제거, Disabled 처리 및 달력 이미지 제거
+function setDisabledCalender(ids) {
+    for (var i = 0; i < ids.length; i++) {
+        //$("#" + ids[i]).attr("onclick", "").unbind("click").nextChild("img").remove();
+        $("#" + ids[i]).attr("onclick", "").attr("disabled", "disabled").unbind("click").parent().find(".img_apv_cal").remove();
+    }
+}

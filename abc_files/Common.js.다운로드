@@ -1,0 +1,1543 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>김형복</creator> 
+///<createDate>2011.10.11</createDate> 
+///<lastModifyDate>2011.10.11</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///사이트에서 공통적으로 사용되는 공용 스크립트 정의(Prefix "XFN_")
+///</summary>
+///<ModifySpc>
+///여기에 변경내역을 변경일자(변경자) : 변경내용으로 기록합니다. 
+///</ModifySpc>
+*/
+
+////////////////////////////////////////// 사용자 공통 ////////////////////////////////
+
+// 스크린 보호 처리
+function XFN_ScreenLock(pMode) {
+    if (pMode == "Lock") { // 화면 잠금
+        $.alerts.overlayOpacity = 0.92;
+        $.alerts._overlay('show');
+        window.localStorage.setItem("ScreenLock" + _UR_Code.toLowerCase(), "Y");
+        $("object").hide();
+        XFN_CheckPassword(function () { XFN_ScreenLock('Clear'); }, function () { XFN_ScreenLock('Lock'); });
+    } else if (pMode == "Clear") { // 화면 잠금 해지
+        Common.AlertClose();
+        if (window.localStorage.getItem("ScreenLock" + _UR_Code.toLowerCase()) != undefined) {
+            window.localStorage.removeItem("ScreenLock" + _UR_Code.toLowerCase());
+        }
+        $("object").show();
+        $.alerts.overlayOpacity = 0.00;
+    } else if (pMode == "Ready") { // 화면 로딩
+        if (window.localStorage.getItem("ScreenLock" + _UR_Code.toLowerCase()) != undefined) {
+            XFN_ScreenLock('Lock');
+        }
+    }
+}
+
+// 존재하지 않는 이미지 체크 ==> 이미지에 추가 [ class='XF_NoImageCheck' imgSize='94,82' onerror='XFN_OnErrorImage(this)' ]
+function XFN_NoImageCheck() {
+    $(".XF_NoImageCheck").each(function () {
+        var l_ImagePath = $(this).attr("src");
+        var l_ImageWidth = $(this).attr("imgSize").split(",")[0];
+        var l_ImageHeight = $(this).attr("imgSize").split(",")[1];
+        if (!_ie) {
+            var http = null;
+            try {
+                http = new XMLHttpRequest();
+                http.open('HEAD', l_ImagePath, false);
+                http.send();
+            } catch (Error) {
+                http = null;
+            } finally {
+                if (http != null) {
+                    if (http.status == 404 || http.status == 403) {
+                        $(this).attr("src", "/Images/Images/common/noimg.gif").css({ "width": l_ImageWidth, "height": l_ImageHeight });
+                    }
+                } else {
+                    $(this).attr("src", "/Images/Images/common/noimg.gif").css({ "width": l_ImageWidth, "height": l_ImageHeight });
+                }
+            }
+        }
+        $(this).removeClass("XF_NoImageCheck");
+    });
+}
+
+// Onload 이미지 사이즈 조정
+function XFN_OnloadImageCheck(pObj) {
+    if ($(pObj).attr("imgSize")) {
+        var l_ImageWidth = $(pObj).attr("imgSize").split(",")[0];
+        var l_ImageHeight = $(pObj).attr("imgSize").split(",")[1];
+        XFN_ImageReSize($(pObj), l_ImageWidth, l_ImageHeight);
+    }
+}
+
+// 검색 영역에 특수문자(<,>)입력 체크 함수
+function XFN_CheckXSSCharacter(pObj) {
+    var strLen = pObj.value.length;
+    var strValue = pObj.value;
+    var strChangeValue = strValue;
+    for (var i = 0; i < strLen; i++) {
+        if (strValue.charAt(i) == '<' || strValue.charAt(i) == '>' || strValue.charAt(i) == '\'' || strValue.charAt(i) == '\"'
+             || strValue.charAt(i) == '%' || strValue.charAt(i) == '[' || strValue.charAt(i) == ']'
+            || strValue.charAt(i) == '\\') {
+            strValue = strValue.replace(strValue.charAt(i), "");
+        }//|| strValue.charAt(i) == '&'
+    }
+    if (strChangeValue != strValue) $(pObj).val(strValue);
+}
+
+// 존재하지 않는 이미지 에러 이벤트(Ie 전용)  ==> 이미지에 추가 [ class='XF_NoImageCheck' imgSize='94,82' onerror='XFN_OnErrorImage(this)' ]
+function XFN_OnErrorImage(pObj) {
+    if ($(pObj).attr("imgSize")) {
+        var l_ImageWidth = $(pObj).attr("imgSize").split(",")[0];
+        var l_ImageHeight = $(pObj).attr("imgSize").split(",")[1];
+        $(pObj).attr("src", "/Images/Images/common/noimg.gif").css({ "width": l_ImageWidth, "height": l_ImageHeight }).removeClass("XF_NoImageCheck");
+    } else {
+        $(pObj).attr("src", "/Images/Images/common/noimg.gif").removeClass("XF_NoImageCheck");
+    }
+}
+
+// 존재하지 않는 이미지 에러 이벤트(Ie 전용)  ==> 이미지에 추가 [ class='XF_NoImageCheck' imgSize='94,82' onerror='XFN_OnErrorImage(this)' ]
+// 사람이미지 형태 추가
+function XFN_OnErrorPersonImage(pObj) {
+    if ($(pObj).attr("imgSize")) {
+        var l_ImageWidth = $(pObj).attr("imgSize").split(",")[0];
+        var l_ImageHeight = $(pObj).attr("imgSize").split(",")[1];
+        $(pObj).attr("src", "/images/images/approval/no_face.jpg").css({ "width": l_ImageWidth, "height": l_ImageHeight }).removeClass("XF_NoImageCheck");
+    } else {
+        $(pObj).attr("src", "/images/images/approval/no_face.jpg").removeClass("XF_NoImageCheck");
+    }
+}
+
+////////////////////////////////////////// 사용자 Menu (top, left) ////////////////////////////////
+
+// 로그아웃 버튼 클릭시 호출 > 세션 스토리지 초기화
+function XFN_LogOut() {
+    window.sessionStorage.clear();
+    $("#ifrmHidden").attr({ "src": "/LogOut.aspx" });
+    Common.Progress("Logout...", function () { location.href = "/Login.aspx"; }, 1200);
+}
+
+// 관리자 클릭시 현재 페이지 경로를 sessionStorage(UserPageURL)에 저장 후 이동.
+function XFN_aAdmin_Click() {
+    window.sessionStorage.setItem("UserPageURL", location.href.replace("#", ""));
+    if (CFN_GetCookie("SaveAdminURL") != "") {
+        location.href = Common.GetPgModule("ZAdmin.Main");
+    } else {
+        if (window.sessionStorage.getItem("AdminPageURL") != undefined) {
+            location.href = window.sessionStorage.getItem("AdminPageURL");
+        } else {
+            location.href = Common.GetPgModule("ZAdmin.Main");
+        }
+    }
+}
+
+// 좌측 메뉴 선택
+function XFN_SelectedLeftMenu(pId, pMenuSave) {
+    if (pMenuSave) { window.sessionStorage.setItem("LeftMenuID", pId); } // 구분 메뉴의 경우에는 메뉴아이디를 저장하지 않음.
+    if ($("#" + pId).attr("Alias") != "X_Close") {// X_Close 인경우는 toggle이벤트를 발생시키지 않음. 
+        // 테마일 정의 경우 처리
+        if ($("#" + pId).parent().attr("alias") == "Schedule.Theme") {
+            $("#" + pId).parent().parent().next("ul").toggle();
+        } else {
+            //2017-01-24 추가
+            // $("#" + pId).next("ul").toggle();
+            $("#" + pId).parent().next("ul").toggle();
+        }
+    }
+}
+
+// 페이지 호출이 아닌 경우 이웃메뉴 닫기
+function XFN_SelectedLeftDivMenu(pMenuID, pParentID, pMenuExtendAll) {
+    var l_ul = $("ul");
+    var l_liMenu = $("#left_" + pMenuID);
+
+    // 테마 일정의 경우 처리
+    if ($(l_liMenu).attr("alias") == "Schedule.Theme") {
+        l_liMenu = $("#left_" + pMenuID).parent().parent().parent();
+    }
+
+    $('.lnb__folder-list > li > div > a').each(function (i) {
+        //$(this).children('a').removeClass("select").removeClass("open");
+        if ($(this).attr("id") != "left_" + pMenuID || $(this).attr("id") == undefined) {
+            $(this).parent().parent().removeClass("active");
+        } else {
+            $(this).parent().parent().addClass("active");
+        }
+    });
+
+    // 선택한 메뉴 외의 메뉴 닫기 및 클래스 변경
+    if (!pMenuExtendAll) { // 전체 메뉴 Open 이 아닌경우
+        for (var i = 0; i < l_ul.length; i++) {
+            if ($(l_ul[i]).attr("parentId") == pParentID && $(l_ul[i]).attr("menuId") != pMenuID) {
+                $(l_ul[i]).css({ "display": "none" });
+                if ($(l_ul[i]).parent().hasClass("leftmenu01_open")) {
+                    $(l_ul[i]).parent().removeClass("leftmenu01_open");
+                    $(l_ul[i]).parent().addClass("leftmenu01");
+                }
+            }
+        }
+    }
+}
+
+////////////////////////////////////////// 관리자 Menu (top, left) ////////////////////////////////
+// 관리자상단 메뉴 선택
+function XFN_SelectedTopMenu_Admin(id) {
+    // 선택된 상단 메뉴 정보 기억
+    window.sessionStorage.setItem("TopMenuID_Admin", id);
+
+    // 좌측 메뉴 선택 상태값 초기화
+    if (window.sessionStorage.getItem("AdminLeftID") != undefined)
+        window.sessionStorage.removeItem("AdminLeftID");
+    // 트리 메뉴 선택 상태값 초기화
+    if (window.sessionStorage.getItem("TreeMenuArray_Admin") != undefined)
+        window.sessionStorage.removeItem("TreeMenuArray_Admin");
+    // 좌측 메뉴 숨김 상택값 초기화
+    if (window.sessionStorage.getItem("LeftMenuOpen_Admin") != undefined)
+        window.sessionStorage.removeItem("LeftMenuOpen_Admin");
+}
+
+// 관리자 좌측 메뉴 선택
+function XFN_SelectedLeftMenu_Admin(pId, pMenuSave) {
+    if (pMenuSave) { window.sessionStorage.setItem("AdminLeftID", pId); } // 구분 메뉴의 경우에는 메뉴아이디를 저장하지 않음.
+    $("#" + pId).next("ul").toggle();
+}
+
+////////////////////////////////////////// 겸직 관련 /////////////////////////////////////////////////
+// 겸직 변경
+function XFN_aAdditionalChange_Click(pObjEvent) {
+    var sJobType = "";
+    var sDomainCode = "";
+    var sDomainName = "";
+    var sGroupCode = "";
+    var sGroupName = "";
+    var sJobLevelCode = "";
+    var sJobLevelName = "";
+    var sJobPositionCode = "";
+    var sJobPositionName = "";
+    var sJobTitleCode = "";
+    var sJobTitleName = "";
+    var sSelected = "";
+    var iAdditionalCnt = 0; // 겸직 수
+
+    var sXML = $("#txtAdditionalInfoList").val();
+    var sHTML = "";
+    sHTML += "<div id=\"divAdditionalList_Balloon\">";
+    sHTML += "<table width=\"300px\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" class='tbAdditionJobList'>";
+    $($.parseXML(sXML)).find("ItemInfo").each(function (pIntIndex) {
+        iAdditionalCnt++; //겸직 수 증가
+        sJobType = $(this).find("JobType").text();
+        sDomainCode = $(this).find("DomainCode").text();
+        sDomainName = $(this).find("DomainName").text();
+        sGroupCode = $(this).find("GroupCode").text();
+        sGroupName = $(this).find("GroupName").text();
+        sJobLevelCode = $(this).find("JobLevelCode").text();
+        sJobLevelName = $(this).find("JobLevelName").text();
+        sJobPositionCode = $(this).find("JobPositionCode").text();
+        sJobPositionName = $(this).find("JobPositionName").text();
+        sJobTitleCode = $(this).find("JobTitleCode").text();
+        sJobTitleName = $(this).find("JobTitleName").text();
+
+        sHTML += "<tr height=\"30\">";
+        sHTML += "<td width=\"20px\">";
+        sSelected = "";
+        if ((Common.GetSession("DN_Code") == sDomainCode) &&
+            (Common.GetSession("GR_Code") == sGroupCode) &&
+            (Common.GetSession("UR_JobLevelCode") == sJobLevelCode) &&
+            (Common.GetSession("UR_JobPositionCode") == sJobPositionCode) &&
+            (Common.GetSession("UR_JobTitleCode") == sJobTitleCode)) {
+            sSelected = " checked=\"checked\"";
+        }
+        sHTML += "<input style=\"cursor: pointer;\" type=\"radio\" name=\"rdoAdditionalJob\" id=\"rdoAdditionalJob_" + pIntIndex + "\" class=\"radio_01\"" + sSelected + " value=\"" + sDomainCode + "/" + sGroupCode + "/" + sJobTitleCode + "/" + sJobPositionCode + "/" + sJobLevelCode + "\" />";
+        sHTML += "</td>";
+        sHTML += "<td style=\"padding-top: 4px;\">";
+        sHTML += "<label style=\"cursor: pointer;\" for=\"rdoAdditionalJob_" + pIntIndex + "\">" + "[" + Common.GetDic("JobType_" + sJobType) + "]" + sDomainName + "/" + sGroupName + "/" + sJobTitleName + "/" + sJobPositionName + "/" + sJobLevelName + "</label>";
+        sHTML += "</td>";
+        sHTML += "</tr>";
+        sHTML += "<tr><td colspan=\"2\" height=\"1\" bgcolor=\"#dcdcdc\"></td></tr>";
+    });
+    sHTML += "</table>";
+    sHTML += "<center>";
+    sHTML += "<table class=\"pop_btn2\" cellpadding=\"0\" cellspacing=\"0\">";
+    sHTML += "<tr><td><a href=\"javascript:XFN_btnAdditionalChange_OnClick()\"><em class=\"btn_bs2_l\"><span class=\"btn_bs2_r\"><strong class=\"txt_btn2_bs\">" + Common.GetDic("lbl_change") + "</strong></span></em></a></td></tr>";
+    sHTML += "</table>";
+    sHTML += "</center>";
+    sHTML += "</div>";
+
+    Common.ShowBalloon("", "BalloonAdditionalList", "", sHTML, 300, 42 + 38 * iAdditionalCnt, null, null, "right", pObjEvent);
+
+    $("#BalloonAdditionalList_hideDiv").height($("#divAdditionalList_Balloon").height() + 10);
+    $("#BalloonAdditionalList_p").width($("#divAdditionalList_Balloon").width() + 10);
+}
+
+// 겸직변경 실행
+function XFN_btnAdditionalChange_OnClick() {
+    var sCodeValue = $("INPUT[id^='rdoAdditionalJob_']:checked:first").val();
+    var sDN_Code = sCodeValue.split('/')[0];
+    var sGR_Code = sCodeValue.split('/')[1];
+    var sJT_Code = sCodeValue.split('/')[2];
+    var sJP_Code = sCodeValue.split('/')[3];
+    var sJL_Code = sCodeValue.split('/')[4];
+
+    var sURL = Common.GetPgModule("Portal.WebService");
+    var oResult = CFN_CallAjaxJson(sURL + "/SetChangeAdditionalJob", "{pStrDN_Code:'" + sDN_Code + "', pStrGR_Code:'" + sGR_Code + "', pStrJT_Code:'" + sJT_Code + "', pStrJP_Code:'" + sJP_Code + "', pStrJL_Code:'" + sJL_Code + "'}", false, null);
+    var bSucces = eval($.parseJSON(oResult).d[0].Value);
+    var sResult = $.parseJSON(oResult).d[1].Value;
+    if (bSucces) {
+        location.reload();
+    } else {
+        Common.Error(sResult, "Error Dialog", function () { });
+    }
+}
+
+////////////////////////////////////////// OrgMap : 임직원 조회 /////////////////////////////////////////////////
+// 임직원 조회 Open
+function XFN_aOrgMap_Click() {
+    var sType = "A0";
+    var sInGroup = "Y";
+    var sInAllCompany = "Y";
+    var sTarget = "U";
+    var sSubSystem = "PORTAL";
+    var sSearchType = "";
+    var sSearchText = "";
+
+    XFN_OrgMapShow("aOrgMap", "divOrgMap", "", "", "", sType, sInGroup, sInAllCompany, sTarget, sSubSystem, sSearchType, sSearchText);
+}
+
+////////////////////////////////////////// OrgMap : 조직도 //////////////////////////////////////////
+// 조직도를 레이어로 오픈합니다.
+// pStrEventID = 조직도를 열기위해 누른 버튼 ID
+// pStrOpenNameID = 조직도가 열리는 Div 이름
+// pStrSelectedItemID = 선택 목록을 임시로 저장할 Textarea ID
+// pStrIframeIDs = 조직도를 띄우는 IFrame 이름들...최상위 부모에서부터 시작
+// pStrCallBackMethod = 조직도에서 확인 버튼 클릭시 호출할 함수
+// pStrType = 조직도 유형(A0/B1/B9/C1/C9/D1/D9)
+// pStrInGroup = 조직도에 그룹사 포함 여부(Y/N)
+// pStrInAllCompany = 조직도에 타회사 포함 여부(Y/N)
+// pStrTarget = 검색 대상 - 부서 검색 여부(사용자[U]/부서[D])
+// pStrSubSystem = 조직도를 연 시스템(PORTAL/BOARD/BOARD01/...)
+// pStrSearchType = 검색 유형(DC/DN/UN/LN/PN/TN/CN)
+// pStrSearchText = 검색어
+// pStrTreeKind = Tree 종류 (Dept/Group/Mail)
+// pStrCaller = 호출자 (User/Admin)
+// pStrCuCode = 커뮤니티코드
+// pStrOpenCompany = 조직도를 오픈 할 때 기초 회사 선택
+// pStrLimitCount = 조직도 선택 제한 갯수
+//
+// 조직도 유형
+// A0 - 직원 조회용(2열)
+// B1 - 사용자 선택(3열-1명만)
+// B9 - 사용자 선택(3열-여러명)
+// C1 - 그룹 선택(3열-1개만)
+// C9 - 그룹 선택(3열-여러개)
+// D1 - 사용자/그룹 선택(3열-1개만)
+// D9 - 사용자/그룹 선택(3열-여러개)
+function XFN_OrgMapShow(pStrEventID, pStrOpenNameID, pStrSelectedItemID, pStrIframeIDs, pStrCallBackMethod, pStrType, pStrInGroup, pStrInAllCompany, pStrTarget, pStrSubSystem, pStrSearchType, pStrSearchText, pStrTreeKind, pStrCaller, pStrCuCode, pStrOpenCompany, pStrLimitCount, pStrMatrixType, pStrTreeExaendYN) {
+    var sTitle = "";
+    var sURL = "";
+    if (!pStrTreeExaendYN) pStrTreeExaendYN = "Y";
+    if (pStrTreeKind == undefined || pStrTreeKind == null)
+        pStrTreeKind = "";
+    if (pStrType.substring(0, 1) == "A") {
+        sURL = Common.GetPgModule("OrgMapEx");
+    }
+    else if (pStrTreeKind.toString().toUpperCase() == "MAIL") {
+        sURL = Common.GetPgModule("OrgMailMap");
+    }
+    else {
+        sURL = Common.GetPgModule("OrgMap");
+    }
+    sURL += "?Type=" + pStrType;
+    sURL += "&Group=" + pStrInGroup;
+    sURL += "&AllCompany=" + pStrInAllCompany;
+    sURL += "&Target=" + pStrTarget;
+    sURL += "&TreeExaendYN=" + pStrTreeExaendYN;
+
+    // 열람권한에서 그룹사 체크박스 사용하지 않을 경우에만 처리
+    if (pStrSearchText != undefined && pStrSearchText == "OrgRootNoCheck") {
+        sURL += "&OrgRootNoCheck=Y";
+        pStrSearchText = "";
+    }
+
+    sURL += "&SearchType=" + pStrSearchType;
+    if (pStrSearchText != undefined) {
+        sURL += "&SearchText=" + pStrSearchText;
+    } else {
+        sURL += "&SearchText=";
+    }
+    sURL += "&SubSystem=" + pStrSubSystem;
+
+    // 조직도 트리 종류
+    if (pStrTreeKind == undefined || pStrTreeKind == "") {
+        sURL += "&TreeKind=Dept";
+    } else {
+        sURL += "&TreeKind=" + pStrTreeKind;
+    }
+
+    // 조직도 호출자
+    if (pStrCaller == undefined || pStrCaller == "") {
+        sURL += "&Caller=User";
+    } else {
+        sURL += "&Caller=" + pStrCaller;
+    }
+
+    sURL += "&SelectedItemID=" + pStrSelectedItemID;
+    sURL += "&IframeName=" + pStrIframeIDs;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+    if (pStrCuCode == undefined || pStrCuCode == "") {
+        sURL += "&CuCode=";
+    } else {
+        sURL += "&CuCode=" + pStrCuCode;
+    }
+
+    if (pStrOpenCompany == undefined || pStrOpenCompany == "") {
+        sURL += "&OpenCompany=";
+    } else {
+        sURL += "&OpenCompany=" + pStrOpenCompany;
+    }
+
+    if (pStrMatrixType == undefined || pStrMatrixType == "") {
+        sURL += "&ApvType=";
+    } else {
+        sURL += "&ApvType=" + pStrMatrixType;
+    }
+
+    if (pStrLimitCount == undefined || pStrLimitCount == "") {
+        sURL += "&LimitCount=";
+    } else {
+        sURL += "&LimitCount=" + pStrLimitCount;
+    } 
+
+    var aStrDictionary = Common.GetDicAll("lbl_OrgMap;lbl_apv_org;msg_OrgMap" + pStrType + ";lbl_OrgMap_" + pStrType.substring(0, 1));
+    //var sTitle = aStrDictionary["lbl_OrgMap"] + " ||| " + aStrDictionary["msg_OrgMap" + pStrType];
+    var sTitle = aStrDictionary["lbl_OrgMap_" + pStrType.substring(0, 1)];
+    //var sWidth = "";
+    //var sHeight = "645px";
+    var sWidth = "";
+    var sHeight = "860px";
+    if (pStrTreeKind.toString().toUpperCase() == "MAIL")
+        sTitle = aStrDictionary["lbl_OrgMap"];
+    if (pStrType.substring(0, 1) == "A") {
+        //sWidth = "595px";
+        sWidth = "595px";
+        Common.Show(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    } else {
+        //sWidth = "969px";
+        //var sHeight = "645px";
+        sWidth = "1200px";
+        sHeight = "670px";
+        Common.ShowDialog(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    }
+}
+
+// 조직도를 새 창으로 오픈합니다.
+// pStrEventID = 불필요(null)
+// pStrOpenNameID = 불필요(null)
+// pStrSelectedItemID = 선택 목록을 임시로 저장할 Textarea ID
+// pStrIframeIDs = 불필요(null)
+// pStrCallBackMethod = 조직도에서 확인 버튼 클릭시 호출할 함수
+// pStrType = 조직도 유형(A0/B1/B9/C1/C9/D1/D9)
+// pStrInGroup = 조직도에 그룹사 포함 여부(Y/N)
+// pStrInAllCompany = 조직도에 타회사 포함 여부(Y/N)
+// pStrTarget = 검색 대상 - 부서 검색 여부(사용자[U]/부서[D])
+// pStrSubSystem = 조직도를 연 시스템(PORTAL/BOARD/BOARD01/...)
+// pStrSearchType = 검색 유형(DC/DN/UN/LN/PN/TN/CN)
+// pStrSearchText = 검색어
+// pStrTreeKind = Tree 종류 (Dept/Group/Mail)
+// pStrCaller = 호출자 (User/Admin)
+// pStrCuID = 커뮤니티코드
+// pStrMatrixType = 메트릭스타입
+function XFN_OrgMapShow_WindowOpen(pStrEventID, pStrOpenNameID, pStrSelectedItemID, pStrIframeIDs, pStrCallBackMethod, pStrType, pStrInGroup, pStrInAllCompany, pStrTarget, pStrSubSystem, pStrSearchType, pStrSearchText, pStrTreeKind, pStrCaller, pStrCuCode, pStrLimitCount, pStrMatrixType) {
+    var sTitle = "";
+    var sURL = "";
+    if (pStrTreeKind == undefined || pStrTreeKind == null)
+        pStrTreeKind = "";
+    if (pStrType.substring(0, 1) == "A") {
+        sURL = Common.GetPgModule("OrgMapEx");
+    }
+    else if (pStrTreeKind.toString().toUpperCase() == "MAIL") {
+        sURL = Common.GetPgModule("OrgMailMap");
+    }
+    else {
+        sURL = Common.GetPgModule("OrgMap");
+    }
+    sURL += "?Type=" + pStrType;
+    sURL += "&Group=" + pStrInGroup;
+    sURL += "&AllCompany=" + pStrInAllCompany;
+    sURL += "&Target=" + pStrTarget;
+
+    // 열람권한에서 그룹사 체크박스 사용하지 않을 경우에만 처리
+    if (pStrSearchText != undefined && pStrSearchText == "OrgRootNoCheck") {
+        sURL += "&OrgRootNoCheck=Y";
+        pStrSearchText = "";
+    }
+
+    sURL += "&SearchType=" + pStrSearchType;
+    if (pStrSearchText != undefined) {
+        sURL += "&SearchText=" + pStrSearchText;
+    } else {
+        sURL += "&SearchText=";
+    }
+    sURL += "&SubSystem=" + pStrSubSystem;
+
+    // 조직도 트리 종류
+    if (pStrTreeKind == undefined || pStrTreeKind == "") {
+        sURL += "&TreeKind=Dept";
+    } else {
+        sURL += "&TreeKind=" + pStrTreeKind;
+    }
+
+    // 조직도 호출자
+    if (pStrCaller == undefined || pStrCaller == "") {
+        sURL += "&Caller=User";
+    } else {
+        sURL += "&Caller=" + pStrCaller;
+    }
+
+    if (pStrMatrixType == undefined || pStrMatrixType == "") {
+        sURL += "&ApvType=";
+    } else {
+        sURL += "&ApvType=" + pStrMatrixType;
+    }
+
+    sURL += "&SelectedItemID=" + pStrSelectedItemID;
+    sURL += "&IframeName=" + pStrIframeIDs;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+    if (pStrCuCode == undefined || pStrCuCode == "") {
+        sURL += "&CuCode=";
+    } else {
+        sURL += "&CuCode=" + pStrCuCode;
+    }
+
+    if (pStrLimitCount == undefined || pStrLimitCount == "") {
+        sURL += "&LimitCount=";
+    } else {
+        sURL += "&LimitCount=" + pStrLimitCount;
+    }
+
+    var aStrDictionary = Common.GetDicAll("lbl_OrgMap;msg_OrgMap" + pStrType);
+
+    var sTitle = "조직도";
+    //var sWidth = "";
+    //var sHeight = "645px";
+    var sWidth = "";
+    var sHeight = "860";
+
+    if (pStrType.substring(0, 1) == "A") {
+        //sWidth = "595px";
+        sWidth = "595";
+        CFN_OpenWindow(sURL, "", sWidth, sHeight, "fix");
+    } else {
+        //sWidth = "969px";
+        //var sHeight = "645px";
+        sWidth = "1200";
+        sHeight = "675";
+        CFN_OpenWindow(sURL, "", sWidth, sHeight, "fix");
+    }
+}
+
+// 전자결재 조직도를 오픈합니다.
+// pStrEventID = 조직도를 열기위해 누른 버튼 ID
+// pStrOpenNameID = 조직도가 열리는 Div 이름
+// pStrSelectedItemID = 선택 목록을 임시로 저장할 Textarea ID
+// pStrIframeIDs = 조직도를 띄우는 IFrame 이름들...최상위 부모에서부터 시작
+// pStrCallBackMethod = 조직도에서 확인 버튼 클릭시 호출할 함수
+// pStrType = 조직도 유형(A0/B1/B9/C1/C9/D1/D9)
+// pStrInGroup = 조직도에 그룹사 포함 여부(Y/N)
+// pStrInAllCompany = 조직도에 타회사 포함 여부(Y/N)
+// pStrTarget = 검색 대상 - 부서 검색 여부(사용자[U]/부서[D])
+// pStrSubSystem = 조직도를 연 시스템(PORTAL/BOARD/BOARD01/...)
+// pStrSearchType = 검색 유형(DC/DN/UN/LN/PN/TN/CN)
+// pStrSearchText = 검색어
+function XFN_OrgMapShowApproval(pStrEventID, pStrOpenNameID, pStrSelectedItemID, pStrIframeIDs, pStrCallBackMethod, pStrType, pStrInGroup, pStrInAllCompany, pStrTarget, pStrSubSystem, pStrSearchType, pStrSearchText) {
+    var sTitle = "";
+    var sURL = Common.GetPgModule("OrgMapApproval");
+    sURL += "?Type=" + pStrType;
+    sURL += "&Group=" + pStrInGroup;
+    sURL += "&AllCompany=" + pStrInAllCompany;
+    sURL += "&Target=" + pStrTarget;
+    sURL += "&SearchType=" + pStrSearchType;
+    sURL += "&SearchText=" + pStrSearchText;
+    sURL += "&SubSystem=" + pStrSubSystem;
+    // 조직도 트리 종류
+    sURL += "&TreeKind=Dept";
+    // 조직도 호출자
+    sURL += "&Caller=User";
+    sURL += "&SelectedItemID=" + pStrSelectedItemID;
+    sURL += "&IframeName=" + pStrIframeIDs;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+
+
+    var aStrDictionary = Common.GetDicAll("lbl_OrgMap;msg_OrgMap" + pStrType);
+    var sTitle = aStrDictionary["lbl_OrgMap"] + " ||| " + aStrDictionary["msg_OrgMap" + pStrType];
+    var sWidth = "";
+    var sHeight = "640px";
+
+    if (pStrType.substring(0, 1) == "A") {
+        sWidth = "607px";
+        Common.Show(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    } else {
+        sWidth = "976px";
+        Common.ShowDialog(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    }
+}
+
+// 조직도 Window 새창열기
+function XFN_OrgMapShowApproval_WindowOpen(pStrEventID, pStrOpenNameID, pStrSelectedItemID, pStrIframeIDs, pStrCallBackMethod, pStrType, pStrInGroup, pStrInAllCompany, pStrTarget, pStrSubSystem, pStrSearchType, pStrSearchText) {
+    var sTitle = "";
+    var sURL = Common.GetPgModule("OrgMapApproval");
+    sURL += "?Type=" + pStrType;
+    sURL += "&Group=" + pStrInGroup;
+    sURL += "&AllCompany=" + pStrInAllCompany;
+    sURL += "&Target=" + pStrTarget;
+    sURL += "&SearchType=" + pStrSearchType;
+    sURL += "&SearchText=" + pStrSearchText;
+    sURL += "&SubSystem=" + pStrSubSystem;
+    // 조직도 트리 종류
+    sURL += "&TreeKind=Dept";
+    // 조직도 호출자
+    sURL += "&Caller=User";
+    sURL += "&SelectedItemID=" + pStrSelectedItemID;
+    sURL += "&IframeName=" + pStrIframeIDs;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+    sURL += "&EventID=" + pStrEventID;
+    sURL += "&OpenNameID=" + pStrOpenNameID;
+
+
+    var aStrDictionary = Common.GetDicAll("lbl_OrgMap;msg_OrgMap" + pStrType);
+    //var sTitle = aStrDictionary["lbl_OrgMap"] + " ||| " + aStrDictionary["msg_OrgMap" + pStrType];
+    var sTitle = "";
+    var sWidth = "";
+    var sHeight = "640";
+
+    if (pStrType.substring(0, 1) == "A") {
+        sWidth = "607";
+        CFN_OpenWindow(sURL, sTitle, sWidth, sHeight, "fix");
+        //Common.Show(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    }
+    else {
+        sWidth = "976";
+        CFN_OpenWindow(sURL, sTitle, sWidth, sHeight, "fix");
+        //Common.ShowDialog(pStrEventID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+    }
+}
+
+////////////////////////////////////////// Dictionary : 다국어 설정 //////////////////////////////////////////
+// 다국어를 설정할 수 있는 화면을 표시합니다.
+function XFN_ShowSetDictionaryInfo(pStrObjectID, pStrOpenNameID, pStrIframeIDs, pStrTextItemID, pStrSelectedItemID, pStrCallBackMethod) {
+    var sURL = Common.GetPgModule("Common.DictionaryInfo");
+    sURL += "?SelectedItemID=" + pStrSelectedItemID;
+    sURL += "&TextItemID=" + pStrTextItemID;
+    sURL += "&IframeName=" + pStrIframeIDs;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+
+    var aStrDictionary = Common.GetDicAll("lbl_MultilanguageSettings;msg_MultilanguageSettings");
+    var sTitle = aStrDictionary["lbl_MultilanguageSettings"] + " ||| " + aStrDictionary["msg_MultilanguageSettings"];
+    var sWidth = "500px";
+    var sHeight = "390px";
+    Common.ShowDialog(pStrObjectID, pStrOpenNameID, sTitle, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+}
+
+////////////////////////////////////////// Program : 프로그램 설정 //////////////////////////////////////////
+// 프로그램을 설정하는 화면을 표시합니다.
+function XFN_ShowSetProgram(pStrOpenNameID, pStrProgramID, pStrIframeIDs, pStrCallBackMethod) {
+    var sURL = "?IframeName=" + pStrIframeIDs;
+    sURL += "&ProgramID=" + pStrProgramID;
+    sURL += "&OpenName=" + pStrOpenNameID;
+    sURL += "&CallBackMethod=" + pStrCallBackMethod;
+    Common.ShowDialog("", pStrOpenNameID, Common.GetDic("lbl_ProgramSelectionList") + " ||| " + Common.GetDic("msg_SelectProgramLinktoMenu"), Common.GetPgModule('System.ProgramList') + sURL, "594px", "550px", "iframe");
+}
+
+////////////////////////////////////////// 공통 이미지 원본 뷰어  //////////////////////////////////////////
+// 원본 이미지 조회 팝업 기본형 - XFN_ShowOriginImage(이미지 경로);
+// pImagePath : 보여줄 이미지 경로
+// pType : Full(원본 사이즈로 보여줌.) | ReSize(요청한 비율에 맞게 보여줌)
+// pWidth : ReSize시 이미지의 최대 넓이(미입력시 화면 사이즈)
+// pHeight : ReSize시 이미지의 최대 높이(미입력시 10000)
+function XFN_ShowOriginImage(pImageURL, pType, pWidth, pHeight) {
+    if (pImageURL == null || pImageURL == undefined || pImageURL == "") { return; }
+    if (pType == null || pType == undefined || pType == "") { pType = "Full"; }
+    if (pWidth == null || pWidth == undefined) { pWidth = $(window).width() - 8; }
+    if (pHeight == null || pHeight == undefined) { pHeight = "10000"; }
+
+    // 무조건 모든 이미지를 원본 사이즈로 보이기
+    //pType = "Full"; 
+
+    if (pType.toLowerCase() == "resize") { // 창의 비율에 맞게 이미지를 맞춰서 보기
+        var l_imgURL = "/Common/Control/ImageViewer.aspx?ImagePath=" + pImageURL + "&ImageWidth=" + pWidth + "&ImageHeight=" + pHeight;
+        Common.ShowDialog("", "div_OrginView", "ImageView", l_imgURL, 0 + "px", 0 + "px", "iframe-ifNoScroll", "-100px", "-100px");
+    } else { // 원본 이미지로 보기
+        var l_imgTag = "<center><img src='" + pImageURL + "' id='imgOriginImageView' onclick=Common.Close('div_OrginView') style='cursor:pointer;'></center>";
+        Common.ShowDialog("", "div_OrginView", "ImageView", l_imgTag, "", "", "html");
+    }
+}
+
+////////////////////////////////////////// 공통 인쇄 페이지 팝업  //////////////////////////////////////////
+// 공통 인쇄 팝업 호출(인쇄 페이지의 내용에 이벤트 방지 기능 추가)
+// pPrintContainerID 인쇄할 내용을 감싸고 있는 컨테이너 아이디
+// pWidth : 인쇄 창 Width
+// pHeight : 인쇄 창 height
+function XFN_OpenPrint(pPrintContainerID, pWidth, pHeight) {
+    if (pPrintContainerID == null || pPrintContainerID == undefined) { pPrintContainerID = "divPrintBody"; }
+    if (pWidth == null || pWidth == undefined) { pWidth = "800"; }
+    if (pHeight == null || pHeight == undefined) { pHeight = "700"; }
+    var src = Common.GetPgModule("BasePrintPage") + "?ContainerID=" + pPrintContainerID;
+    var etcParam = "scroll";
+    CFN_OpenWindow(src, "PrintPopup", pWidth, pHeight, etcParam)
+}
+
+////////////////////////////////////////// 파일 업로드 팝업 호출  //////////////////////////////////////////
+// 닷넷 기본 단일 파일 업로드 팝업
+function XFN_FileUploadSinglePopup(pSaveType, pServiceType, pFrontPath, pTitle, pLimitCnt, pLimitSize, pLimitTotalSize, pLimitExtention, pFileName, pAddParam) {
+    if (pServiceType == null || pServiceType == "" || pServiceType == undefined) { pServiceType = "common"; }                       // 서비스 유형
+    if (pSaveType == null || pSaveType == "" || pSaveType == undefined) { pSaveType = "image"; }                                    // 첨부파일 유형
+    if (pFrontPath == null || pFrontPath == "" || pFrontPath == undefined) { pFrontPath = CFN_GetCtrlById("hidFrontPath").value; }  // 저장할 프론트 Path 정보
+    if (pTitle == null || pTitle == "" || pTitle == undefined) { pTitle = Common.GetDic("lbl_ImageAdd"); }                          // 파업창 Title
+    if (pLimitCnt == null || pLimitCnt == "" || pLimitCnt == undefined) { pLimitCnt = ""; }                                         // 업로드 제한 개수
+    if (pLimitSize == null || pLimitSize == "" || pLimitSize == undefined) { pLimitSize = ""; }                                     // 업로드 파일 1개의 최대 사이즈 MB
+    if (pLimitTotalSize == null || pLimitTotalSize == "" || pLimitTotalSize == undefined) { pLimitTotalSize = ""; }                  // 한번에 업로드 할 수 있는 최대 용량 byte
+    if (pLimitExtention == null || pLimitExtention == "" || pLimitExtention == undefined) { pLimitExtention = ""; }                 // 업로드 제한 확장자
+    if (pFileName == null || pFileName == undefined) { pFileName = ""; }                                                           // 업로드 제한 파일명
+    if (pAddParam == null || pAddParam == undefined) { pAddParam = ""; }
+
+    // 파일 추가 메시지 설정
+    var l_AddTitleMessage = "";
+    if (pLimitCnt != "") { l_AddTitleMessage += Common.GetDic("msg_UploadTotalCount").replace("{0}", pLimitCnt); }
+    if (pLimitTotalSize != "") {
+        if (l_AddTitleMessage != "") {
+            l_AddTitleMessage += ", Max:" + (pLimitTotalSize / 1024 / 1024).toFixed(2) + "MB";
+        } else {
+            l_AddTitleMessage += "Max:" + (pLimitTotalSize / 1024 / 1024).toFixed(2) + "MB";
+        }
+    }
+    if (pLimitSize != "") {
+        if (l_AddTitleMessage != "") {
+            l_AddTitleMessage += ", One:" + pLimitSize + "MB";
+        } else {
+            l_AddTitleMessage += "One:" + pLimitSize + "MB";
+        }
+    }
+
+    l_AddTitleMessage = pTitle + " |||" + l_AddTitleMessage;
+
+    var l_PopupURL = new StringBuilder();
+    l_PopupURL.AppendFormat("?saveType={0}&serviceType={1}&savePath={2}", pSaveType, pServiceType, pFrontPath);
+    if (pLimitCnt != "") { l_PopupURL.Append("&limitCnt=" + pLimitCnt); }
+    if (pLimitSize != "") { l_PopupURL.Append("&limitSize=" + pLimitSize); }
+    if (pLimitTotalSize != "") { l_PopupURL.Append("&limitTotalSize=" + pLimitTotalSize); }
+    if (pLimitExtention != "") { l_PopupURL.Append("&limitExtenstion=" + pLimitExtention); }
+    if (pFileName != "") { l_PopupURL.Append("&fileName=" + pFileName); }
+    if (pAddParam != "") { l_PopupURL.Append("&" + pAddParam); }
+    Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoad") + l_PopupURL.ToString(), "300px", "90px", "iframe-ifNoScroll");
+
+    l_PopupURL = null;
+}
+
+// 다중 파일 업로드 팝업(옵션에 따라, 브라우져에 따라, 기본, CoviFileTrans, DEXTUploadX, CoviSilverlightTrans가 각각 뜨게됨.)
+function XFN_FileUploadMultiPopup(pSaveType, pServiceType, pFrontPath, pTitle, pLimitCnt, pLimitSize, pLimitTotalSize, pLimitExtention, pFileName, pAddParam) {
+    var l_AlreadyFileCnt = 0;
+    if (pServiceType == null || pServiceType == "" || pServiceType == undefined) { pServiceType = "common"; }                       // 서비스 유형
+    if (pSaveType == null || pSaveType == "" || pSaveType == undefined) { pSaveType = "file"; }                                     // 첨부파일 유형
+    if (pFrontPath == null || pFrontPath == "" || pFrontPath == undefined) { pFrontPath = CFN_GetCtrlById("hidFrontPath").value; }  // 저장할 프론트 Path 정보
+    if (pTitle == null || pTitle == "" || pTitle == undefined) { pTitle = Common.GetDic("lbl_AllAdd"); }                            // 파업창 Title
+    if (pLimitCnt == null || pLimitCnt == undefined) { pLimitCnt = ""; }                                                            // 업로드 제한 개수
+    if (pLimitSize == null || pLimitSize == undefined) { pLimitSize = ""; }                                                         // 업로드 파일 1개의 최대 사이즈 MB
+    if (pLimitTotalSize == null || pLimitTotalSize == undefined) { pLimitTotalSize = ""; }                                          // 한번에 업로드 할 수 있는 최대 용량 byte
+    if (pLimitExtention == null || pLimitExtention == undefined) { pLimitExtention = ""; }                                          // 업로드 제한 확장자
+    if (pFileName == null || pFileName == undefined) {
+        pFileName = "";
+    } else {
+        l_AlreadyFileCnt = pFileName.split("%7C").length - 1;
+    }
+    if (pAddParam == null || pAddParam == undefined) { pAddParam = ""; }
+
+    // 파일 추가 메시지 설정
+    var l_AddTitleMessage = "";
+    if (pLimitCnt != "") { l_AddTitleMessage += Common.GetDic("msg_UploadTotalCount").replace("{0}", (pLimitCnt - l_AlreadyFileCnt)); }
+    if (pLimitTotalSize != "") {
+        if (l_AddTitleMessage != "") {
+            l_AddTitleMessage += ", Max:" + (pLimitTotalSize / 1024 / 1024).toFixed(2) + "MB";
+        } else {
+            l_AddTitleMessage += "Max:" + (pLimitTotalSize / 1024 / 1024).toFixed(2) + "MB";
+        }
+    }
+    if (pLimitSize != "") {
+        if (l_AddTitleMessage != "") {
+            l_AddTitleMessage += ", One:" + pLimitSize + "MB";
+        } else {
+            l_AddTitleMessage += "One:" + pLimitSize + "MB";
+        }
+    }
+
+    l_AddTitleMessage = pTitle + " |||" + l_AddTitleMessage;
+
+    var l_PopupURL = new StringBuilder();
+    l_PopupURL.AppendFormat("?saveType={0}&serviceType={1}&savePath={2}", pSaveType, pServiceType, pFrontPath);
+    if (pLimitCnt != "") { l_PopupURL.Append("&limitCnt=" + pLimitCnt); }
+    if (pLimitSize != "") { l_PopupURL.Append("&limitSize=" + pLimitSize); }
+    if (pLimitTotalSize != "") { l_PopupURL.Append("&limitTotalSize=" + pLimitTotalSize); }
+    if (pLimitExtention != "") { l_PopupURL.Append("&limitExtenstion=" + pLimitExtention); }
+    if (pFileName != "") { l_PopupURL.Append("&fileName=" + pFileName); }
+    if (pAddParam != "") { l_PopupURL.Append("&" + pAddParam); }
+
+    switch (Common.GetBaseConfig('FileAttachType')) { // 현재 CoviFileTrans와 닷넷 기본만 지원
+        case "0": // 모두 : 닷넷 기본
+            Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            break;
+        case "1": // IE : DEXTUploadX, 이외 닷넷 기본
+            Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            break;
+        case "2": // IE : CoviFileTrans, 이외 닷넷 기본
+            if (_ie) {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Covi.FileUPLoadMulti") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+            } else {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            }
+            break;
+        case "3": // 모두 : CoviSilverlightTrans
+            Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            break;
+        case "4": // IE : CoviFileTrans, 이외 : CoviSilverlightTrans
+            if (_ie) {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Covi.FileUPLoadMulti") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+            } else {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            }
+            break;
+            /*
+                case "5": // IE : CoviFileTrans, 이외 : CoviSilverlightTrans
+                if (_ie) {
+                    if (_ieVer >= 10) {
+                        Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadHtml5") + l_PopupURL.ToString(), "500px", "350px", "iframe-ifNoScroll");
+                    }
+                    // IE 10 미만
+                    else {
+                        Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Covi.FileUPLoadMulti") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+                    }
+                } else {
+                    Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+                }
+                break;
+            default:
+                if (_ie) {
+                    if (_ieVer >= 10) {
+                        Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadHtml5") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+                    }
+                        // IE 10 미만
+                    else {
+                        Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Covi.FileUPLoadMulti") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+                    }
+                } else {
+                    Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+                }
+            */
+        default:
+            if (_ie) {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Covi.FileUPLoadMulti") + l_PopupURL.ToString(), "500px", "150px", "iframe-ifNoScroll");
+            } else {
+                Common.ShowDialog("divImageAttach", "DivPop_FileUpload", l_AddTitleMessage, Common.GetPgModule("Base.FileUPLoadMulti") + l_PopupURL.ToString(), "300px", "228px", "iframe-ifNoScroll");
+            }
+            break;
+    }
+
+    l_PopupURL = null;
+}
+
+////////////////////////////////////////// 단일 파일 다운로드(Front/Back)  //////////////////////////////////////////
+// SingleFile Direct DownLoad [OLD - BackStroage, NEW - FrontStorage]
+function XFN_SingleFileDownload(pFilePath, pFileName, pType) {
+    if (!eval(document.getElementById("ifrHidDownLoad"))) {
+        $("body").append("<iframe id='ifrHidDownLoad' src='' name='ifrHidDownLoad' style='width:0px;height:0px'></iframe>");
+    }
+    var l_DownloadPageURL = "/Common/ExControls/FileDownload/FileDownload.aspx?pFileURL=" + pFilePath + "&pFileName=" + pFileName + "&pFileType=" + pType;
+    document.getElementById("ifrHidDownLoad").src = l_DownloadPageURL;
+}
+
+////////////////////////////////////////// 멀티파일 다운로드(Back)  //////////////////////////////////////////
+function XFN_DownloadCoviFileTrans(pWindows, pDownLoadType, pMsgID, pObjectID, pObjectType, pServiceType, pFileType, pDownFolder, pDownLoadTitle, pFileID) {// POPUP 작업을 위해 미리 작성함. (아직 적용되지 않음)
+    var l_winstyle = "height=360, width=275, status=no, resizable=no, help=no, scroll=no";
+    var l_winpath = window.location.origin + "/Common/ExControls/FileDownload/FileDownloadCoviTrans.aspx";
+    l_winpath += "?pDownLoadType=" + pDownLoadType;
+    l_winpath += "&pMessageID=" + pMsgID;
+    l_winpath += "&pObjectID=" + pObjectID;
+    l_winpath += "&pObjectType=" + pObjectType;
+    l_winpath += "&pServiceType=" + pServiceType;
+    l_winpath += "&pFileType=" + pFileType;
+    l_winpath += "&pDownLoadTitle=" + pDownLoadTitle;
+    if (pFileID == undefined || pFileID == "") {
+        pFileID = "0";
+    }
+    l_winpath += "&pFileID=" + pFileID;
+    if (pDownFolder != undefined) { l_winpath += "&DownFolder=" + pDownFolder; }
+    CFN_OpenWindow(l_winpath, pWindows, 275, 360, "fix");
+}
+
+// 닷넷 기본으로 멀티 파일을 다운로드 함.
+function XFN_MultiFileDownLoadBasic(sServiceType, iObjectID, sObjectType, iMessageID, iFIleID) {// POPUP 작업을 위해 미리 작성함. (아직 적용되지 않음)
+    var l_sHost = "";
+    var l_sDownURL = "";
+    var l_sParam = "?pServiceType=" + sServiceType + "&pObjectID=" + iObjectID + "&pObjectType=" + sObjectType + "&pMessageID=" + iMessageID + "&pFileID=" + iFIleID;
+    l_sDownURL = "/Common/ExControls/FileDownload/Filedownload.aspx"; // 단일 다운로드
+    Common.Confirm(Common.GetDic("msg_MultiFileDownLoadBasic"), Common.GetDic("lbl_FileDownLoadCheck"), function (pResult) {
+        if (pResult) {
+            Common.ShowDialog("", "DivPop_MultiFileDown", "MultiFileDown", l_sHost + l_sDownURL + l_sParam, "310px", "150px", "iframe");
+        }
+    });
+}
+
+////////////////////////////////////////// 확장 에디터 팝업  //////////////////////////////////////////
+//페이지에 확장에디터 하나만 사용하는 경우
+//호출하는 페이지에 아래의 히든필드가 존재해야 한다.
+//<asp:HiddenField ID="hidContentHtml" runat="server" />
+//<asp:HiddenField ID="hidContentImage" runat="server" />
+//여러개의 확장에디터를 사용하는 경우 ContentID 와 ContentImage를 전달해야 합니다.
+function XFN_OpenExtentionEditorPopUp(pIframeName, pCallBackMethod, pTitle, pContentID, pContentImageID) {
+    if (pCallBackMethod == null || pCallBackMethod == "" || pCallBackMethod == undefined) { return; }
+
+    if (pTitle == null || pTitle == "" || pTitle == undefined) {
+        var l_dicTitle = Common.GetDicAll("lbl_TextEditor;msg_TextEditor")
+        pTitle = l_dicTitle["lbl_TextEditor"] + " |||" + l_dicTitle["msg_TextEditor"];
+    }
+
+    var sParam = "?CallBackMethod=" + pCallBackMethod;
+    if (typeof (pIframeName) != undefined && pIframeName != null && pIframeName != "") {
+        sParam = sParam + "&IframeName=" + pIframeName;
+    }
+
+    if (pContentID != null && pContentID != "" && pContentID != undefined) {
+        sParam = sParam + "&ContentID=" + pContentID;
+    }
+
+    if (pContentImageID != null && pContentImageID != "" && pContentImageID != undefined) {
+        sParam = sParam + "&ImageID=" + pContentImageID;
+    }
+
+    Common.ShowDialog("", "DivPop_Editor", pTitle, Common.GetPgModule("ExtentionWebEditor") + sParam, "1000px", "620px", "iframe");
+}
+
+////////////////////////////////////////// 보안 관련  //////////////////////////////////////////
+// 사용자 보안행위 시간체크
+function XFN_CheckSecurityActionTime() {
+    var l_bReturn = true;
+    var l_ActionTime = new Date();
+    if (window.sessionStorage.getItem("SecurityActionTime") != undefined) {
+        var l_SecurityActionTime = new Date(window.sessionStorage.getItem("SecurityActionTime"));
+        if (parseInt(CFN_DiffDate(l_SecurityActionTime, l_ActionTime, "sec"), 10) < Common.GetBaseConfig("SecurityActionTime")) { // 암호를 다시 물어 보는 시간 3분동안 호출이 없으면
+            l_bReturn = false;
+        }
+    }
+    return l_bReturn;
+}
+
+// 사용자 암호 체크
+function XFN_CheckPassword(pSuccCallBackMethod, pFailCallBackMethod) {
+    parent.Common.Password(Common.GetDic("msg_EnterPassword"), "", "◈ " + Common.GetDic("lbl_SecurityCheck"), function (pPw) {
+        if (pPw != null) {
+            var oParam = { "pPassword": pPw };
+            if (Common.GetAppConfig("LoginAuthTarget") == "Unify" || Common.GetAppConfig("LoginAuthTarget") == "AD") {
+                var l_CheckResult = CFN_CallAjaxJson(Common.GetPgModule("Base.WebService") + "/CheckADPassword", JSON.stringify(oParam), false, null);
+            } else {
+                var l_CheckResult = CFN_CallAjaxJson(Common.GetPgModule("Base.WebService") + "/CheckPassword", JSON.stringify(oParam), false, null);
+            }
+
+            if ($.parseJSON(l_CheckResult).d.indexOf("ERROR|") == -1) {
+                if (eval($.parseJSON(l_CheckResult).d)) { // 암호일치
+                    pSuccCallBackMethod();
+                } else { // 암호 불일치
+                    parent.Common.Warning(Common.GetDic("msg_PwDoNotMatch"), "Warning Dialog", pFailCallBackMethod);
+                }
+            } else {
+                // 확인중 에러 발생
+                parent.Common.Error($.parseJSON(l_CheckResult).d.split("ERROR|")[1], "Error Dialog", pFailCallBackMethod);
+            }
+        } else {
+            if (pFailCallBackMethod != undefined) {
+                pFailCallBackMethod();
+            }
+        }
+    });
+}
+
+//메뉴의 Open Target에 따라 처리 - New:새창
+function XFN_OpenKind(pTarget, pUrl) {
+    if (pTarget == "New") {//새창
+        window.open(pUrl, "New", "", false);
+    }
+}
+
+//////////////////////////////////////////  웹메일 읽기/쓰기 팝업 관련 /////////////////////////////////////////////////
+// 메일 내용 상세조회 팝업
+// pStrPopupType: 팝업의 종류를 결정함 (WINDOW - 윈도우 open 팝업 / LAYER - 레이어 팝업)
+// pStrPopupId: 조회 팝업창 ID
+// pStrSystem: System
+// pStrFolderID: 조회할 메일 폴더 ID
+// pStrItemID: 조회할 메일 ItemID
+// pStrChangeKey: 조회할 메일 ChangeKey
+function XFN_PopupMailDetailView(pStrPopupType, pStrPopupId, pStrSystem, pStrFolderID, pStrItemID, pStrChangeKey) {
+    pStrPopupId = pStrPopupId + "_" + (Math.random() * (1 << 30)).toString(16).replace('.', ''); // GUID 생성하여 새로운 창으로 연다
+
+    var nWindowPopWidth = 1300;
+    var nWindowPopHeight = 950;
+
+    //TO-DO : 메일 도메인 URL 호출시 Request Validation 오류발생
+    var sURL = location.protocol + "//" + Common.GetBaseConfig("MailWebServerDomain") + "/WebMail/Mail/View.aspx?system=" + pStrSystem;
+    //var sURL = "/WebMail/Mail/View.aspx?system=" + pStrSystem;
+
+    // 폴더ID|폴더Type|메일ID|메일ChangeKey|InternetMessageId|이전MenuID|이전페이지(LIST/READ/...)|리스트의AddParms
+    var sAddParams = pStrFolderID;
+    sAddParams += "|";
+    sAddParams += "|" + pStrItemID;
+    sAddParams += "|" + pStrChangeKey;
+    sAddParams += "|";
+    sAddParams += "|";
+    sAddParams += "|";
+    sAddParams += "|";
+    sAddParams = encodeURIComponent(sAddParams);
+
+    if (pStrPopupType == "WINDOW") {
+        sURL += "&mode=WINDOW";
+        sURL += "&AddParams=" + sAddParams;
+
+        CFN_OpenWindow(sURL, pStrPopupId, nWindowPopWidth, nWindowPopHeight, "both");
+    } else {
+        sURL += "&mode=LAYER";
+        sURL += "&AddParams=" + sAddParams;
+
+        var fnOpenLayerPopup = Common.ShowDialog;
+
+        try {
+            if (parent.Common.Show) {
+                fnOpenLayerPopup = parent.Common.ShowDialog;
+            }
+        } catch (e) { }
+        fnOpenLayerPopup("", pStrPopupId, Common.GetDic("lbl_Mail_ReadMail"), sURL, "840px", "600px", "iframe");  // 메일읽기
+    }
+}
+
+
+// 메일 쓰기 팝업
+// pStrPopupId : 쓰기 팝업창 ID
+// pStrCmd : 호출 Type (CONTACT/BOARD/APPROVAL)
+// pStrTo : 받는 사람 mail 주소 (To)
+// pStrCc : 받는 사람 mail 주소 (Cc)
+// pStrBcc : 받는 사람 mail 주소 (Bcc)
+// pStrSubject : Mail Subject 정의
+// pStrBody : Mail 본문 내용 정의
+// pStrBodyType : Mail 본문 내용 Type (HTML/TEXT)
+// pStrAttachmentFile : 첨부파일 정보 (Ex - ContactList_20130913_0346_1.csv:48:OLD:3966:csv:/GWStorage/Board/File/20131223/1590.0_ContactList_20130913_0346_1.csv; ContactList_20130913_0347.csv:198904:OLD:3967:csv:/GWStorage/Board/File/20131223/1590.1_ContactList_20130913_0347.csv; ContactList_20130913_0347.zip:18972:OLD:3968:zip:/GWStorage/Board/File/20131223/1590.2_ContactList_20130913_0347.zip)
+function XFN_PopupMailWrite(pStrPopupId, pStrCmd, pStrTo, pStrCc, pStrBcc, pStrSubject, pStrBody, pStrBodyType, pStrAttachmentFile) {
+    pStrPopupId = pStrPopupId + "_" + (Math.random() * (1 << 30)).toString(16).replace('.', ''); // GUID 생성하여 새로운 창으로 연다
+
+    var sValue = "";
+    sValue += "<MailInfo>";
+    sValue += "<Receiver>";
+    if (pStrTo != null && pStrTo != undefined && pStrTo != "") {
+        var aStrTo = pStrTo.split(";");
+        for (var i = 0; i < aStrTo.length; i++) {
+            sValue += "<To>";
+            sValue += "<Name>" + $("<div />").text(aStrTo[i].split("<")[0]).html() + "</Name>";
+            sValue += "<Email>" + $("<div />").text(aStrTo[i].split("<")[1].replace(/>/gi, "")).html() + "</Email>";
+            sValue += "</To>";
+        }
+    }
+    if (pStrCc != null && pStrCc != undefined && pStrCc != "") {
+        var aStrCc = pStrCc.split(";");
+        for (var i = 0; i < aStrCc.length; i++) {
+            sValue += "<Cc>";
+            sValue += "<Name>" + $("<div />").text(aStrCc[i].split("<")[0]).html() + "</Name>";
+            sValue += "<Email>" + $("<div />").text(aStrCc[i].split("<")[1].replace(/>/gi, "")).html() + "</Email>";
+            sValue += "</Cc>";
+        }
+    }
+    if (pStrBcc != null && pStrBcc != undefined && pStrBcc != "") {
+        var aStrBcc = pStrBcc.split(";");
+        for (var i = 0; i < aStrBcc.length; i++) {
+            sValue += "<Bcc>";
+            sValue += "<Name>" + $("<div />").text(aStrBcc[i].split("<")[0]).html() + "</Name>";
+            sValue += "<Email>" + $("<div />").text(aStrBcc[i].split("<")[1].replace(/>/gi, "")).html() + "</Email>";
+            sValue += "</Bcc>";
+        }
+    }
+    sValue += "</Receiver>";
+
+    if (pStrSubject == null || pStrSubject == undefined) {
+        sValue += "<Subject></Subject>";
+    } else {
+        sValue += "<Subject>" + $("<div />").text(pStrSubject).html() + "</Subject>";
+    }
+    if (pStrBodyType == null || pStrBodyType == undefined) {
+        sValue += "<BodyType></BodyType>";
+    } else {
+        sValue += "<BodyType><![CDATA[" + pStrBodyType + "]]></BodyType>";
+    }
+    if (pStrBody == null || pStrBody == undefined) {
+        sValue += "<Body></Body>";
+    } else {
+        sValue += "<Body>" + $("<div />").text(pStrBody).html() + "</Body>";
+    }
+    if (pStrAttachmentFile != null && pStrAttachmentFile != undefined && pStrAttachmentFile != "") {
+        var aStrFileInfo = pStrAttachmentFile.split("|");
+        sValue += "<Files>";
+        for (var i = 0; i < aStrFileInfo.length; i++) {
+            if (aStrFileInfo[i] != '') {
+                sValue += "<File>";
+                sValue += "<Name>" + $("<div />").text(aStrFileInfo[i].split(":")[0]).html() + "</Name>";
+                sValue += "<URL>" + $("<div />").text(aStrFileInfo[i].split(":")[5]).html() + "</URL>";
+                sValue += "<Size>" + $("<div />").text(aStrFileInfo[i].split(":")[1]).html() + "</Size>";
+                sValue += "</File>";
+            }
+        }
+        sValue += "</Files>";
+    }
+    sValue += "</MailInfo>";
+
+    var theWidth = 1300;
+    var theHeight = 950;
+
+    //TO-DO : 메일 도메인 URL 호출시 Request Validation 오류발생
+    var sBlankURL = location.protocol + "//" + Common.GetBaseConfig("MailWebServerDomain") + "/Blank.aspx";
+    var sURL = location.protocol + "//" + Common.GetBaseConfig("MailWebServerDomain") + "/WebMail/Mail/Write.aspx";
+    sURL += "?mode=" + escape("WINDOW");
+    sURL += "&cmd=" + escape(pStrCmd);
+    sURL += "&MailData=" + escape(encodeURIComponent(sValue));
+
+    CFN_OpenWindowPost(sURL, theWidth, theHeight, pStrPopupId, "both", sBlankURL);
+
+    //var objHid = $("<input type=\"hidden\" id=\"hidMail" + pStrPopupId + "\" />");
+    //objHid.val(sValue);
+    //$("body").append(objHid);
+
+    //CFN_OpenWindow(sURL, pStrPopupId, theWidth, theHeight, "both");
+}
+
+function XFN_PopupMachineTranslation(pStrUrl,pBlankURL){
+    
+    var pStrPopupId = "MachineTranslationPopup";
+    var theWidth = Common.GetBaseConfig("MachineTranslationPopupWidth");//1300
+    var theHeight = Common.GetBaseConfig("MachineTranslationPopupHeight");//950
+    CFN_OpenWindowPostTranslation(pStrUrl, theWidth, theHeight, pStrPopupId, "both", pBlankURL);
+}
+//캐시 모두 초기화(개인의 모든 output 캐시)
+function XFN_OutputCacheAll(pURL) {
+    $("#btn_CacheResetting").attr("class", "top_ico_resetting_progress");
+    var sURL = Common.GetPgModule("Base.WebService");
+    // 캐시 초기화 - 개인캐시 초기화시 로컬 캐시도 초기화 함.
+    CFN_ClareLocal5Storage();
+
+    var oResult = CFN_CallAjaxJson(sURL + "/OutputCacheAll", "{}", false, null);
+    if ($.parseJSON(oResult).d.indexOf("ERROR|") == -1) {
+        if (pURL != undefined && pURL != "") {
+            if (pURL != "NONE") { // 새로고침 또는 이동하지 않음.
+                setTimeout(function () { location.href = pURL; }, 500);
+            }
+        } else {
+            setTimeout(function () { location.href = location.href; }, 500);
+        }
+    } else {
+        parent.Common.Error($.parseJSON(oResult).d.split("ERROR|")[1], "Error Dialog", null);
+    }
+}
+
+// 개인의 특정 영역 output 캐시 초기화
+function XFN_OutPutCacheClient(pGroupKey, pURL) {
+    var sURL = Common.GetPgModule("Base.WebService");
+    var oResult = CFN_CallAjaxJson(sURL + "/SyncClientOutputCache", "{pStrGroupKey:'" + pGroupKey + "'}", false, null);
+    if ($.parseJSON(oResult).d.indexOf("ERROR|") == -1) {
+        if (pURL != undefined && pURL != "") {
+            location.href = pURL;
+        }
+    } else {
+        parent.Common.Error($.parseJSON(oResult).d.split("ERROR|")[1], "Error Dialog", null);
+    }
+}
+
+//////////////////////////////////////////////// 첨부파일 ///////////////////////////////////////////////////////////
+
+// CoviFileTrans Active X 설치여부 확인
+function XFN_IsUseCoviFileTrans() {
+    var Installx = false;
+
+    try {
+        Installx = new ActiveXObject("COVITRANS.CoviTransCtrl.1");
+        if (Installx) Installed = true; else Installed = false;
+    }
+    catch (ex) { Installed = false; }
+
+    return Installx;
+}
+
+// CoviFileTrans Active X 설치
+function XFN_InstallCoviFileTrans() {
+    Common.Confirm("업로드 컨트롤을 다운받습니다.<br /> 다운받은 컨트롤을 설치하시면 업로드 기능을 사용 할 수 있습니다.<br /> * 입력한 내용이 저장되지 않습니다.", 'Confirmation Dialog', function (result) {
+        window.open(Common.GetBaseConfig("InstallCoviFileTrans"));
+    });
+}
+
+// 첨부파일 Zip 다운로드 & 멀티다운로드 Active X
+// IE 10 && IE외 브라우저 == 첨부파일 Zip 다운로드
+// IE 10 이하 버전 멀티다운로드 Active X
+function XFN_FileMultiDownload(pSubject, pWindows, pDownLoadType, pMsgID, pObjectID, pObjectType, pServiceType, pFileType, pDownFolder, pDownLoadTitle, pFileID) {
+    if (_ie) {
+        if (_ieVer >= 10) {
+            XFN_MultiDownload_Zip(pSubject, pServiceType, pObjectID, pObjectType, pMsgID);
+        } else {
+            if (XFN_IsUseCoviFileTrans()) {
+                XFN_DownloadCoviFileTrans(pWindows, pDownLoadType, pMsgID, pObjectID, pObjectType, pServiceType, pFileType, pDownFolder, pDownLoadTitle, pFileID);
+            } else {
+                Common.Confirm("멀티 다운로드 Active X를 설치 하시겠습니까? 설치 하지 않을 경우 기능을 이용 하실 수 없습니다.", "Confirmation Dialog", function (result) {
+                    if (result) {
+                        XFN_DownloadCoviFileTrans(pWindows, pDownLoadType, pMsgID, pObjectID, pObjectType, pServiceType, pFileType, pDownFolder, pDownLoadTitle, pFileID);
+                    }
+                });
+            }
+        }
+
+    } else {
+        aMultiDownload_Zip();
+    }
+}
+
+// 웹메일용 첨부파일 멀티 다운로드
+function XFN_FileMultiDownload_WebMail(pStrPopupId, pStrXMLAttachFileInfo) {
+    pStrPopupId = pStrPopupId + "_" + (Math.random() * (1 << 30)).toString(16).replace('.', ''); // GUID 생성하여 새로운 창으로 연다
+
+    var sURL = "/Common/ExControls/FileDownload/MultiFileDownloadDext5Upload.aspx";
+
+    var fnOpenLayerPopup = Common.ShowDialog;
+
+    try {
+        if (parent.Common.Show) {
+            fnOpenLayerPopup = parent.Common.ShowDialog;
+        }
+    } catch (e) { }
+
+    fnOpenLayerPopup("", pStrPopupId, Common.GetDic("btn_AllDownload"), sURL, "560px", "330px", "iframe");
+}
+function XFN_FileMultiDownload_WebMail_Zip(pStrXMLAttachFIleInfo) {
+    parent.Common.Progress();
+    CFN_CallAjaxJson(Common.GetPgModule("Base.WebService") + "/GetAttachFileAllDownloadZip", "{pSystem:'MAIL',pStrXMLAttachFIleInfo:'" + escape(encodeURIComponent(pStrXMLAttachFIleInfo)) + "'}", true, function (pObjData) {
+        var oXml = $($.parseXML(pObjData.d));
+        if (eval(oXml.find("Result").text())) {
+            parent.Common.AlertClose();
+            var l_ZipFilePath = oXml.find("ZipFilePath").text();
+            var l_ZipFileName = oXml.find("ZipFileName").text();
+            var sURL = Common.GetPgModule("FileDownLoad.Zip") + "?ZipFilePath=" + escape(encodeURIComponent(l_ZipFilePath)) + "&ZipFileName=" + escape(encodeURIComponent(l_ZipFileName));
+
+            if (document.getElementById("divFileDownLoadHiddenLayer") == null) {
+                $("body").append("<div id = 'divFileDownLoadHiddenLayer' style='display:none;'><iframe id='ifrDownLoadHiddenFrame' src='' name='download' style='width:0px; heigth:0px'></iframe></div>");
+            }
+            $("#ifrDownLoadHiddenFrame").attr("src", sURL);
+        } else {
+            parent.Common.Error(oXml.find("Reason").text(), "Error Dialog", null);
+        }
+    });
+}
+function XFN_FileMultiDownload_WebMail_ActiveX(pStrXMLAttachFIleInfo) {
+    var sURL = "/WebMail/Controls/MailWebService.asmx";
+    CFN_CallAjaxJson(sURL + "/GetAttachFileAllDownload", "{pStrXMLAttachFIleInfo:'" + escape(encodeURIComponent(pStrXMLAttachFIleInfo)) + "'}", true, function (pObjData) {
+        var oXml = $($.parseXML(pObjData.d));
+        if (eval(oXml.find("Result").text())) {
+            var sAttachFIleInfo = oXml.find("AttachFileInfo").text();
+            if (sAttachFIleInfo != "") {
+                $("#hidMultiFileInfo").val(sAttachFIleInfo);
+                var l_winstyle = "height=350, width=270, menubar=no, toolbar=no, status=no, scrollbars=no, resizable=no";
+                var l_winpath = "/Common/ExControls/FileDownload/FileDownloadCoviTrans_WebMail.aspx?FileInfoID=hidMultiFileInfo";
+                CFN_OpenWindow(l_winpath, 'CoviDownLoad', 270, 350, "fix");
+            }
+        } else {
+            parent.Common.Error(oXml.find("Reason").text(), "Error Dialog", null);
+        }
+    });
+}
+
+// 멀티 다운로드 호출(Zip)
+function XFN_MultiDownload_Zip(pSubject, pServiceType, pObjectID, pObjectType, pMsgID) {
+    // Common.Progress();
+
+    //XML데이터 생성
+    var oXml = MultiDownload_Zip_MakeXML(pSubject, pServiceType, pObjectID, pObjectType, pMsgID);
+
+    //XML문자열 구하기 (크로스브라우징)
+    var oXmlStr = "";
+    if (_ie) {  //IE브라우져
+        oXmlStr = oXml.xml;
+    } else {
+        oXmlStr = new XMLSerializer().serializeToString(oXml);
+    }
+
+    CFN_CallAjaxJson(Common.GetPgModule("Base.WebService") + "/GetAttachFileAllDownloadZip", "{pSystem:'" + pServiceType + "',pStrXMLAttachFIleInfo:'" + oXmlStr + "'}", true, function (pObjData) {
+        var oXml = $($.parseXML(pObjData.d));
+        if (eval(oXml.find("Result").text())) {
+            Common.AlertClose();
+            var l_ZipFilePath = oXml.find("ZipFilePath").text();
+            var l_ZipFileName = oXml.find("ZipFileName").text();
+
+            var sURL = Common.GetPgModule("FileDownLoad.Zip") + "?ZipFilePath=" + escape(encodeURIComponent(l_ZipFilePath)) + "&ZipFileName=" + escape(encodeURIComponent(l_ZipFileName));
+            if (document.getElementById("divFileDownLoadHiddenLayer") == null) {
+                $("body").append("<div id = 'divFileDownLoadHiddenLayer' style='display:none;'><iframe id='ifrDownLoadHiddenFrame' src='' name='download' style='width:0px; heigth:0px'></iframe></div>");
+            }
+            $("#ifrDownLoadHiddenFrame").attr("src", sURL);
+        } else {
+            parent.Common.Error(oXml.find("Reason").text(), "Error Dialog", null);
+        }
+    });
+}
+
+function MultiDownload_Zip_MakeXML(pSubject, pServiceType, pObjectID, pObjectType, pMsgID) {
+    var oXml = CreateXmlDocument();
+
+    var strWrap = "<Attachment></Attachment>";
+    if (window.ActiveXObject !== undefined) {
+        if (!oXml.loadXML(strWrap)) {
+            return;
+        }
+    } else if (document.implementation.createDocument) {   // ie 이외
+        oXml = document.implementation.createDocument("", "Attachment", null);
+
+    } else {
+        Common.Warning(Common.GetDic("msg_NoSupportBrowse"));  //지원하지 않는 브라우져 입니다
+    }
+
+    // 대상자 XML
+    FcNodeText("Subject", pSubject, oXml);
+    FcNodeText("ServiceType", pServiceType, oXml);
+    FcNodeText("ObjectID", pObjectID, oXml);
+    FcNodeText("ObjectType", pObjectType, oXml);
+    FcNodeText("MessageID", pMsgID, oXml);
+
+
+    return oXml;
+
+}
+
+// 언어 변경
+function XFN_SetChangeLanguage(pStrLanguageCode) {
+    Common.Progress();
+
+    var sURL = "/Common/Controls/PortalWebService.asmx";
+    CFN_CallAjaxJson(sURL + "/SetChangeLanguage", "{pStrLanguageCode:'" + pStrLanguageCode + "'}", true, function (pObjData) {
+        var oXmlResult = $($.parseXML(pObjData.d));
+        Common.AlertClose();
+        if (eval(oXmlResult.find("Result").text())) {
+            location.href = location.href;
+        } else {
+            Common.Error(oXmlResult.find("Reason").text(), Common.GetDic("lbl_Alram"), null);
+        }
+    });
+}
+
+// 특정 언어로 입력된 정보를 보여주기('ko-KR;지역언어;영어'로 구분된 다국어 정보)
+function XFN_GetDicInfo(pStringInfo, pLanguageCode) {
+    // 현대기아차 방식
+    var strReturn = "";
+    var strMyLangCode = "ko-KR";
+    var strDataLangCode = "ko-KR";
+    var arrStringInfo = pStringInfo.split(";");
+
+    if (arrStringInfo.length > 2) {
+        if (typeof pLanguageCode == "undefined") {
+            if (typeof _Language == "undefined") {
+                strMyLangCode = Common.GetSession("Language");
+            } else {
+                strMyLangCode = _Language;
+            }
+        } else {
+            strMyLangCode = pLanguageCode;
+        }
+        if (arrStringInfo[0].toLowerCase() == strMyLangCode.toLowerCase()) {
+            if (arrStringInfo[1] != "") {
+                strReturn = arrStringInfo[1];
+            } else {
+                strReturn = arrStringInfo[2];
+            }
+        } else {
+            if (arrStringInfo[2] != "") {
+                strReturn = arrStringInfo[2];
+            } else {
+                strReturn = arrStringInfo[1];
+            }
+        }
+        if (typeof pLanguageCode != "undefined") {
+            if (pLanguageCode.toLowerCase() == "local") {
+                strReturn = arrStringInfo[1];
+            } else if (pLanguageCode.toLowerCase() == "eng") {
+                strReturn = arrStringInfo[2];
+            }
+        }
+    } else {
+        strReturn = pStringInfo;
+    }
+
+    return strReturn;
+}
+
+// 데이터 다국어 처리 함수(데이터 언어코드, 로컬 데이터, 영어 데이터)
+function XFN_GetDicData(pDataLangCode, pLocalData, pEnglishData) {
+    var strReturn = "";
+    var strMyLangCode = "ko-KR";
+    if (typeof _Language == "undefined") {
+        strMyLangCode = Common.GetSession("Language");
+    } else {
+        strMyLangCode = _Language;
+    }
+
+    if (pDataLangCode.toLowerCase() == strMyLangCode.toLowerCase()) {
+        if (pLocalData != "") {
+            strReturn = pLocalData;
+        } else {
+            strReturn = pEnglishData;
+        }
+    } else {
+        if (XFN_IsNullOrEmpty(pEnglishData)) {
+            strReturn = "";
+        } else {
+            strReturn = pEnglishData;
+        }
+    }
+
+    return strReturn;
+}
+
+// 다국어 방식 변경 - 언어코드;자국어;영문 2017.04.17 임동현
+function XFN_GetDicDatas(pLangData) {
+    var result = "";
+    if (pLangData != undefined) {
+        var splitData = pLangData.split(';');
+
+        if (splitData.length > 2) {
+            result = CFN_GetDicData(splitData[0], splitData[1], splitData[2]);
+        }
+        else {
+            result = pLangData;
+        }
+    }
+
+    return result;
+}
+
+// 지정한 컨테이너 안의 특정 class를 준 하위 텍스트의 데이터 다국어 처리
+function XFN_TransDicInfoContainer(pContainerID, pTargetClass) {
+    $("#" + pContainerID).each(function () {
+        $(this).find("." + pTargetClass).each(function () {
+            $(this).text(XFN_GetDicDatas($(this).text()))
+            $(this).removeClass(pTargetClass);
+        });
+    });
+}
+
+function XFN_GetUserDisplayName(pExDisplayUserName, pExJobPositionName, pExDeptName)
+{
+    var sCurrentLanguage = _Language;
+    var strUserName ="";
+    var strJobPositionName ="";
+    var strDeptName ="";
+    var sReturn = "";
+    if(pExJobPositionName == undefined && pExDeptName == undefined)
+    {
+
+        var sURL = Common.GetPgModule("Portal.WebService");
+        var sResult = CFN_CallAjaxJson(sURL + "/OrgMapSelectedLoad", "{pStrDept:'',pStrUser:'" + pExDisplayUserName + "'}", false, null);
+        var bCheck = $.parseJSON(sResult).d[0].Value;
+        var sResultData = $.parseJSON(sResult).d[1].Value;
+
+        if (bCheck) {
+            if ($($.parseXML(sResultData)).find("ExDisplayName").length>0)
+                strUserName = $($.parseXML(sResultData)).find("ExDisplayName").text();
+            if ($($.parseXML(sResultData)).find("ExJobPositionName").length > 0)
+                strJobPositionName = $($.parseXML(sResultData)).find("ExJobPositionName").text();
+            if(strDeptName = $($.parseXML(sResultData)).find("GroupName").length>0)
+                strDeptName = $($.parseXML(sResultData)).find("GroupName").text();
+            strUserName = XFN_GetDicInfo(strUserName);
+            strJobPositionName = XFN_GetDicInfo(strJobPositionName);
+            strDeptName = XFN_GetDicInfo(strDeptName);
+        }
+        else {
+            Common.Warning(sResultData);
+            return "";
+        }
+    }
+    else{
+        strUserName = XFN_GetDicInfo(pExDisplayUserName);
+        strJobPositionName = XFN_GetDicInfo(pExJobPositionName);
+        strDeptName = XFN_GetDicInfo(pExDeptName);
+    }
+    
+    if (sCurrentLanguage == "ko-KR")
+    {
+        sReturn = strUserName;
+        if (strJobPositionName != "")
+            sReturn = sReturn + " " + strJobPositionName;
+        if (strDeptName != "")
+            sReturn = sReturn + " " + strDeptName;
+    }
+    else
+    {
+        sReturn = strUserName;
+        if (strJobPositionName != "")
+            sReturn = sReturn + " " + strJobPositionName;
+    }
+    return sReturn;
+}
+
+// 20171201 hpark XSS처리 ComUtils.ConvertInputValue 스크립트버전 추가
+function XFN_ConvertXssView(pValue)
+{
+	if (!pValue) return "";
+    pValue = pValue.replace(/</gi, "&lt;");
+    pValue = pValue.replace(/>/gi, "&gt;");
+    pValue = pValue.replace(/"/gi, "&quot;");
+    pValue = pValue.replace(/'/gi, "&apos;");
+    //pValue = pValue.replace(/\\/gi, "&#x2F;");
+    
+	return pValue;
+}
+
+
+// 프레젠스 정보 가져오기
+function XFN_GetPresenseInfo(pTarget) {
+    var sURL = Common.GetPgModule("Portal.WebService");
+    var oResult = CFN_CallAjaxJson(sURL + "/GetPresenseInfo", "{ pTargetCode:'" + pTarget + "'}", false, null);
+    var bSucces = eval($.parseJSON(oResult).d[0].Value);
+    var sResult = $.parseJSON(oResult).d[1].Value;
+    if (!bSucces) {
+        Common.Error(sResult, "Error Dialog", function () { });
+        return "";
+    } else {
+        return eval('(' + sResult + ')');
+    }
+}
+
+
+//NULL,undefiend,공백시 체크 리턴해주는 함수
+function XFN_IsNullOrEmpty(pString) {
+    if (pString == "" || pString == undefined || pString == "undefined" || pString == null || pString == "null") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//NULL,undefiend,공백시 공백 리턴해주는 함수
+function XFN_IsNullOrEmptyToString(pString) {
+    if (pString == "" || pString == undefined || pString == "undefined" || pString == null || pString == "null") {
+        return "";
+    } else {
+        return pString;
+    }
+}

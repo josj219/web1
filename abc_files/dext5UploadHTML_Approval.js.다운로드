@@ -1,0 +1,1027 @@
+﻿var G_UploadID;
+var G_vertical = '\u000B'; // 파일 구분자
+var G_formfeed = '\u000C'; // 각 파일당 속성 구분자
+
+// 첨부파일 컨트롤 iframe 로드
+function LoadFileUpload(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    var ifrmHtml5 = '';
+    ifrmHtml5 = '<iframe src="/Common/ExControls/Dext5upload/Dext5UploadHTML_Iframe_Approval.aspx?ControlSeq=' + pSeq + '" id="iframeHTML5_if' + pSeq + '" scrolling="no" style="width:100%; height:129px; border:0px solid #c4c4c4; background:white;"></iframe>';
+    ifrmHtml5 += '<input type="hidden" id="fileInfo' + pSeq + '" value=""/>';
+    return ifrmHtml5;
+}
+
+//////////////////////////  컨트롤 버튼 이벤트(열기, 추가, 저장, 삭제) /////////////////////////
+// 선택한 파일 열기(오픈)
+function OpenSelectedFile(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_openSelectedFile();
+}
+
+// 파일 추가
+function AddFile(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_openFileDialog();
+}
+
+// 로템 자료공유시스템 파일을 전자결재 양식 첨부영역으로 추가
+function AddFileRotem() {
+    if (Common.GetSession("HMG_EXTERNAL_CONNECTION").toUpperCase() == "N") { // N : 사내, Y : 사외
+        var sOpenName = "MailSharedSaveWin";
+        var sWidth = "950px"; // (window.screen.width / 2) + 300 + "px";
+        var sHeight = "550px"; // (window.screen.height / 2) + 220 + "px";
+        var sURL = Common.GetBaseConfig("FileShareSystemLink", "4"); // 로템 DN_ID : 4; /Common/ExControls/Rotem/SelectData.aspx
+
+        Common.ShowDialog("", sOpenName, "<img style='margin-bottom: -7px;' src='" + Common.GetBaseConfig("FileShareLogoImage", "4") + "'>&nbsp;" + Common.GetDic("lbl_Share_Win")/*자료공유시스템*/, sURL, sWidth, sHeight, "iframe-ifNoScroll");
+        var frmif = $("#MailSharedSaveWin_if");
+        var frm = frmif.get(0).contentWindow;
+        var closeBtn = frmif.parent().parent().parent().find(".divpop_close").hide();
+
+        frmif.bind("load", function () {//iframe 로딩후 동작
+            //console.log(frmif);
+            frm.closeAction = function () { closeBtn.trigger("click"); };
+            frm.selectAction = function (selectDatas, dType) {
+                //console.log(selectDatas, dType);
+                if (selectDatas.length > 0) {
+                    var isdownloadable = true;
+                    var F_name = "", F_size = "", F_idx = "", F_domain = "", F_dtype = "";
+                    for (var i = 0; i < selectDatas.length; i++) {
+                        if (selectDatas[i].limit == "Y" && selectDatas[i].down == "N" && selectDatas[i].pwd == "N") {
+                            Common.Warning(selectDatas[i].name + " > " + Common.GetDic("msg_File_CannotDownload"), Common.GetDic("lbl_WarningTitle"), function () { }); // 다운로드 불가능한 파일입니다.
+                            isdownloadable = false;
+                            break;
+                        }
+                        else if (Common.GetBaseConfig('FileExtensionFilter').indexOf(selectDatas[i].fext) > 0) {
+                            Common.Warning(selectDatas[i].name + " > " + Common.GetDic("msg_File_CannotDownload"), Common.GetDic("lbl_WarningTitle"), function () { }); // 다운로드 불가능한 파일입니다.
+                            isdownloadable = false;
+                            break;
+                        }
+                            //else if ($("#iframeHTML5_if")[0].contentWindow.DEXT5UpLoadFileList() != null && $("#iframeHTML5_if")[0].contentWindow.DEXT5UpLoadFileList().length > 0) {
+                            //    var oXml = $("#iframeHTML5_if")[0].contentWindow.DEXT5UpLoadFileList();                            
+                            //    $(oXml).each(function(i, obj) {
+                            //        if (selectDatas[i].name == obj.FileName) {
+                            //            Common.Warning(selectDatas[i].name + " > " + Common.GetDic("msg_DuplicateFileExists"), Common.GetDic("lbl_WarningTitle"), function () { }); // 중복된 파일이 존재 합니다.
+                            //            isdownloadable = false;
+                            //            return false;
+                            //        }
+                            //        else {
+                            //            F_name += selectDatas[i].name + ",";
+                            //            F_size += selectDatas[i].size + ",";
+                            //            F_idx += selectDatas[i].idx + ",";
+                            //            F_domain += selectDatas[i].domain + ",";
+                            //            F_dtype += dType + ",";
+                            //        }
+                            //    });
+                            //}
+                        else {
+                            F_name += selectDatas[i].name + ",";
+                            F_size += selectDatas[i].size + ",";
+                            F_idx += selectDatas[i].idx + ",";
+                            F_domain += selectDatas[i].domain + ",";
+                            F_dtype += dType + ",";
+                        }
+                    }
+
+                    if (isdownloadable) {
+                        getFileInfoForRotem(F_name.substring(0, F_name.length - 1), F_size.substring(0, F_size.length - 1), F_idx.substring(0, F_idx.length - 1), F_domain.substring(0, F_domain.length - 1), F_dtype.substring(0, F_dtype.length - 1))
+                    }
+
+                    frm.closeAction();
+                }
+            };
+        });
+    }
+    else {
+        Common.Warning(Common.GetDic("msg_Share_Warning"), Common.GetDic("lbl_WarningTitle"), function () { }); // 보안상 사내에서만 사용 가능합니다.
+        return;
+    }
+}
+
+// 로템 자료공유시스템 (파일업로드)
+function UploadFileRotem() {
+    if (Common.GetSession("HMG_EXTERNAL_CONNECTION").toUpperCase() == "N") { // N : 사내, Y : 사외        
+        var oXml = $($("#iframeHTML5_if")[0].contentWindow.DEXT5UPLOAD.GetSelectedAllFileListForXml(G_UploadID));
+
+        var nSelectedFileCount = 0;
+        if (oXml != null) {
+            nSelectedFileCount += oXml.find("file").length;
+        }
+
+        if (nSelectedFileCount == 0) {
+            parent.Common.Warning(Common.GetDic("msg_SelectFile"));
+        }
+        else {
+            $oXmlFile = oXml.find("file");
+            var sUploadFileInfo = "";
+            $($oXmlFile).each(function (i, obj) {
+                var pVal = getParams(obj.textContent);
+                //sUploadFileInfo += pVal["fiid"] + ";" + pVal["idx"] + ";" + pVal["fileid"] + ";" + pVal["filename"] + "|";
+                sUploadFileInfo += pVal["fiid"] + ";" + pVal["idx"] + "|";
+            });
+
+            var sTitle = Common.GetDic("lbl_Rotem_FileSharing");       // 자료공유시스템(로템)
+            var strURL = Common.GetPgModule("Rotem_FileUpload_ToFS");  // /Common/ExControls/FileUpload/FileUpload_Approval_Rotem.aspx
+            strURL = strURL + "?sUploadFileInfo=" + encodeURI(sUploadFileInfo);
+            var vwidth = (window.screen.width / 4);
+            var swidth = vwidth + "px";
+            var vheight = (window.screen.height / 2);
+            var sheight = vheight + "px";
+            //Common.ShowDialog("AddSharingDocument", "div_AddSharingDocument", sTitle, strURL, swidth, "450px", "iframe-scroll");
+            Common.ShowDialog("AddSharingDocument", "div_AddSharingDocument", "<img style='margin-bottom: -7px;' src='" + Common.GetBaseConfig("FileShareLogoImage", "4") + "'>&nbsp;" + Common.GetDic("lbl_Share_Win")/*자료공유시스템*/, strURL, swidth, "450px", "iframe-scroll");
+        }
+    }
+    else {
+        Common.Warning(Common.GetDic("msg_Share_Warning"), Common.GetDic("lbl_WarningTitle"), function () { }); // 보안상 사내에서만 사용 가능합니다.
+        return;
+    }
+}
+
+// 로템 자료공유시스템 (다운로드)
+function DownloadFromFileShareToGroupware(F_name, F_size, F_idx, F_domain, F_dtype) {
+    var sURL = Common.GetPgModule("Rotem_FileDown_FromFS"); // /Common/ExControls/FileDownload/FileDownload_Approval_Rotem.aspx
+    var Params = String.format("{downLoadPath:\"{0}\", fileIdx:\"{1}\", domainIdx:\"{2}\", domainFolderType:\"{3}\", downLoadFileName:\"{4}\", fileAction:\"RotemFileDownFromShareSystem\"}"
+                , encodeURI(CFN_GetCtrlById("hidFrontPath").value), F_idx, F_domain, F_dtype, F_name);
+    try {
+        Common.Loading(Common.GetDic("msg_Downloading")); // 다운로드 중입니다.
+        CFN_CallAjaxJson(sURL, Params, false, function (data) {
+            var receivedData = $.parseJSON(data);
+            var result = $.parseJSON(receivedData);
+            if (result.RESULT == "OK") {
+                var l_type = $("#AlertLayer").attr("AlertType");
+                if (l_type == "progress") {
+                    $.alerts._hide();
+                }
+            }
+            else {
+                alert("Error");
+            }
+        });
+    } catch (e) {
+        alert("Error" + e.toString());
+    }
+}
+
+// 로템 자료공유시스템 (다운로드한 파일 그룹웨어 FrontStorage 로 복사)
+function CopyFromFileShareToGroupware(updateFileInfo, diff_idxArr) {
+
+    var downF_name = "";
+    var downF_size = "";
+    var downF_idx = "";
+    var downF_domain = "";
+    var downF_dtype = "";
+
+    // 새로 추가된 것만 복사
+    if (diff_idxArr.length > 0 && diff_idxArr[0] != "") {
+        for (var i = 0; i < diff_idxArr.length; i++) {
+            $.each(updateFileInfo, function (key, value) {
+                if (diff_idxArr[i] == key) {
+                    downF_name += value.split('|')[0] + ","
+                    downF_size += value.split('|')[1] + ","
+                    downF_idx += key + ","
+                    downF_domain += value.split('|')[2] + ","
+                    downF_dtype += value.split('|')[3] + ","
+                }
+            });
+        }
+
+        downF_name = downF_name.substring(0, downF_name.length - 1);
+        downF_size = downF_size.substring(0, downF_size.length - 1);
+        downF_idx = downF_idx.substring(0, downF_idx.length - 1);
+        downF_domain = downF_domain.substring(0, downF_domain.length - 1);
+        downF_dtype = downF_dtype.substring(0, downF_dtype.length - 1);
+
+        if (downF_idx.length > 0) {
+            var sURL = Common.GetPgModule("Rotem_FileDown_FromFS"); // /Common/ExControls/FileDownload/FileDownload_Approval_Rotem.aspx
+            var Params = String.format("{downLoadPath:\"{0}\", fileIdx:\"{1}\", domainIdx:\"{2}\", domainFolderType:\"{3}\", downLoadFileName:\"{4}\", fileAction:\"RotemFileCopyToFrontStorage\"}"
+                        , encodeURI(CFN_GetCtrlById("hidFrontPath").value), downF_idx, downF_domain, downF_dtype, downF_name);
+            try {
+                CFN_CallAjaxJson(sURL, Params, false, function (data) {
+                    var receivedData = $.parseJSON(data);
+                    var result = $.parseJSON(receivedData);
+                    if (result.RESULT == "OK") {
+                        var saveFilePath = decodeURI(result.RESULT_MESSAGE);
+                        CFN_GetCtrlById("hidRotemFilePath").value = saveFilePath;
+                    }
+                    else {
+                        alert("Error");
+                    }
+                });
+            } catch (e) {
+                alert("Error" + e.toString());
+            }
+        }
+    }
+}
+
+// 로템 자료공유시스템 다운로드 파일정보 수신 (자료공유시스템 추가 > 파일선택 > 확인 버튼 클릭 시 콜백함수)
+function getFileInfoForRotem(F_name, F_size, F_idx, F_domain, F_dtype) {
+    /*
+        F_nm : 파일명 ex. 링크테스트.txt
+        F_size : 파일사이즈 ex. 10542(Byte)
+        F_idx : 파일 idx (파일의 키)
+        F_domain : 도메인 idx
+        F_dtype : 파일이 업로드 되어 있는 폴더 타입 ex. 3 // 1:내디스크, 2:개인공유, 3:그룹공유, 4:도메인공유, 5:게스트, 6:휴지통, 7:개인사진, 8:개인문서, 9:파일수신함, A:개인보안
+    */
+    var newF_nameArr = F_name.split(',');
+    var newF_sizeArr = F_size.split(',');
+    var newF_idxArr = F_idx.split(',');
+    var newF_domainArr = F_domain.split(',');
+    var newF_dtypeArr = F_dtype.split(',');
+
+    var oldF_nameArr = CFN_GetCtrlById("hidRotemFileName").value.split(',');
+    var oldF_sizeArr = CFN_GetCtrlById("hidRotemFileSize").value.split(',');
+    var oldF_idxArr_A = oldF_idxArr = CFN_GetCtrlById("hidRotemFileIdx").value.split(',');
+    var oldF_domainArr = CFN_GetCtrlById("hidRotemDomainIdx").value.split(',');
+    var oldF_dtypeArr = CFN_GetCtrlById("hidRotemDomainFolderType").value.split(',');
+
+    var uniqF_nameArr, uniqF_sizeArr, uniqF_idxArr, uniqF_domainArr, uniqF_dtypeArr;
+    var updateF_name = "", updateF_size = "", updateF_idx = "", updateF_domain = "", updateF_dtype = "";
+    var updateFileInfo = {};
+    var interF_idxArr;
+    var diff_idxArr;
+
+    // Step1. 자료공유시스템에서 파일 다운로드 (선택한 것은 전부 다운로드)
+    DownloadFromFileShareToGroupware(F_name, F_size, F_idx, F_domain, F_dtype);
+
+    // Step2. 파일정보 정리 - 중복파일 등(idx)
+    if (oldF_idxArr[0] != "") {
+        for (var i = 0; i < oldF_idxArr.length; i++) {
+            updateFileInfo[oldF_idxArr[i]] = oldF_nameArr[i] + "|" + oldF_sizeArr[i] + "|" + oldF_domainArr[i] + "|" + oldF_dtypeArr[i];
+        }
+    }
+
+    for (var i = 0; i < newF_idxArr.length; i++) {
+        updateFileInfo[newF_idxArr[i]] = newF_nameArr[i] + "|" + newF_sizeArr[i] + "|" + newF_domainArr[i] + "|" + newF_dtypeArr[i];
+    }
+
+    $.each(updateFileInfo, function (key, value) {
+        updateF_name += value.split('|')[0] + ",";
+        updateF_size += value.split('|')[1] + ",";
+        updateF_idx += key + ",";
+        updateF_domain += value.split('|')[2] + ",";
+        updateF_dtype += value.split('|')[3] + ",";
+    });
+
+    CFN_GetCtrlById("hidRotemFileName").value = updateF_name.substring(0, updateF_name.length - 1);
+    CFN_GetCtrlById("hidRotemFileSize").value = updateF_size.substring(0, updateF_size.length - 1);
+    CFN_GetCtrlById("hidRotemFileIdx").value = updateF_idx.substring(0, updateF_idx.length - 1);
+    CFN_GetCtrlById("hidRotemDomainIdx").value = updateF_domain.substring(0, updateF_domain.length - 1);
+    CFN_GetCtrlById("hidRotemDomainFolderType").value = updateF_dtype.substring(0, updateF_dtype.length - 1);
+
+    // intersect
+    $.intersect = function (a, b) { return $.grep(a, function (i) { return $.inArray(i, b) > -1; }); };
+    interF_idxArr = $.intersect(oldF_idxArr_A, newF_idxArr);
+    // diff        
+    //diff_idxArr = $(newF_idxArr).add(oldF_idxArr_A).not(interF_idxArr).get();
+    diff_idxArr = $(newF_idxArr).not(interF_idxArr).get();
+
+    // Step3. 자료공유시스템에서 파일 다운로드한 파일을 FrontStorage 로 복사
+    CopyFromFileShareToGroupware(updateFileInfo, diff_idxArr);
+
+    // Step4. 다운로드한 파일 표시
+    //debugger;
+    if (oldF_idxArr == undefined) {
+        for (var i = 0; i < newF_nameArr.length; i++) {
+            $("#iframeHTML5_if")[0].contentWindow.DEXT5UPLOAD.AddUploadedFile(i + 1, unescape(newF_nameArr[i]), "", parseInt(newF_sizeArr[i]), newF_idxArr[i], "dext5upload");
+        }
+    }
+    else {
+        // 새로 추가된 것만 표시
+        if (diff_idxArr.length > 0) {
+            for (var i = 0; i < diff_idxArr.length; i++) {
+                $.each(updateFileInfo, function (key, value) {
+                    if (diff_idxArr[i] == key) {
+                        $("#iframeHTML5_if")[0].contentWindow.DEXT5UPLOAD.AddUploadedFile(i + 1, unescape(value.split('|')[0]), "", parseInt(value.split('|')[1]), key, "dext5upload");
+                    }
+                });
+            }
+        }
+    }
+
+    // 파일 용량 보이기
+    var List = GetApprovalUpLoadFileList();
+    var fileSize = 0.0;
+    var fileCnt = 0;
+    var MaxFileCnt = Common.GetBaseConfig("MaxUpload");
+
+    $.each(List, function () {
+        var Name = this.FileName;
+        var Size = this.FileSize;
+        fileCnt++;
+        fileSize += Math.ceil(parseInt(Size).toFixed(2) / 1024);
+    });
+
+    MaxFileCnt = GetApprovalUpLoadMaxCnt();
+    if ((fileSize >= 1024) || (fileSize == 0)) {
+        var fileSize_MB_arr = (Math.ceil((fileSize / 1024) * 10) / 10).toString().split('.');
+        var fileSize_MB_Comma = setComma(fileSize_MB_arr[0]);
+        if (fileSize_MB_arr[1] != undefined) fileSize_MB_Comma = fileSize_MB_Comma + "." + fileSize_MB_arr[1];
+        fileSize_MB_Comma += "MB";
+        document.getElementById("f_ck_sp").innerHTML = "<i class='i-file'></i> <span class='l-file__color'>" + fileCnt + "</span>" + gLabel_lbl_units + ",<span class='l-file__color'>" + fileSize_MB_Comma + "</span> " + gLabel_lbl_added + " <span class='l-file__small-caption'>(" + gLabel_lbl_max + "<span class='l-file__color'>" + MaxFileCnt + "</span>" + gLabel_lbl_units + " <span class='l-file__color'>" + Common.GetBaseConfig("MaxFileSize") + "</span>MB " + gLabel_lbl_limits + ")</span>";
+    }
+    else {
+        var fileSize_KB_Comma = setComma(fileSize) + "KB";
+        document.getElementById("f_ck_sp").innerHTML = "<i class='i-file'></i> <span class='l-file__color'>" + fileCnt + "</span>" + gLabel_lbl_units + ",<span class='l-file__color'>" + fileSize_KB_Comma + "</span>  " + gLabel_lbl_added + " <span class='l-file__small-caption'>(" + gLabel_lbl_max + "<span class='l-file__color'>" + MaxFileCnt + "</span>" + gLabel_lbl_units + " <span class='l-file__color'>" + Common.GetBaseConfig("MaxFileSize") + "</span>MB " + gLabel_lbl_limits + ")</span>";
+        // <span class="l-file__small-caption">(최대 <span class="l-file__color">20</span>개 <span class="l-file__color">300MB</span> 제한)</span>
+    }
+}
+
+// 선택한 파일 저장(다운로드)
+function SelectFileDownLoad(pSeq, pEvent) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_downloadFile();
+    if (pEvent) {
+        pEvent.preventDefault();
+        pEvent.stopPropagation();
+    }
+}
+
+// 선택된 파일 삭제
+function DeleteFile(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_deleteSelectedFile();
+}
+
+// 추가한 파일 전체 선택
+function CheckAll(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.CheckAll();
+}
+
+//등록된 모든 파일 정보 확인(프린트에서 사용됨)
+function GetApprovalUpLoadFileList() {
+    return $("#iframeHTML5_if")[0].contentWindow.DEXT5UpLoadFileList();
+}
+
+function GetOpenerApprovalUpLoadFileList() {
+    return opener.$("#iframeHTML5_if")[0].contentWindow.DEXT5UpLoadFileList();
+}
+
+function GetFileCount() {
+    return fn_getTotalFileCount();
+}
+
+function getFiles() {
+    return DEXT5UpLoadFileList();
+}
+
+//Dext5 컨트롤을 이용하지 않은화면에서 Dext5 컨트롤이용 다운로드 처리, 2017.10.26, 양유빈
+//양식화면에서 UseDefineDext5ControlDownload()을 호출하면 CommonFileDownLoadProcess()를 실행하고 Dext5 다운로드 모듈을 이용한다.
+//iframe 사용: 양식에 Dext5 컨트롤이 있는 상태에서 2개의 컨트롤를 넣을수 없음. 따라서 iframe로 추가함.
+function UseDefineDext5ControlDownload() {
+    var l_sDownURL = '/Common/ExControls/dext5upload/Dext5UploadHTML_DownloadForm.aspx';
+    if ($("#Dext5filedownloadiframe").length > 0) {
+        $("#Dext5filedownloadiframe").attr("src", l_sDownURL);
+    } else {
+        var $iFrm = $('<IFRAME id="Dext5filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+        $iFrm.appendTo('body');
+    }
+}
+
+//양식 의견 파일첨부 다운로드
+function CommonFileDownLoadProcess(fileid, itemKey, MessageId, doclevel) {
+    try {
+        /*
+        if ($("#Dext5filedownloadiframe").length > 0) {
+            //DRM 협조처 개수에 따른 처리
+            var ConsultDrmYn = "N";
+            var ExistObject = $("#CONSULT_DRM_YN").length;
+            if (ExistObject == 1) {
+                ConsultDrmYn = $("#CONSULT_DRM_YN").val();
+            }
+            var contentWindow = $("#Dext5filedownloadiframe")[0].contentWindow;
+            contentWindow.CallDext5DownLoad(fileid, itemKey, MessageId, doclevel, ConsultDrmYn);
+        }
+        else {
+            var templatemode = parent.getInfo("templatemode");//Read or Write
+            if (templatemode == undefined || templatemode == "") {
+                templatemode = "Read";
+            }
+            var l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+            var IS_MULTI = "N";
+            var ConsultDrmYn = "N";//기안시 협조처 개수를 ConsultDrmYn="Y" 에 DRM 미적용.2017.09.09, 양유빈
+            var fmpf = parent.getInfo("fmpf");
+
+            l_sDownURL = l_sDownURL + String.format("?fiid={0}&idx={1}&templatemode={2}&IS_MULTI={3}&fileid={4}&doclevel={5}&ConsultDrmYn={6}&fmpf={7}", MessageId, itemKey, templatemode, IS_MULTI, fileid, doclevel, ConsultDrmYn, fmpf);
+
+            if ($("#filedownloadiframe").length > 0) {
+                $("#filedownloadiframe").attr("src", l_sDownURL);
+            } else {
+                var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+                $iFrm.appendTo('body');
+            }
+        }
+        */
+
+        var fmpf = parent.getInfo("fmpf");
+        var sURL = Common.GetPgModule("Base.WebService");
+        var Param = String.format("{ MESSAGEID:\"{0}\",FILEID:\"{1}\" }", MessageId, fileid);
+        CFN_CallAjaxJson(sURL + "/GetAttachFileInfo", Param, false, function (data) {
+            var result = $.parseJSON(data).d;
+            var Json = $.parseJSON(result);
+            if (Json.RESULT == "OK") {
+                var FileName = Json.FileName;
+
+                if (MessageId != "" && fileid != "") {
+                    var Extension = FileName.substring(FileName.lastIndexOf('.') + 1);
+                    // AutoDoc 파일 조회시는 ECM에 직접 호출하여 오픈함.
+                    if (Extension.toUpperCase() == "ECM") {
+                        // 업무표준만 진행
+                        if (fmpf == "GOJP_WORKFORM_W01") {
+                            //ECM파일은 오토독스 서버와 연결하여 다운로드 처리
+                            AutoDocsDownLoad_Approval(fileid, itemKey, MessageId, doclevel, Json, FileName, "DOWN");
+                            return false;
+                        }
+                        else {
+                            AutoDocsDownLoadIframe(MessageId, itemKey);
+                        }
+                    } else {
+                        CommonFileDownLoadProcess_Sub(fileid, itemKey, MessageId, doclevel);
+                    }
+                }
+            }
+            else {
+                alert("다운로드 에러");
+            }
+        });
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+function CommonFileDownLoadProcess_Sub(fileid, itemKey, MessageId, doclevel, filePath) {
+    try {
+        if (typeof filePath == "undefined") filePath = "";
+
+        if ($("#Dext5filedownloadiframe").length > 0) {
+            //DRM 협조처 개수에 따른 처리
+            var ConsultDrmYn = "N";
+            var ExistObject = $("#CONSULT_DRM_YN").length;
+            if (ExistObject == 1) {
+                ConsultDrmYn = $("#CONSULT_DRM_YN").val();
+            }
+            var contentWindow = $("#Dext5filedownloadiframe")[0].contentWindow;
+            contentWindow.CallDext5DownLoad(fileid, itemKey, MessageId, doclevel, ConsultDrmYn, filePath);
+        }
+        else {
+            var templatemode = parent.getInfo("templatemode");//Read or Write
+            if (templatemode == undefined || templatemode == "") {
+                templatemode = "Read";
+            }
+            var l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+            var IS_MULTI = "N";
+            var ConsultDrmYn = "N";//기안시 협조처 개수를 ConsultDrmYn="Y" 에 DRM 미적용.2017.09.09, 양유빈
+            var fmpf = parent.getInfo("fmpf");
+
+            l_sDownURL = l_sDownURL + String.format("?fiid={0}&idx={1}&templatemode={2}&IS_MULTI={3}&fileid={4}&doclevel={5}&ConsultDrmYn={6}&fmpf={7}", MessageId, itemKey, templatemode, IS_MULTI, fileid, doclevel, ConsultDrmYn, fmpf);
+
+            if ($("#filedownloadiframe").length > 0) {
+                $("#filedownloadiframe").attr("src", l_sDownURL);
+            } else {
+                var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+                $iFrm.appendTo('body');
+            }
+        }
+
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+//양식 의견 파일첨부 열기
+function CommonFileOpenProcess(fileid, itemKey, MessageId, doclevel) {
+    try {
+        /*
+        if ($("#Dext5filedownloadiframe").length > 0) {
+            //DRM 협조처 개수에 따른 처리
+            var ConsultDrmYn = "N";
+            var ExistObject = $("#CONSULT_DRM_YN").length;
+            if (ExistObject == 1) {
+                ConsultDrmYn = $("#CONSULT_DRM_YN").val();
+            }
+            var contentWindow = $("#Dext5filedownloadiframe")[0].contentWindow;
+            contentWindow.CallDext5OpenFile(fileid, itemKey, MessageId, doclevel, ConsultDrmYn);
+        }
+        else {
+            var templatemode = parent.getInfo("templatemode");//Read or Write
+            if (templatemode == undefined || templatemode == "") {
+                templatemode = "Read";
+            }
+            var l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+            var IS_MULTI = "N";
+            var ConsultDrmYn = "N";//기안시 협조처 개수를 ConsultDrmYn="Y" 에 DRM 미적용.2017.09.09, 양유빈
+            l_sDownURL = l_sDownURL + String.format("?fiid={0}&idx={1}&templatemode={2}&IS_MULTI={3}&fileid={4}&doclevel={5}&ConsultDrmYn={6}", MessageId, itemKey, templatemode, IS_MULTI, fileid, doclevel, ConsultDrmYn);
+
+            if ($("#filedownloadiframe").length > 0) {
+                $("#filedownloadiframe").attr("src", l_sDownURL);
+            } else {
+                var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+                $iFrm.appendTo('body');
+            }
+        }
+        */
+
+        var fmpf = parent.getInfo("fmpf");
+        var sURL = Common.GetPgModule("Base.WebService");
+        var Param = String.format("{ MESSAGEID:\"{0}\",FILEID:\"{1}\" }", MessageId, fileid);
+        CFN_CallAjaxJson(sURL + "/GetAttachFileInfo", Param, false, function (data) {
+            var result = $.parseJSON(data).d;
+            var Json = $.parseJSON(result);
+            if (Json.RESULT == "OK") {
+                var FileName = Json.FileName;
+
+                if (MessageId != "" && fileid != "") {
+                    var Extension = FileName.substring(FileName.lastIndexOf('.') + 1);
+                    // AutoDoc 파일 조회시는 ECM에 직접 호출하여 오픈함.
+                    if (Extension.toUpperCase() == "ECM") {
+                        if (fmpf == "GOJP_WORKFORM_W01") {
+                            //ECM파일은 오토독스 서버와 연결하여 다운로드 처리
+                            AutoDocsDownLoad_Approval(fileid, itemKey, MessageId, doclevel, Json, FileName, "OPEN");
+                            return false;
+                        }
+                        else {
+                            AutoDocsDownLoadIframe(MessageId, itemKey);                            
+                        }
+                    } else {
+                        CommonFileOpenProcess_Sub(fileid, itemKey, MessageId, doclevel, Json);
+                    }
+                }
+            }
+            else {
+                alert("다운로드 에러");
+            }
+        });
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+function CommonFileOpenProcess_Sub(fileid, itemKey, MessageId, doclevel, Json, filePath) {
+    try {
+        if (typeof filePath == "undefined") filePath = "";
+
+        if ($("#Dext5filedownloadiframe").length > 0) {
+            //DRM 협조처 개수에 따른 처리
+            var ConsultDrmYn = "N";
+            var ExistObject = $("#CONSULT_DRM_YN").length;
+            if (ExistObject == 1) {
+                ConsultDrmYn = $("#CONSULT_DRM_YN").val();
+            }
+            var contentWindow = $("#Dext5filedownloadiframe")[0].contentWindow;
+            contentWindow.CallDext5OpenFile_Approval(fileid, itemKey, MessageId, doclevel, ConsultDrmYn, Json, filePath);
+        }
+        else {
+            var templatemode = parent.getInfo("templatemode");//Read or Write
+            if (templatemode == undefined || templatemode == "") {
+                templatemode = "Read";
+            }
+            var l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+            var IS_MULTI = "N";
+            var ConsultDrmYn = "N";//기안시 협조처 개수를 ConsultDrmYn="Y" 에 DRM 미적용.2017.09.09, 양유빈
+            var fmpf = parent.getInfo("fmpf");
+
+            l_sDownURL = l_sDownURL + String.format("?fiid={0}&idx={1}&templatemode={2}&IS_MULTI={3}&fileid={4}&doclevel={5}&ConsultDrmYn={6}&fmpf={7}", MessageId, itemKey, templatemode, IS_MULTI, fileid, doclevel, ConsultDrmYn, fmpf);
+
+            if ($("#filedownloadiframe").length > 0) {
+                $("#filedownloadiframe").attr("src", l_sDownURL);
+            } else {
+                var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+                $iFrm.appendTo('body');
+            }
+        }
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+// 로드시 기존 파일 정보를 컨트롤에 바인드함.
+var fileOnloadCnt = 0;
+function FileOnLoad() {
+    //컨트롤 우측 상단 첨부파일 정보를 숨긴다 - 추후 필요시 해당 함수 수정 후 구현
+    $('#f_ck_sp').show();
+}
+
+// 유효성 검사
+function ChkIsValidationCheck(pBoolRequired, pSeq) {
+
+    if (typeof pSeq == "undefined") pSeq = "";
+    $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_transfer();
+
+}
+
+// 첨부파일 컨트롤에 바인드된 파일 개수 
+function GetAttachFilesCnt(pSeq) {
+    if (typeof pSeq == "undefined") pSeq = "";
+    return $("#iframeHTML5_if" + pSeq)[0].contentWindow.fn_getTotalFileCount();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// DEXT5 Upload API - 컨트롤 Iframe에서 사용
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 파일추가 대화창
+function fn_openFileDialog(currUploadID) {
+    if (currUploadID) {
+        DEXT5UPLOAD.OpenFileDialog(currUploadID);
+    } else {
+        DEXT5UPLOAD.OpenFileDialog(G_UploadID);
+    }
+}
+
+// 전송시작
+function fn_transfer(currUploadID) {
+    if (currUploadID) {
+        DEXT5UPLOAD.Transfer(currUploadID);
+    } else {
+        DEXT5UPLOAD.Transfer(G_UploadID);
+    }
+}
+
+// 자료공유시스템에서 가져온 파일 체크
+function fn_isExistRotemFile(oXml) {
+    // 참고 > 로템 자료공유시스템처럼 추가 연계되는 회사가 생기면, 로템 자료공유시스템 파일 추가하는 로직부터 수정
+    // 양식 작성(Draft) 일때만 아래 Rule 이 적용되고, 기안 이후부터는 기존 결재 파일 로직을 따라감
+    var returnVal = false;
+
+    // 오류 발생 시 false 처리
+    try {
+        oXml = $(oXml);
+        var $oXmlFile;
+        $oXmlFile = oXml.find("file");
+        $($oXmlFile).each(function (i, obj) {
+            var pVal = getParams(obj.textContent);
+            var selFile = pVal["fiid"] + ";" + pVal["idx"] + ";" + pVal["FileID"] + "|";
+            console.log(obj.textContent);
+            console.log(pVal["fiid"] + " " + pVal["idx"] + " " + pVal["FileID"]);
+
+            if (pVal["fiid"] == undefined && obj.textContent.indexOf(':') == -1) {
+                returnVal = true;
+                return false;
+            }
+        });
+    } catch (e) {
+        return false;
+    }
+
+    return returnVal;
+}
+
+// 파일 오픈(표준모드 보완 필요)
+function fn_openSelectedFile() {
+    // 전체 파일이 1개인 경우 자동 선택을 통해 파일 Open
+    var nTotalCount = DEXT5UPLOAD.GetTotalFileCount(G_UploadID);
+
+    if (nTotalCount == 1) {
+        var isExistRotemFile = false;
+        var oXmlForRotem = DEXT5UPLOAD.GetSelectedAllFileListForXml(G_UploadID);
+        if (oXmlForRotem != null) isExistRotemFile = fn_isExistRotemFile(oXmlForRotem);
+
+        if (isExistRotemFile) {
+            parent.Common.Warning(Common.GetDic("msg_no_support_shareSystem"));
+            return false;
+        }
+        else {
+            DEXT5UPLOAD.SetSelectItem('-1', '1', G_UploadID); // 전체 선택
+        }
+    }
+
+    // 자동차 업무표준에서 사용하는 첨부파일 오픈 오류로 인해 nSelectedFileCount 계산을 위해 재 추출
+    var oXml = DEXT5UPLOAD.GetSelectedAllFileListForXml(G_UploadID);
+    var nSelectedFileCount = 0;
+    if (oXml != null) {
+        oXml = $(oXml);
+        nSelectedFileCount = oXml.find("file").length;
+    }
+
+    if (nSelectedFileCount == 0) {
+        parent.Common.Warning(Common.GetDic("msg_066"));
+    }
+    else if (nSelectedFileCount > 1) {
+        parent.Common.Warning(Common.GetDic("msg_SelectOnlyOneFile"));
+    }
+    else {
+        if (isExistRotemFile) {
+            parent.Common.Warning(Common.GetDic("msg_no_support_shareSystem"));
+            return false;
+        }
+        else {
+            DEXT5UPLOAD.OpenSelectedFile(G_UploadID);
+        }
+    }
+}
+
+// 선택한 파일 다운로드
+function fn_downloadFile(currUploadID) {
+    var oXml;
+    if (currUploadID) {
+        oXml = DEXT5UPLOAD.GetSelectedAllFileListForXml(currUploadID);
+    } else {
+        oXml = DEXT5UPLOAD.GetSelectedAllFileListForXml(G_UploadID);
+    }
+
+    var isExistRotemFile = false;
+    if (oXml != null) isExistRotemFile = fn_isExistRotemFile(oXml);
+
+    console.log("isExistRotemFile : " + isExistRotemFile);
+    console.log("oXml : " + $(oXml));
+
+    var nSelectedFileCount = 0;
+    if (oXml != null) {
+        oXml = $(oXml);
+        nSelectedFileCount += oXml.find("file").length;
+    }
+
+    if (nSelectedFileCount == 0) {
+        if (currUploadID) {
+            DEXT5UPLOAD.DownloadAllFile(currUploadID);
+        } else {
+            if (isExistRotemFile) {
+                parent.Common.Warning(Common.GetDic("msg_no_support_shareSystem"));
+                return false;
+            } else {
+                DEXT5UPLOAD.DownloadAllFile(G_UploadID);
+            }
+        }
+    }
+    else {
+        if (currUploadID) {
+            DEXT5UPLOAD.DownloadFile(currUploadID);
+        } else {
+            if (isExistRotemFile) {
+                parent.Common.Warning(Common.GetDic("msg_no_support_shareSystem"));
+                return false;
+            } else {
+                DEXT5UPLOAD.DownloadFile(G_UploadID);
+            }
+        }
+    }
+}
+
+// 선택한 파일삭제
+function fn_deleteSelectedFile(currUploadID) {
+    var oXml;
+    var $oXmlFile;
+    if (currUploadID) {
+        oXml = DEXT5UPLOAD.GetSelectedAllFileListForXml(currUploadID);
+    } else {
+        oXml = DEXT5UPLOAD.GetSelectedAllFileListForXml(G_UploadID);
+    }
+    var nSelectedFileCount = 0;
+    if (oXml != null) {
+        oXml = $(oXml);
+        nSelectedFileCount += oXml.find("file").length;
+
+        // 현대해외출장보고
+        $oXmlFile = oXml.find("file");
+    }
+
+    if (nSelectedFileCount == 0) {
+        parent.Common.Warning(Common.GetDic("msg_selectdeletefile"));
+    }
+    else {
+        if (currUploadID) {
+            fileid = currUploadID;
+            DEXT5UPLOAD.DeleteSelectedFile(currUploadID);
+        } else {
+            fileid = G_UploadID;
+            DEXT5UPLOAD.DeleteSelectedFile(G_UploadID);
+
+            // 해외출장품 삭제 데이터 처리
+            if (parent.$("#hidDeleteFile_OBT").length == 1) {
+                var sDelFileInfo = "";
+                $($oXmlFile).each(function (i, obj) {
+                    var pVal = getParams(obj.textContent);
+                    sDelFileInfo += pVal["fiid"] + ";" + pVal["idx"] + ";" + pVal["FileID"] + "|";
+                });
+                sDelFileInfo = currUploadID > 1 ? sDelFileInfo.substr(0, str.length - 1) : sDelFileInfo;
+                parent.$("#hidDeleteFile_OBT").val(sDelFileInfo);
+            }
+
+            if (parent.$("#hidDeleteFile_EXT").length == 1) {
+                var sDelFileInfo = "";
+                $($oXmlFile).each(function (i, obj) {
+                    //var pVal = getParams(obj.textContent);
+                    sDelFileInfo += $(obj).find("order").text() + "|";
+                });
+                sDelFileInfo = currUploadID > 1 ? sDelFileInfo.substr(0, str.length - 1) : sDelFileInfo;
+                parent.$("#hidDeleteFile_EXT").val(sDelFileInfo);
+            }
+        }
+    }
+}
+
+function getParams(url) {
+    var param = new Array();
+    var params;
+
+    params = url.substring(url.indexOf('?') + 1, url.length);
+    params = params.split("&");
+
+    var size = params.length;
+    var key, value;
+    for (var i = 0 ; i < size ; i++) {
+        key = params[i].split("=")[0];
+        value = params[i].split("=")[1];
+        param[key] = value;
+    }
+    return param;
+}
+
+// 전체 파일개수
+function fn_getTotalFileCount(currUploadID) {
+    if (currUploadID) {
+        return (DEXT5UPLOAD.GetTotalFileCount(currUploadID));
+    } else {
+        return (DEXT5UPLOAD.GetTotalFileCount(G_UploadID));
+    }
+}
+
+// 전체 파일크기(Bytes)
+function fn_getTotalFileSize(currUploadID) {
+    if (currUploadID) {
+        return (DEXT5UPLOAD.GetTotalFileSize(currUploadID));
+    } else {
+        return (DEXT5UPLOAD.GetTotalFileSize(G_UploadID));
+    }
+}
+
+// 첨부파일 자체 방식 다운로드
+function DEXT5DownLoadProcess(strItemKey) {
+    try {
+        var templatemode = parent.getInfo("templatemode");//Read or Write
+        var doclevel = parent.getInfo("DOC_LEVEL");
+
+        //기안시 협조처 개수를 ConsultDrmYn="Y" 에 DRM 미적용.2017.09.09, 양유빈
+        var ConsultDrmYn = "N";
+        var ExistObject = parent.$("#CONSULT_DRM_YN").length;
+        if (ExistObject == 1) {
+            ConsultDrmYn = parent.$("#CONSULT_DRM_YN").val();
+        }
+
+        var l_sDownURL = '/Common/ExControls/FileDownload/FileDownload_Approval.aspx';
+        var IS_MULTI = strItemKey.length > 1 ? "Y" : "N";
+        var fmpf = parent.getInfo("fmpf");
+
+        l_sDownURL = l_sDownURL + String.format("?fiid={0}&idx={1}&templatemode={2}&IS_MULTI={3}&doclevel={4}&ConsultDrmYn={5}&fmpf={6}", parent.getInfo("fiid"), strItemKey, templatemode, IS_MULTI, doclevel, ConsultDrmYn, fmpf);
+
+        if ($("#filedownloadiframe").length > 0) {
+            $("#filedownloadiframe").attr("src", l_sDownURL);
+        } else {
+            var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+            $iFrm.appendTo('body');
+        }
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+//오토독스 파일 다운로드
+function AutoDocsDownLoad_Approval(fileid, strItemKey, messageId, doclevel, Json, fileName, mode) {
+
+    var paramInfo = "fiid=" + messageId + "&idx=" + strItemKey + "&localsave=Y";
+
+    CFN_CallAjax("/Common/ExControls/FileDownload/AutoDocsFileDownLoad.aspx", paramInfo, function (xmlReturn) {
+        var oXml = $($.parseXML(xmlReturn));
+
+        if (oXml.find("Result").text() == "True") {
+
+            // 등록실패한 값이 없다면 
+            if (oXml.find("Reason").text() == "") {
+                AutoDocsDownLoadIframe(messageId, strItemKey);
+            }
+            else {
+                var filePath = oXml.find("Reason").text();
+                if (mode == "OPEN") {
+                    CommonFileOpenProcess_Sub(fileid, strItemKey, messageId, doclevel, Json, filePath);
+                }
+                else {
+                    CommonFileDownLoadProcess_Sub(fileid, strItemKey, messageId, doclevel, filePath);
+                }
+            }
+        }
+        else {
+            AutoDocsDownLoadIframe(messageId, strItemKey);
+        }
+
+    }, false, "");
+}
+
+//오토독스 파일 다운로드
+function AutoDocsDownLoadIframe(messageId, strItemKey) {
+    var sURL = Common.GetPgModule("Base.WebService");
+    var Params = String.format("{formInstId:\"{0}\", idx:\"{1}\"}", messageId, strItemKey);
+    var oResult = CFN_CallAjaxJson(sURL + "/GetDidFile", Params, false, null);
+    var result = $.parseJSON(oResult).d;
+    var Json = $.parseJSON(result);
+    var Did = Json.did;
+    var userid = Json.userid;
+    if (Json.ERROR == "NONE") {
+        var l_sDownURL = String.format("http://autodocs.hmc.co.kr:8080/if/SecureInterface.do?dID={0}&userID={1}&commonID=A003&xSystemCode=SYS001003", Did, userid);
+        if ($("#filedownloadiframe").length > 0) {
+            $("#filedownloadiframe").attr("src", l_sDownURL);
+        } else {
+            var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+            $iFrm.appendTo('body');
+        }
+    }
+    return false;
+}
+
+//오토독스 파일 다운로드
+function AutoDocsDownLoad(strItemKey) {
+    var fiid = parent.getInfo("fiid")
+    var sURL = Common.GetPgModule("Base.WebService");
+    var Params = String.format("{formInstId:\"{0}\", idx:\"{1}\"}", fiid, strItemKey);
+    var oResult = CFN_CallAjaxJson(sURL + "/GetDidFile", Params, false, null);
+    var result = $.parseJSON(oResult).d;
+    var Json = $.parseJSON(result);
+    var Did = Json.did;
+    var userid = Json.userid;
+    if (Json.ERROR == "NONE") {
+        var l_sDownURL = String.format("http://autodocs.hmc.co.kr:8080/if/SecureInterface.do?dID={0}&userID={1}&commonID=A003&xSystemCode=SYS001003", Did, userid);
+        if ($("#filedownloadiframe").length > 0) {
+            $("#filedownloadiframe").attr("src", l_sDownURL);
+        } else {
+            var $iFrm = $('<IFRAME id="filedownloadiframe" frameBorder="0" width="0" height="0"  name="iFrm" src=' + l_sDownURL + ' scrolling="no"></IFRAME>');
+            $iFrm.appendTo('body');
+        }
+    }
+    return false;
+}
+
+//첨부목록 현황 용량 보이기
+function DEXT5UpLoadPathFileList(originalName) {
+    var fileInfoJson = [];
+    var file_list = DEXT5UPLOAD.GetAllFileListForJson(G_UploadID);
+    if (file_list != null) {
+        var file_web_Name = file_list.webFile.originalName;
+        var file_web_size = file_list.webFile.size;
+        for (var i = 0; i < file_web_Name.length; i++) {
+            if (file_web_Name[i] != originalName) {
+                var file_web = { FileName: file_web_Name[i], FileSize: file_web_size[i] };
+                fileInfoJson.push(file_web);
+            }
+        }
+
+        var file_new_Name = file_list.newFile.originalName;
+        var file_new_size = file_list.newFile.size;
+        for (var i = 0; i < file_new_Name.length; i++) {
+            if (file_new_Name[i] != originalName) {
+                var file_web = { FileName: file_new_Name[i], FileSize: file_new_size[i] };
+                fileInfoJson.push(file_web);
+            }
+        }
+    }
+    return fileInfoJson;
+}
+
+//첨부목록 현황 조회(프린트에서 사용됨)
+function DEXT5UpLoadFileList() {
+    var fileInfoJson = [];
+    var file_list = DEXT5UPLOAD.GetAllFileListForJson(G_UploadID);
+    if (file_list != null) {
+        var file_web_Name = file_list.webFile.originalName;
+        var file_web_size = file_list.webFile.size;
+        for (var i = 0; i < file_web_Name.length; i++) {
+            var file_web = { FileName: file_web_Name[i], FileSize: file_web_size[i] };
+            fileInfoJson.push(file_web);
+        }
+
+        var file_new_Name = file_list.newFile.originalName;
+        var file_new_size = file_list.newFile.size;
+        for (var i = 0; i < file_new_Name.length; i++) {
+            var file_web = { FileName: file_new_Name[i], FileSize: file_new_size[i] };
+            fileInfoJson.push(file_web);
+        }
+    }
+    return fileInfoJson;
+}
+
+//CustomeValue 객체 생성 (첨부파일 다운로드 용)
+function MakeCustomeValue() {
+    //파일순번, fiid, 20171025/파일명, 보안등급, DRM 사전적용여부, FileID(없으면 ""), DRM 권한적용 속성,추가 첨부파일 여부 --> Total 8개속성
+    var obj = {
+        idx: "0"
+        , fiid: ""
+        , filename: ""
+        , doclevel: ""
+        , consultdrmyn: ""
+        , fileid: ""
+        , drmpermission: ""
+        , isextra: ""
+        , useRule: ""
+        , autodocsfilePath: ""
+    };
+
+    return obj;
+}
+
+//최대 업로드 가능한 첨부파일 개수
+function GetApprovalUpLoadMaxCnt() {
+    return $("#iframeHTML5_if")[0].contentWindow.DEXT5UPLOAD.config.MaxTotalFileCount;
+}

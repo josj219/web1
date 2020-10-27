@@ -1,0 +1,755 @@
+﻿
+var HMG_HostUrl = location.href.replace(location.pathname, '').replace(location.search, '').replace('#', ''); var HMG_Domain = location.host.replace(/(https?:\/\/)?([a-zA-Z0-9]*.)?/, '');
+var config; var mailDomain; if (HMG_HostUrl.toLowerCase().indexOf("hmckmc.co.kr") >= 0) mailDomain = "https://rndmail." + HMG_Domain; else mailDomain = "https://autowaymail." + HMG_Domain;
+//var mailDomain; if (HMG_HostUrl.toLowerCase().indexOf("hmckmc.co.kr") >= 0) mailDomain = "https://rndmail." + HMG_Domain; else if (HMG_HostUrl.toLowerCase().indexOf("stg") >= 0) mailDomain = "https://autowaymail-" + HMG_Domain; else mailDomain = "https://autowaymail." + HMG_Domain;
+var HMG_Strings;
+
+void 0 === HMG_Strings && (HMG_Strings = new Object),
+HMG_Strings.CMS = function () { },
+HMG_Strings.STS = function () { }, HMG_Strings.Presence = function () { },
+HMG_Strings.Presence.CallOuts = function () { },
+HMG_Strings.STS.L_UserFieldNoUserPresenceAlt = "현재 상태 정보 없음",
+HMG_Strings.STS.L_UserFieldNoUserPresenceAlt = "현재 상태 정보 없음",
+HMG_Strings.Presence.UnableHtml = "<span class='hmg-imnSpan'><a href='javascript:;' onclick='IMNImageOnClick(event);return false;' class='hmg-imnlink hmg-spimn-presenceLink'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-imgSize-10x10'><img class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' src='/Shared/images/spimn.png?rev=23' /></span></a></span><span class='hmg-noWrap hmg-imnSpan'><span><a href='javascript:;' onclick='javascript:Imn_OpenUserProfile(\"{2}\");'>{2}</a></span></span>",
+HMG_Strings.Presence.DefaultHtml = "<span class='hmg-imnSpan'><a href='javascript:;' onclick='IMNImageOnClick(event);return false;' class='hmg-imnlink hmg-spimn-presenceLink'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-imgSize-10x10'><img name='imnmark' ShowOfflinePawn='1' class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' alt='오프라인' src='/Shared/images/spimn.png?rev=23' sip='{0}' id='{1}' /></span></a></span><span class='hmg-noWrap hmg-imnSpan'><span><a href='javascript:;' onclick='javascript:Imn_OpenUserProfile(\"{2}\"); return false;'>{3}</a></span></span>",
+HMG_Strings.Presence.UnableImageHtml30 = "<div class='c-user-profile c-user-profile--small'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-30x30' style='background-image: {0};' alt='{1}' href='#'></a><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick='Imn_OpenUserProfile(\"{1}\"); return false;'><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMail('{2}', '{13}'); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMessage('{2}'); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345', '테스트메뉴', 'S12345', '테스트화면', ''); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_SendFile('{14}','{2}'); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenPhoneList(this, '{4}', '{15}', '{16}', '{20}', '{21}'); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}');\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenSMS('{1}','{2}', '', '', '', '', '{20}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_Like('{1}'); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+HMG_Strings.Presence.UnableImageHtml40 = "<div class='c-user-profile'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-40x40' style='background-image: {0};' alt='{1}' href='#'></a><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick='Imn_OpenUserProfile(\"{1}\"); return false;'><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMail('{2}', '{13}'); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMessage('{2}'); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345', '테스트메뉴', 'S12345', '테스트화면',''); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_SendFile('{14}','{2}'); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenPhoneList(this, '{4}', '{15}', '{16}', '{20}', '{21}'); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}');\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenSMS('{1}','{2}', '', '', '', '', '{20}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_Like('{1}'); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+//HMG_Strings.Presence.DefaultImageHtml30 = "<div class='c-user-profile c-user-profile--small'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-30x30' style='background-image: {0};' alt='{1}' href='#'></a><div class='hmg-imnDiv'><span class='hmg-imnSpan'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-photo1-imgSize-10x10'><img name='imnmark' ShowOfflinePawn='1' class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' alt='오프라인' src='/Shared/images/spimn.png?rev=23' sip='{2}' id='{3}' /></span></span></div><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick='Imn_OpenUserProfile(\"{1}\"); return false;'><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMail('{2}', '{13}'); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMessage('{2}'); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345', '테스트메뉴', 'S12345', '테스트화면',''); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_SendFile('{14}','{2}'); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenPhoneList(this, '{4}', '{15}', '{16}', '{20}', '{21}'); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}');\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenSMS('{1}','{2}','{20}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_Like('{1}'); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+//HMG_Strings.Presence.DefaultImageHtml40 = "<div class='c-user-profile'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-40x40' style='background-image: {0};' alt='{1}' href='#'></a><div class='hmg-imnDiv'><span class='hmg-imnSpan'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-photo2-imgSize-10x10'><img name='imnmark' ShowOfflinePawn='1' class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' alt='오프라인' src='/Shared/images/spimn.png?rev=23' sip='{2}' id='{3}' /></span></span></div><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick='Imn_OpenUserProfile(\"{1}\"); return false;'><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMail('{2}', '{13}'); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMessage('{2}'); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345', '테스트메뉴', 'S12345', '테스트화면',''); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_SendFile('{14}','{2}'); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenPhoneList(this, '{4}', '{15}', '{16}', '{20}', '{21}'); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}');\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{20}\" onclick=\"Imn_OpenSMS('{1}','{2}','{20}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_Like('{1}'); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+HMG_Strings.Presence.DefaultImageHtml30 = "<div class='c-user-profile c-user-profile--small'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-30x30' style='background-image: {0};' alt='{1}' href='#'></a><div class='hmg-imnDiv'><span class='hmg-imnSpan'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-photo1-imgSize-10x10'><img name='imnmark' ShowOfflinePawn='1' class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' alt='오프라인' src='/Shared/images/spimn.png?rev=23' sip='{2}' id='{3}' /></span></span></div><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick='Imn_OpenUserProfile(\"{1}\", \"{UserInfoValue}\"); return false;'><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Mail}\" onclick=\"Imn_OpenMail('{2}', '{13}' , '{MailValue}' ); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Lync}\" onclick=\"Imn_OpenMessage('{2}', '{LyncValue}' ); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{MPlusNote}\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345' , '테스트메뉴' , 'S12345' , '테스트화면' ,'', '{MPlusNoteValue}' ); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{SendFile}\" onclick=\"Imn_SendFile('{14}','{2}', '{SendFileValue}' ); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{PhoneCall}\" onclick=\"Imn_OpenPhoneList(this, '{4}' , '{15}' , '{16}' , '{20}' , '{21}', '{PhoneCallValue}'); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}', '{PhoneCallValue}'});\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}', '{PhoneCallValue}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}', '{PhoneCallValue}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{SMS}\" onclick=\"Imn_OpenSMS('{1}','{2}', '', '', '', '','{SMSValue}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Like}\" onclick=\"Imn_Like('{1}', '{LikeValue}' ); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+HMG_Strings.Presence.DefaultImageHtml40 = "<div class='c-user-profile'><a tabindex='0' class='c-user-profile__visual hmg-imnSpan-photo-40x40' style='background-image: {0};' alt='{1}' href='#'></a><div class='hmg-imnDiv'><span class='hmg-imnSpan'><span class='hmg-spimn-presenceWrapper hmg-imnImg hmg-spimn-photo2-imgSize-10x10'><img name='imnmark' ShowOfflinePawn='1' class='hmg-spimn-img hmg-spimn-presence-offline-10x10x32' alt='오프라인' src='/Shared/images/spimn.png?rev=23' sip='{2}' id='{3}' /></span></span></div><div class=\"c-user-profile__contact-list\"><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button\" onclick=\"Imn_OpenUserProfile('{1}', '{UserInfoValue}' ); return false;\"><i class=\"i-f_user\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{5}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Mail}\" onclick=\"Imn_OpenMail('{2}', '{13}' , '{MailValue}' ); return false;\"><i class=\"i-f_mail\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{6}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Lync}\" onclick=\"Imn_OpenMessage('{2}', '{LyncValue}' ); return false;\"><i class=\"i-f_message\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{7}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{MPlusNote}\" onclick=\"Imn_OpenMPlusNote('{2}', 'M12345' , '테스트메뉴' , 'S12345' , '테스트화면' ,'', '{MPlusNoteValue}' ); return false;\"><i class=\"i-note\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{8}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{SendFile}\" onclick=\"Imn_SendFile('{14}','{2}', '{SendFileValue}' ); return false;\"><i class=\"i-sendfile\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{9}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{PhoneCall}\" onclick=\"Imn_OpenPhoneList(this, '{4}' , '{15}' , '{16}' , '{20}' , '{21}', '{PhoneCallValue}' ); return false;\"><i class=\"i-f_contact\"></i></button><div class='c-user-profile__phone-numbers'><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{4}', '{PhoneCallValue}');\">{17} : {4}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{15}', '{PhoneCallValue}');\">{18} : {15}</a><a class='c-user-profile__phone-number' href='javascript:void(0);' onclick=\"Imn_OpenPhoneCall('{16}', '{PhoneCallValue}');\">{19} : {16}</a></div><div class=\"c-tooltip__box c-tooltip__box--bottom\">{10}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{SMS}\" onclick=\"Imn_OpenSMS('{1}','{2}', '', '', '', '','{SMSValue}'); return false;\"><i class=\"i-sms\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{11}</div></div><div class=\"c-user-profile__contact-item c-tooltip\"><button class=\"c-user-profile__button c-user-profile__button_{Like}\" onclick=\"Imn_Like('{1}', '{LikeValue}' ); return false;\"><i class=\"i-thumb_up_fill\"></i></button><div class=\"c-tooltip__box c-tooltip__box--bottom\">{12}</div></div></div></div>",
+
+_g_aStrDicInfo = Common.GetDicAll("PS_UserInfo;PS_MailTo;PS_Lync;PS_PhoneCall;PS_SMS;PS_MPlusNote;PS_SendFile;PS_Like;PS_ExtensionNumber;PS_CompanyPhone;PS_CellPhone;PS_Ready"),
+HMG_Strings.Presence.CallOuts.UserInfo = _g_aStrDicInfo["PS_UserInfo"], //Common.GetDic("PS_UserInfo"), //"사용자정보",
+HMG_Strings.Presence.CallOuts.MailTo = _g_aStrDicInfo["PS_MailTo"], //Common.GetDic("PS_MailTo"), //"메일",
+HMG_Strings.Presence.CallOuts.Lync = _g_aStrDicInfo["PS_Lync"], //Common.GetDic("PS_Lync"), //"메시지",
+HMG_Strings.Presence.CallOuts.PhoneCall = _g_aStrDicInfo["PS_PhoneCall"], //Common.GetDic("PS_PhoneCall"), //"전화",
+HMG_Strings.Presence.CallOuts.SMS = _g_aStrDicInfo["PS_SMS"], //Common.GetDic("PS_SMS"), //"SMS",
+HMG_Strings.Presence.CallOuts.MPlusNote = _g_aStrDicInfo["PS_MPlusNote"], //Common.GetDic("PS_MPlusNote"), //"쪽지",
+HMG_Strings.Presence.CallOuts.SendFile = _g_aStrDicInfo["PS_SendFile"], //Common.GetDic("PS_SendFile"), //"파일전송",
+HMG_Strings.Presence.CallOuts.Like = _g_aStrDicInfo["PS_Like"], //Common.GetDic("PS_Like"), //"추천하기",
+HMG_Strings.Presence.CallOuts.ExtensionNumber = _g_aStrDicInfo["PS_ExtensionNumber"], //Common.GetDic("PS_ExtensionNumber"), //"전용선",
+HMG_Strings.Presence.CallOuts.CompanyPhone = _g_aStrDicInfo["PS_CompanyPhone"], //Common.GetDic("PS_CompanyPhone"), //"회사전화",
+HMG_Strings.Presence.CallOuts.CellPhone = _g_aStrDicInfo["PS_CellPhone"], //Common.GetDic("PS_CellPhone"), //"휴대폰",
+HMG_Strings.Presence.Ready = _g_aStrDicInfo["PS_Ready"], //Common.GetDic("PS_Ready"), //"준비중 입니다.",
+"undefined" != typeof Sys && Sys && Sys.Application && Sys.Application.notifyScriptLoaded(),
+"undefined" != typeof HMG_NotifyScriptLoadedAndExecuteWaitingJobs && HMG_NotifyScriptLoadedAndExecuteWaitingJobs("strings.js");
+
+var g_presenceEnabled = !0, _spPageContextInfo = { userId: 2 };
+
+
+try { HMG_Strings.Presence.CallOuts.UserInfo = PTResource.UserInfo_Title, HMG_Strings.Presence.CallOuts.MailTo = PTResource.Mail, HMG_Strings.Presence.CallOuts.Lync = PTResource.Message, HMG_Strings.Presence.CallOuts.PhoneCall = PTResource.UCCall, HMG_Strings.Presence.CallOuts.SMS = PTResource.SMS, HMG_Strings.Presence.CallOuts.MPlusNote = PTResource.MPlus_Note_Title, HMG_Strings.Presence.CallOuts.SendFile = PTResource.SendFile, HMG_Strings.Presence.CallOuts.Like = PTResource.PraiseTo, HMG_Strings.Presence.CallOuts.ExtensionNumber = PTResource.Admin_UserAccountMgmt_0037, HMG_Strings.Presence.CallOuts.CompanyPhone = PTResource.Org_DirectTel, HMG_Strings.Presence.CallOuts.CellPhone = PTResource.Org_Tel, HMG_Strings.Presence.Ready = PTResource.MSG_Ready } catch (e) { }
+var _browserisFlight = true; var g_presenceEnabled = true;
+function $_global_init() {
+    "undefined" == typeof BrowserDetection && (BrowserDetection = { __namespace: !0 }),
+        function () {
+            function a() {
+                var b, a = navigator.userAgent.toLowerCase(); if (this.osver = 1, Boolean(a)) { var c = a.substring(a.indexOf("windows ") + 11); this.osver = parseFloat(c) }
+                this.major = parseInt(navigator.appVersion), this.msEdge = a.indexOf("edge/") != -1; var d = a.indexOf("msie"), e = a.indexOf("trident"); this.ie = d != -1 || e != -1; var f = "0"; if (this.ie) if (d != -1) f = a.substring(d + 5); else { var g = a.indexOf("rv:"); g != -1 && (f = a.substring(g + 3)) }
+                if (this.iever = parseInt(f), this.verIEFull = parseFloat(f), this.ie4up = this.ie && this.major >= 4, this.ie5up = this.ie && this.iever >= 5, this.ie55up = this.ie && this.verIEFull >= 5.5, this.ie6up = this.ie && this.iever >= 6, this.ie7down = this.ie && this.iever <= 7, this.ie8down = this.ie && this.iever <= 8, this.ie9down = this.ie && this.iever <= 9, this.ie7up = this.ie && this.iever >= 7, this.ie8standard = this.ie && Boolean(document.documentMode) && 8 == document.documentMode, this.ie8standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 8, this.ie9standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 9, this.ie10standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 10, this.ie11 = this.ie && Boolean(document.documentMode) && 11 == document.documentMode, this.ie11up = this.ie && Boolean(document.documentMode) && document.documentMode >= 11, this.nav = a.indexOf("mozilla") != -1 && a.indexOf("spoofer") == -1 && a.indexOf("compatible") == -1 && !this.ie, this.nav6 = this.nav && 5 == this.major, this.nav6up = this.nav && this.major >= 5, this.nav7up = !1, this.nav6up && (b = a.indexOf("netscape/"), b >= 0 && (this.nav7up = parseInt(a.substring(b + 9)) >= 7)), this.winnt = a.indexOf("winnt") != -1 || a.indexOf("windows nt") != -1, this.win32 = this.major >= 4 && "Win32" == navigator.platform || a.indexOf("win32") != -1 || a.indexOf("32bit") != -1, this.win64bit = a.indexOf("win64") != -1, this.win = this.winnt || this.win32 || this.win64bit, this.safari = a.indexOf("webkit") != -1 && !this.ie && !this.msEdge, this.safari125up = !1, this.safari3up = !1, this.safari && this.major >= 5) { b = a.indexOf("webkit/"), b >= 0 && (this.safari125up = parseInt(a.substring(b + 7)) >= 125); var h = a.indexOf("version/"); h >= 0 && (this.safari3up = parseInt(a.substring(h + 8)) >= 3) } if (this.firefox = this.nav && a.indexOf("firefox") != -1, this.firefox3up = !1, this.firefox36up = !1, this.firefox4up = !1, this.firefox && this.major >= 5) {
+                    var i = a.indexOf("firefox/");
+                    if (i >= 0) { var j = a.substring(i + 8); this.firefox3up = parseInt(j) >= 3, this.firefox36up = parseFloat(j) >= 3.6, this.firefox4up = parseInt(j) >= 4 }
+                } if (this.chrome = this.nav && a.indexOf("chrome") != -1 && !this.ie && !this.msEdge, this.chrome7up = !1, this.chrome8up = !1, this.chrome9up = !1, this.chrome && this.major >= 5) { var k = a.indexOf("chrome/"); if (k >= 0) { var l = a.substring(k + 7), m = parseInt(l); this.chrome7up = m >= 7, this.chrome8up = m >= 8, this.chrome9up = m >= 9 } }
+                this.ipad = a.indexOf("ipad") != -1, this.windowsphone = a.indexOf("windows phone") != -1, this.aol = this.ie && a.indexOf(" aol ") != -1, this.mac = a.indexOf("mac") != -1, this.w3c = this.nav6up, this.webKit = a.indexOf("webkit") != -1 && !this.ie && !this.msEdge, this.win8AppHost = a.indexOf("msapphost") != -1, this.msTouch = "undefined" != typeof navigator.msMaxTouchPoints && navigator.msMaxTouchPoints > 0, this.isTouch = this.msTouch || "ontouchstart" in document.documentElement, this.armProcessor = a.indexOf("arm") != -1
+            }
+            function b() {
+                var b, a = navigator.userAgent.toLowerCase();
+                if (this.osver = 1, Boolean(a)) {
+                    var c = a.substring(a.indexOf("windows ") + 11); this.osver = parseFloat(c)
+                } if (this.major = parseInt(navigator.appVersion), this.nav = a.indexOf("mozilla") != -1 && a.indexOf("spoofer") == -1 && a.indexOf("compatible") == -1, this.nav6 = this.nav && 5 == this.major, this.nav6up = this.nav && this.major >= 5, this.nav7up = !1, this.nav6up && (b = a.indexOf("netscape/"), b >= 0 && (this.nav7up = parseInt(a.substring(b + 9)) >= 7)), this.ie = a.indexOf("msie") != -1, this.ipad = a.indexOf("ipad") != -1, this.windowsphone = a.indexOf("windows phone") != -1, this.aol = this.ie && a.indexOf(" aol ") != -1, this.ie) {
+                    var d = a.substring(a.indexOf("msie ") + 5); this.iever = parseInt(d), this.verIEFull = parseFloat(d)
+                } else this.iever = 0; if (this.ie4up = this.ie && this.major >= 4, this.ie5up = this.ie && this.iever >= 5, this.ie55up = this.ie && this.verIEFull >= 5.5, this.ie6up = this.ie && this.iever >= 6, this.ie7down = this.ie && this.iever <= 7, this.ie8down = this.ie && this.iever <= 8, this.ie9down = this.ie && this.iever <= 9, this.ie7up = this.ie && this.iever >= 7, this.ie8standard = this.ie && Boolean(document.documentMode) && 8 == document.documentMode, this.ie8standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 8, this.ie9standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 9, this.ie10standardUp = this.ie && Boolean(document.documentMode) && document.documentMode >= 10, this.winnt = a.indexOf("winnt") != -1 || a.indexOf("windows nt") != -1, this.win32 = this.major >= 4 && "Win32" == navigator.platform || a.indexOf("win32") != -1 || a.indexOf("32bit") != -1, this.win64bit = a.indexOf("win64") != -1, this.win = this.winnt || this.win32 || this.win64bit, this.mac = a.indexOf("mac") != -1, this.w3c = this.nav6up, this.webKit = a.indexOf("webkit") != -1, this.safari = a.indexOf("webkit") != -1, this.safari125up = !1, this.safari3up = !1, this.safari && this.major >= 5) { b = a.indexOf("webkit/"), b >= 0 && (this.safari125up = parseInt(a.substring(b + 7)) >= 125); var e = a.indexOf("version/"); e >= 0 && (this.safari3up = parseInt(a.substring(e + 8)) >= 3) } if (this.firefox = this.nav && a.indexOf("firefox") != -1, this.firefox3up = !1, this.firefox36up = !1, this.firefox4up = !1, this.firefox && this.major >= 5) {
+                    var f = a.indexOf("firefox/"); if (f >= 0) { var g = a.substring(f + 8); this.firefox3up = parseInt(g) >= 3, this.firefox36up = parseFloat(g) >= 3.6, this.firefox4up = parseInt(g) >= 4 }
+                } if (this.win8AppHost = a.indexOf("msapphost") != -1, this.chrome = this.nav && a.indexOf("chrome") != -1, this.chrome7up = !1, this.chrome8up = !1, this.chrome9up = !1, this.chrome && this.major >= 5) { var h = a.indexOf("chrome/"); if (h >= 0) { var i = a.substring(h + 7), j = parseInt(i); this.chrome7up = j >= 7, this.chrome8up = j >= 8, this.chrome9up = j >= 9 } }
+                this.msTouch = "undefined" != typeof navigator.msMaxTouchPoints && navigator.msMaxTouchPoints > 0, this.isTouch = this.msTouch || "ontouchstart" in document.documentElement, this.armProcessor = a.indexOf("arm") != -1
+            }
+            b.prototype = { firefox: void 0, firefox36up: void 0, firefox3up: void 0, firefox4up: void 0, ie: void 0, ie55up: void 0, ie5up: void 0, ie7down: void 0, ie8down: void 0, ie8standard: void 0, ie8standardUp: void 0, ie9down: void 0, ie9standardUp: void 0, ipad: void 0, windowsphone: void 0, chrome: void 0, chrome7up: void 0, chrome8up: void 0, chrome9up: void 0, iever: void 0, mac: void 0, major: void 0, msTouch: void 0, isTouch: void 0, nav: void 0, nav6: void 0, nav6up: void 0, nav7up: void 0, osver: void 0, safari: void 0, safari125up: void 0, safari3up: void 0, verIEFull: void 0, w3c: void 0, webKit: void 0, win: void 0, win8AppHost: void 0, win32: void 0, win64bit: void 0, winnt: void 0, armProcessor: void 0 },
+            a.prototype = b.prototype, a.prototype.ie10standardUp = void 0, a.prototype.ie11 = void 0, a.prototype.ie11up = void 0, a.prototype.msEdge = void 0, "undefined" != typeof _browserisFlight ? BrowserDetection.userAgent = new a : BrowserDetection.userAgent = new b
+        }(),
+    browseris = BrowserDetection.userAgent, bis = BrowserDetection.userAgent, "undefined" == typeof HMG_BrowserStorage && (HMG_BrowserStorage = { __namespace: !0 }),
+    IMNControlObj = null, bIMNControlInited = !1, IMNDictionaryObj = null, IMNDictionaryPresenceTextObj = null, bIMNSorted = !1, bIMNOnloadAttached = !1, IMNOrigScrollFunc = null, bIMNInScrollFunc = !1, IMNSortableObj = null, IMNHeaderObj = null, IMNNameDictionaryObj = null, IMNNameDictionaryPresenceTextObj = null, IMNShowOfflineObj = null, IMNImageInfo_InitializePrototype(), imnCount = 0, imnElemsCount = 0, imnMarkerBatchSize = 4, imnMarkerBatchDelay = 40, imnBatchDelay = 1200, null != document.body && null != document.body.firstChild || ("undefined" != typeof document.addEventListener && "undefined" != typeof window.msWriteProfilerMark && document.addEventListener("DOMContentLoaded", function () { window.msWriteProfilerMark("DOMContentLoaded") }, !1),
+    AttachEvent("DOMContentLoaded", _spBodyOnLoadWrapper, document), window.onload = _spBodyOnLoadWrapper/*, AttachEvent("hashchange", _bodyOnHashChangeHandler, window)*/), flyoutsAllowed = !1, HMG_g_ExecuteOrWaitJobs = new Object, "function" == typeof HMG_NotifyScriptLoadedAndExecuteWaitingJobs && HMG_NotifyScriptLoadedAndExecuteWaitingJobs("core.js")
+}
+function AttachEvent(a, b, c) {
+    if (c || (c = window), "domLoad" == a) a = "undefined" != typeof c.addEventListener && c.addEventListener && BrowserDetection.userAgent.nav ? "DOMContentLoaded" : "load"; else if ("undefined" != a && null != a && 0 == a.indexOf("touch") && BrowserDetection.userAgent.msTouch) switch (a) { case "touchstart": a = "MSPointerDown"; break; case "touchmove": a = "MSPointerMove"; break; case "touchend": a = "MSPointerUp" }
+    "string" == typeof b && (b = new Function(b)), "undefined" != typeof c.addEventListener && c.addEventListener ? c.addEventListener(a, b, !1) : "undefined" != typeof c.attachEvent && c.attachEvent("on" + a, b)
+}
+function HMG_IsSupportedFirefoxOnWin() { return browseris.win && browseris.firefox3up }
+function HMG_IsSupportedChromeOnWin() { return browseris.win && browseris.chrome }
+function HMG_IsSupportedNPApiBrowserOnWin() { return HMG_IsSupportedChromeOnWin() || HMG_IsSupportedFirefoxOnWin() }
+function HMG_IsNPAPIOnWinPluginInstalled(a) { return Boolean(navigator.mimeTypes) && navigator.mimeTypes[a] && navigator.mimeTypes[a].enabledPlugin }
+function HMG_IsSupportedMacBrowser() { return browseris.mac && (browseris.firefox3up || browseris.safari3up || browseris.chrome) }
+function HMG_IsBrowserPluginInstalled(a) { var b = Boolean(navigator.mimeTypes) && navigator.mimeTypes[a]; if (b) { var c = navigator.mimeTypes[a]; return !!c.enabledPlugin } return !1 }
+function displayPNGImage(a, b, c, d, e) {
+    null == g_PNGImageIds && (g_PNGImageIds = []), null == g_PNGImageSources && (g_PNGImageSources = []);
+    var f = null;
+    document.write("<IMG id='" + a + "' "), Boolean(c) && c > 0 && document.write("width='" + String(c) + "' "), Boolean(d) && d > 0 && document.write("height='" + String(d) + "' "), document.write("alt='" + e + "' "), Boolean(f) && document.write("style='" + f + "' "), document.write(" src='" + b + "' />"), g_PNGImageIds.push(a), g_PNGImageSources.push(b)
+}
+function ProcessPNGImages() {
+    var a = browseris.ie && browseris.ie55up && browseris.verIEFull < 7; if (null != g_PNGImageIds && a) for (var b = 0; b < g_PNGImageIds.length; b++) { var c = document.getElementById(g_PNGImageIds[b]); null != c && null != g_PNGImageSources[b] && (c.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src=" + g_PNGImageSources[b] + "),sizingMethod=scale);", c.src = "/_layouts/15/images/blank.gif?rev=40") }
+}
+function HMG_TypeofFullName(a) {
+    if (!Boolean(a)) return "undefined"; for (var b = a.split("."), c = b.length, d = window, e = 0; e < c; e++) if (d = d[b[e]], "undefined" == typeof d) return "undefined"; return typeof d
+}
+function AddEvtHandler(a, b, c, d) {
+    Boolean(a.addEventListener) ? (d = "undefined" != typeof d && null != d && d, a.addEventListener(b.substr(2), c, d)) : Boolean(a.attachEvent) && a.attachEvent(b, c)
+}
+function RemoveEvtHandler(a, b, c, d) {
+    Boolean(a.removeEventListener) ? (d = "undefined" != typeof d && null != d && d, a.removeEventListener(b.substr(2), c, d)) : Boolean(a.detachEvent) && a.detachEvent(b, c)
+}
+var IMNControlObj, bIMNControlInited, IMNDictionaryObj, IMNDictionaryPresenceTextObj, bIMNSorted, bIMNOnloadAttached, IMNOrigScrollFunc, bIMNInScrollFunc, IMNSortableObj, IMNHeaderObj, IMNNameDictionaryObj, IMNNameDictionaryPresenceTextObj, IMNShowOfflineObj, OwaLang, OwaRoot, OwaSharedHoverCardJsKey, OwaSharedHoverCardHMG_StringsJsKey, ActiveSharedHoverCard, ActiveUserField, SharedHoverCardHideTimer, SharedHoverCardHideTime, SharedHoverCardDelayTimer, SharedHoverCardDelayTime, SharedHoverCardDelayed, SharedHoverCardContainer, sharedHoverCardShimParameters, SharedHoverCardShimParameters, sharedHoverCardShim, SharedHoverCardShim, serverSettings, slabManifest, jQueryPatch, SharedHoverCardDependenciesLoaded, SharedHoverCardDependenciesRegistered, FallbackToActiveX, SharedHoverCardBootStrapped, SharedHoverCardPending, currentShowHoverCardInstance, nextShowHoverCardInstance, currentShowHoverCardInstanceBootstrappedState;
+function GetCurrentEvent(a) {
+    return browseris.ie5up ? window.event : Boolean(a) ? a : window.event
+}
+function GetEventTarget(a) {
+    return Boolean(a.srcElement) ? a.srcElement : a.target
+}
+function EnsureIMNControl() {
+    if (!bIMNControlInited || null == IMNControlObj) { var a = "undefined" != typeof g_presenceEnabled && g_presenceEnabled; try { if (HMG_IsSupportedMacBrowser()) IMNControlObj = CreateMacPlugin(); else if (HMG_IsSupportedNPApiBrowserOnWin()) IMNControlObj = CreateNPApiOnWindowsPlugin("application/x-sharepoint-uc"), null != IMNControlObj && a && (IMNControlObj.OnStatusChange = IMNOnStatusChange); else if (browseris.ie5up && (IMNControlObj = new ActiveXObject("Name.NameCtrl.1"), IMNControlObj && a)) { var b; b = HMG_IsSupportedMacBrowser() ? "IMNOnStatusChange" : IMNOnStatusChange, IMNControlObj.OnStatusChange = b } bIMNControlInited = !0 } catch (a) { IMNControlObj = null } AddEvtHandler(window, "onbeforeunload", DiscardIMNControl) } return IMNControlObj
+}
+function DiscardIMNControl() {
+    "undefined" != typeof HMG_IMNHideOOUI && "undefined" != typeof IMNControlObj && "undefined" != typeof bIMNControlInited && (HMG_IMNHideOOUI(), IMNControlObj = null, bIMNControlInited = !1)
+}
+function IMNImageInfo_InitializePrototype() {
+    IMNImageInfo.prototype.img = null, IMNImageInfo.prototype.classPrefix = null, IMNImageInfo.prototype.alt = ""
+}
+function IMNImageInfo() { }
+function IMNGetStatusImage(a, b) {
+    var c = "spimn.png", d = "hmg-spimn-presence-disconnected", e = ""; switch (a) { case 0: d = "hmg-spimn-presence-online", e = HMG_Strings.STS.L_IMNOnline_Text; break; case 11: d = "hmg-spimn-presence-online-oof", e = HMG_Strings.STS.L_IMNOnline_OOF_Text; break; case 1: b ? (d = "hmg-spimn-presence-offline", e = HMG_Strings.STS.L_IMNOffline_Text) : (d = "", e = ""); break; case 12: b ? (d = "hmg-spimn-presence-offline-oof", e = HMG_Strings.STS.L_IMNOffline_OOF_Text) : (d = "", e = ""); break; case 2: d = "hmg-spimn-presence-away", e = HMG_Strings.STS.L_IMNAway_Text; break; case 13: d = "hmg-spimn-presence-away-oof", e = HMG_Strings.STS.L_IMNAway_OOF_Text; break; case 3: d = "hmg-spimn-presence-busy", e = HMG_Strings.STS.L_IMNBusy_Text; break; case 14: d = "hmg-spimn-presence-busy-oof", e = HMG_Strings.STS.L_IMNBusy_OOF_Text; break; case 4: d = "hmg-spimn-presence-away", e = HMG_Strings.STS.L_IMNAway_Text; break; case 5: d = "hmg-spimn-presence-busy", e = HMG_Strings.STS.L_IMNBusy_Text; break; case 6: d = "hmg-spimn-presence-away", e = HMG_Strings.STS.L_IMNAway_Text; break; case 7: d = "hmg-spimn-presence-busy", e = HMG_Strings.STS.L_IMNBusy_Text; break; case 8: d = "hmg-spimn-presence-away", e = HMG_Strings.STS.L_IMNAway_Text; break; case 9: d = "hmg-spimn-presence-donotdisturb", e = HMG_Strings.STS.L_IMNDoNotDisturb_Text; break; case 15: d = "hmg-spimn-presence-donotdisturb-oof", e = HMG_Strings.STS.L_IMNDoNotDisturb_OOF_Text; break; case 21: d = "hmg-spimn-presence-donotdisturb", e = HMG_Strings.STS.L_IMNInPresentation_Text; break; case 10: d = "hmg-spimn-presence-busy", e = HMG_Strings.STS.L_IMNBusy_Text; break; case 16: d = "hmg-spimn-presence-away", e = HMG_Strings.STS.L_IMNIdle_Text; break; case 17: d = "hmg-spimn-presence-away-oof", e = HMG_Strings.STS.L_IMNIdle_OOF_Text; break; case 18: d = "hmg-spimn-presence-blocked", e = HMG_Strings.STS.L_IMNBlocked_Text; break; case 19: d = "hmg-spimn-presence-busy", e = HMG_Strings.STS.L_IMNBusy_Text; break; case 20: d = "hmg-spimn-presence-busy-oof", e = HMG_Strings.STS.L_IMNBusy_OOF_Text } var f = new IMNImageInfo; return f.img = c, f.classPrefix = d, f.alt = e, f
+}
+function IMNGetHeaderImage() {
+    var a = new IMNImageInfo; return a.img = "imnhdr.gif", a.alt = "", a
+}
+function IMNIsOnlineState(a) {
+    return 1 != a
+}
+function IMNSortList(a, b, c) {
+    var d = null, e = null; if (Boolean(IMNSortableObj) && IMNSortableObj[a]) { for (e = document.getElementById(a) ; Boolean(e) && ("TR" != e.tagName || "undefined" == typeof e.Sortable) ;) e = e.parentNode; for (d = e; Boolean(d) && "TABLE" != d.tagName;) d = d.parentNode; var f = d.rows; if (null != d && null != e) { if ("none" == f[1].style.display) for (var g = 1; g < 4; g++) f[g].style.display = "block"; if (!IMNIsOnlineState(b) && IMNIsOnlineState(c)) { for (f[2].style.display = "none", g = 3; "Offline" != f[g].id && Number(f[g].innerText) < Number(e.innerText) ;) g++; "function" == typeof d.moveRow && d.moveRow(e.rowIndex, g), "Offline" == f[f.length - 3].id && (f[f.length - 2].style.display = "block") } else if (IMNIsOnlineState(b) && !IMNIsOnlineState(c)) { for (3 == e.rowIndex && "Offline" == f[e.rowIndex + 1].id && (f[2].style.display = "block"), "Offline" == f[f.length - 3].id && (f[f.length - 2].style.display = "none"), g = f.length - 2; "Offline" != f[g - 1].id && Number(f[g].innerText) > Number(e.innerText) ;) g--; d.moveRow(e.rowIndex, g) } } }
+}
+function IMNOnStatusChange(a, b, c) {
+    if (Boolean(IMNDictionaryObj) && "undefined" != typeof IMNDictionaryObj[c]) { var d = IMNGetStatusImage(b, IMNSortableObj[c] || IMNShowOfflineObj[c]); IMNDictionaryObj[c] != b && (bIMNSorted && IMNSortList(c, IMNDictionaryObj[c], b), IMNUpdateImage(c, d), IMNDictionaryObj[c] = b) } if (Boolean(IMNDictionaryPresenceTextObj) && "undefined" != typeof IMNDictionaryPresenceTextObj[c]) { var e = document.getElementById(c); IMNUpdatePresenceText(e, b) }
+}
+function IMNUpdateImageClassPrefix(a, b) {
+    var c = /hmg-spimn-presence-[a-zA-Z]*-([0-9])/i, e = /ms-spimn-presence-[a-zA-Z]*-([0-9])/i, d = a.getAttribute("class"); null != d && a.setAttribute("class", d.replace(c, b + "-$1").replace(e, b + "-$1"))
+}
+function IMNUpdateImage(a, b) {
+    var c = document.images[a]; if (Boolean(c)) { var d = c.parentNode; d.firstChild != c && d.insertBefore(c, d.firstChild); var e = b.img, f = b.classPrefix, g = b.alt, h = c.src; "undefined" == typeof c.src && (h = c.item(0).src); var i = h.lastIndexOf("/"), j = h.slice(0, i + 1); if (j += e, IMNUpdateImageClassPrefix(c, f), h == j && "blank.gif" != e) return; "undefined" != typeof c.altbase && Boolean(c.altbase) ? c.alt = c.altbase : "undefined" != typeof c.getAttribute("altbase") && Boolean(c.getAttribute("altbase")) ? c.alt = c.getAttribute("altbase") : c.alt = g; var k = browseris.ie && browseris.ie55up && browseris.verIEFull < 7, l = j.toLowerCase().indexOf(".png") > 0; k ? l ? (c.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src=" + j + "),sizingMethod=scale,enabled=true);", c.src = "/_layouts/15/images/blank.gif?rev=40") : (c.style.filter = "", c.src = j) : c.src = j }
+}
+function IMNHandleAccelerator(a) {
+    if (IMNControlObj) { var b = GetCurrentEvent(a); b.altKey && b.shiftKey && 121 == b.keyCode && "undefined" != typeof IMNControlObj.DoAccelerator && IMNControlObj.DoAccelerator() }
+}
+function IMNImageOnClick(a) {
+    IMNControlObj && (IMNShowOOUIKyb(a), "undefined" != typeof IMNControlObj.DoAccelerator && IMNControlObj.DoAccelerator(), HideSharedHoverCard())
+}
+function IMNGetOOUILocation(a) {
+    for (var b = new Object, c = a, d = a, e = a, f = 0, g = 0, j = ("rtl" == document.dir, c.className) ; Boolean(c) && (null == j || j.indexOf("hmg-imnSpan") == -1) && "TABLE" != c.tagName && !("TD" == c.tagName && j.indexOf("ms-vb") >= 0) ;) { if (c = c.parentNode, !Boolean(c)) return null; j = c.className } if (Boolean(c)) { var k; if ("TABLE" == c.tagName) { var l = c.rows(0), m = l.cells(0); k = m.firstChild } else k = c.firstChild; for (; null != k;) { if ("A" == k.tagName) for (var n = k.firstChild; null != n;) { if ("IMG" == n.tagName && Boolean(n.id)) { k = n; break } n = n.firstChild } if ("IMG" == k.tagName && Boolean(k.id)) { d = k; break } k = k.nextSibling } e = d, d = c } a = d; var o = 1; Boolean(browseris.ie9standardUp) && (o = window.screen.deviceXDPI / window.screen.logicalXDPI), g = d.getBoundingClientRect().top * o - 5, f = d.getBoundingClientRect().left * o - 5; for (var p = d.parentNode; (f < 0 || g < 0) && null != p && Boolean(p.getBoundingClientRect) ;) g = p.getBoundingClientRect().top * o - 5, f = p.getBoundingClientRect().left * o - 5, p = p.parentNode; try { for (var q = window; Boolean(q) && q != q.parent;) { var r = q.frameElement, s = Boolean(r) ? r.getBoundingClientRect() : null, t = Boolean(s) ? s.top : 0, u = Boolean(s) ? s.left : 0; g += t, f += u, q = q.parent } } catch (a) { } return b.objSpan = c, b.objOOUI = d != c ? d : e, b.oouiX = f, b.oouiY = g, b
+}
+function IMNShowOOUIMouse(a) {
+    IMNShowOOUI(a, 0)
+}
+function IMNShowOOUIKyb(a) { IMNShowOOUI(a, 1) }
+function IMNShowOOUI(a, b) {
+    if (browseris.ie5up || HMG_IsSupportedMacBrowser() || HMG_IsSupportedNPApiBrowserOnWin()) { var c = GetCurrentEvent(a), d = GetEventTarget(c), e = d, f = d, g = 0, h = 0; if (EnsureIMNControl() && Boolean(IMNNameDictionaryObj)) { var i = IMNGetOOUILocation(d); if (Boolean(i)) { e = i.objSpan, f = i.objOOUI, g = i.oouiX, h = i.oouiY, Boolean(c.clientX) && (g = c.clientX); var j = IMNNameDictionaryObj[f.id]; if (null == j || j.length < 1) return; Boolean(e) && (e.onkeydown = IMNHandleAccelerator), "undefined" != typeof IMNControlObj.ShowOOUI && IMNControlObj.ShowOOUI(j, b, Math.round(g), Math.round(h)) } } }
+}
+function HMG_IMNHideOOUI() {
+    return !Boolean(IMNControlObj) || ("undefined" != typeof IMNControlObj.HideOOUI && IMNControlObj.HideOOUI(), !1)
+}
+function IMNScroll() {
+    return bIMNInScrollFunc || (bIMNInScrollFunc = !0, HMG_IMNHideOOUI()), bIMNInScrollFunc = !1, IMNOrigScrollFunc == IMNScroll || (!Boolean(IMNOrigScrollFunc) || IMNOrigScrollFunc())
+}
+var IsIFrameSharedHoverCard, IsTwiceDone = 1;
+function ProcessImn() {
+    "undefined" != typeof _spPageContextInfo && null != _spPageContextInfo && "undefined" != typeof _spPageContextInfo.userId && _spPageContextInfo.userId != String(-1) && (imnCount = 0, imnElems = document.getElementsByName("imnmark"), imnElemsCount = imnElems.length, EnsureIMNControl() ? ProcessImnMarkers() : RemoveImnAnchors(), IsPeopleHoverCardEnabled() && (sharedHoverCardsCount = 0, sharedHoverCardElements = document.getElementsByName("SharedHoverCardMarker"), sharedHoverCardElementsCount = sharedHoverCardElements.length, sharedHoverCardElementsCount > 0 && (ProcessSharedHoverCardMarkers(), RenderSharedHoverCardContainer()))), IsTwiceDone < 2 && setTimeout("ProcessImn()", imnBatchDelay), IsTwiceDone++
+}
+function ClientCanHandleImn() {
+    return EnsureIMNControl() && "undefined" != typeof IMNControlObj.PresenceEnabled && IMNControlObj.PresenceEnabled
+}
+function RemoveImnAnchors() {
+    for (var a = 0; a < imnElemsCount; a++) { for (var b = imnElems[a], c = b.parentNode; null != c && !IsImnAnchor(c) ;) b = c, c = c.parentNode; IsImnAnchor(c) && 1 == c.childNodes.length && (c.setAttribute("tabIndex", "-1"), c.onclick = null) } var d = document.getElementsByName("imnempty"); for (a = 0; a < d.length; a++) b = d[a], c = b.parentNode, null == c || "SPAN" != c.tagName || Boolean(c.getAttribute("title")) || c.appendChild(b)
+}
+function ProcessImnMarkers() {
+    for (var a = 0; a < imnMarkerBatchSize; ++a) { if (imnCount == imnElemsCount) return; var b = imnElems[imnCount]; null != b && "undefined" != typeof b && IMNRC(b.getAttribute("sip"), b), imnCount++ } setTimeout("ProcessImnMarkers()", imnMarkerBatchDelay)
+}
+function IMNRC(a, b) {
+    if (null != a && "" != a) { var c = "undefined" != typeof g_presenceEnabled && g_presenceEnabled && EnsureIMNControl() && IMNControlObj.PresenceEnabled; if (browseris.ie5up || HMG_IsSupportedMacBrowser() || HMG_IsSupportedNPApiBrowserOnWin()) { var d = Boolean(b) ? b : window.event.srcElement, e = d, f = d.id; if (Boolean(IMNDictionaryObj) || (IMNDictionaryObj = new Object, IMNNameDictionaryObj = new Object, IMNSortableObj = new Object, IMNShowOfflineObj = new Object, Boolean(IMNOrigScrollFunc) || ("undefined" != typeof window.onscroll && (IMNOrigScrollFunc = window.onscroll), window.onscroll = IMNScroll)), Boolean(IMNDictionaryObj) && (IMNNameDictionaryObj[f] || (IMNNameDictionaryObj[f] = a), "undefined" == typeof IMNDictionaryObj[f] && (IMNDictionaryObj[f] = 1), IMNSortableObj[f] || "undefined" == typeof d.Sortable || (IMNSortableObj[f] = d.Sortable, !bIMNOnloadAttached && c && (AttachEvent("load", IMNSortTable, window), bIMNOnloadAttached = !0)), IMNShowOfflineObj[f] || null == d.getAttribute("ShowOfflinePawn") || (IMNShowOfflineObj[f] = d.getAttribute("ShowOfflinePawn")), c)) { var h, g = 1; "undefined" != typeof IMNControlObj.GetStatus && (g = IMNControlObj.GetStatus(a, f)), (IMNIsOnlineState(g) || IMNSortableObj[f] || IMNShowOfflineObj[f]) && (h = IMNGetStatusImage(g, IMNSortableObj[f] || IMNShowOfflineObj[f]), IMNUpdateImage(f, h), IMNDictionaryObj[f] = g) } var i = IMNGetOOUILocation(d); Boolean(i) && (SetImnOnClickHandler(i.objOOUI), e = i.objSpan, Boolean(e) && (IsPeopleHoverCardEnabled() || (e.onmouseover = IMNShowOOUIMouse, e.onfocusin = IMNShowOOUIKyb, e.onmouseout = HMG_IMNHideOOUI, e.onfocusout = HMG_IMNHideOOUI))) } }
+}
+function IsImnAnchor(a) {
+    if (!Boolean(a)) return !1; var b = a.className; return null != b && b.indexOf("hmg-imnlink") != -1
+}
+function SetImnOnClickHandler(a) {
+    var b = a.parentNode, c = b; for (c.className; Boolean(c) && !IsImnAnchor(c) ;) c = c.parentNode; if (Boolean(c) && (b = c), IsImnAnchor(b)) "undefined" == typeof b.onclick && (b.onclick = IMNImageOnClickHandler); else { var e = document.createElement("a"); e.onclick = IMNImageOnClickHandler, e.className = "hmg-imnlink", e.href = "javascript:;", b.insertBefore(e, a), e.appendChild(a) }
+}
+function IMNImageOnClickHandler(a) {
+    return IMNImageOnClick(a), !1
+}
+function IMNSortTable() {
+    var a; for (a in IMNDictionaryObj) IMNSortList(a, 1, IMNDictionaryObj[a]); bIMNSorted = !0
+}
+function IMNRegisterHeader(a) {
+    if (browseris.ie5up || HMG_IsSupportedMacBrowser() || HMG_IsSupportedNPApiBrowserOnWin()) { var b = GetCurrentEvent(a); if (null == b) return; var c = GetEventTarget(b); if (Boolean(IMNHeaderObj) || (IMNHeaderObj = new Object), Boolean(IMNHeaderObj)) { var d = c.id; IMNHeaderObj[d] = d; var e; e = IMNGetHeaderImage(), IMNUpdateImage(d, e) } }
+}
+function ProcessSharedHoverCardMarkers() {
+    for (var a = 0; a < sharedHoverCardMarkerBatchSize; ++a) { if (sharedHoverCardsCount == sharedHoverCardElementsCount) return; var b = sharedHoverCardElements[sharedHoverCardsCount]; null != b && "undefined" != typeof b && AddSharedHoverCardHandlers(b.getAttribute("sip"), b), sharedHoverCardsCount++ } setTimeout("ProcessSharedHoverCardMarkers()", sharedHoverCardMarkerBatchDelay)
+}
+function AddSharedHoverCardHandlers(a, b) {
+    null != a && "" != a && null != b && (IsIFrameSharedHoverCard || (b.onmouseover = ShowSharedHoverCardHandler, b.onmouseout = HideSharedHoverCardHandler))
+}
+function ShowSharedHoverCardHandler(a) {
+    if (IsPeopleHoverCardEnabled()) { var b = GetCurrentEvent(a), c = GetEventTarget(b); if (Boolean(c)) { var d = GetUserField(c); if (null != d) { var f = (d.getAttribute("sip"), SharedHoverCardContainer); Boolean(f) && (CancelSharedHoverCardHideTimer(), ActiveUserField != d && (null != SharedHoverCardDelayTimer && clearTimeout(SharedHoverCardDelayTimer), SharedHoverCardDelayed = f, SharedHoverCardDelayTimer = setTimeout(function () { if (IsIFrameSharedHoverCard) SharedHoverCardDelayed = null, ShowSharedHoverCard(f, d); else { var a = null != SharedHoverCardIFrame ? SharedHoverCardIFrame.contentWindow : null; Boolean(a) && Boolean(a.IFrameShowSharedHoverCard) && (SP.QoS.WriteUserEngagement("SharedHoverCard_ShowCard"), SharedHoverCardDelayed = null, ShowSharedHoverCard(f, d), a.IFrameShowSharedHoverCard(d)) } }, SharedHoverCardDelayTime))) } } }
+}
+function SharedHoverCardLogRUMExtendedAction(a, b, c, d, e) {
+    LogRUMExtendedAction(a, b, c, d, e)
+}
+function IFrameShowSharedHoverCard(a) { ShowSharedHoverCard(SharedHoverCardContainer, a) } function ShowSharedHoverCard(a, b) {
+    if (Boolean(a) && ("" != a.style.visibility || ActiveUserField != b)) { currentShowHoverCardInstanceBootstrappedState = Boolean(SharedHoverCardBootStrapped), currentShowHoverCardInstance = nextShowHoverCardInstance++; var c = (new Date).getTime(), d = currentShowHoverCardInstanceBootstrappedState ? "ShowHoverCardWithBootStrappedBegin" : "ShowHoverCardWithoutBootStrappedBegin"; IsIFrameSharedHoverCard ? parent.SharedHoverCardLogRUMExtendedAction(d, currentShowHoverCardInstance, null, c, null) : LogRUMExtendedAction(d, currentShowHoverCardInstance, null, c, null), Boolean(ActiveSharedHoverCard) && ActiveUserField != b && HideSharedHoverCard(), ActiveSharedHoverCard = a, ActiveUserField = b, a.style.display = "block", PositionSharedHoverCard(a, b), SPAnimationUtility.BasicAnimator.FadeIn(a); var e = a.firstChild, f = a.lastChild; if (e.style.visibility = "", e.style.display = "block", IsIFrameSharedHoverCard) { SharedHoverCardDependenciesRegistered || RegisterSharedHoverCardDependencies(), a.style.left = "0px", a.style.top = "0px"; var g = b.getAttribute("sip"), h = b.getAttribute("userTitle"); RenderSharedHoverCard(f, g, h) } }
+}
+function PositionSharedHoverCard(a, b) {
+    if (null != b && null != a) { var c = IMNGetPosition(b), d = IMNGetDocumentClientWidth(), e = IMNGetScrollX(), f = c.X + a.offsetWidth - e; f > d && (c.X = c.X - (f - d) - 2), a.style.left = c.X + "px", a.style.top = String(c.Y + b.offsetHeight) + "px" }
+}
+function IMNGetScrollX() {
+    var a = 0, b = IMNGetSharepointWorkspace(); return Boolean(b) && (a = b.scrollLeft), a
+}
+function HideSharedHoverCard() {
+    !IsIFrameSharedHoverCard && Boolean(ActiveSharedHoverCard) && (SPAnimationUtility.BasicAnimator.FadeOut(ActiveSharedHoverCard), ActiveSharedHoverCard.style.visibility = "hidden", ActiveSharedHoverCard.style.display = "none", ActiveSharedHoverCard = null, ActiveUserField = null, SharedHoverCardPending = null)
+}
+function GetUserField(a) {
+    for (; Boolean(a) && (null == a.getAttribute || "SharedHoverCardMarker" != a.getAttribute("name")) ;) a = a.parentNode; return a
+}
+function SetSharedHoverCardHideTimer() {
+    SharedHoverCardHideTimer = setTimeout(function () { Boolean(ActiveSharedHoverCard) && HideSharedHoverCard() }, SharedHoverCardHideTime)
+}
+function HideSharedHoverCardHandler(a) {
+    if (Boolean(a) && "mouseout" == a.type) { var b = Boolean(a.relatedTarget) ? a.relatedTarget : a.toElement, c = a.currentTarget; if (!Boolean(b) || !Boolean(c)) return; IMNIsDescendant(b, c) || (CancelSharedHoverCardDelayTimer(), SetSharedHoverCardHideTimer()) } else CancelSharedHoverCardDelayTimer(), SetSharedHoverCardHideTimer()
+}
+function CancelSharedHoverCardHideTimer() {
+    Boolean(SharedHoverCardHideTimer) && clearTimeout(SharedHoverCardHideTimer)
+} function CancelSharedHoverCardDelayTimer() {
+    Boolean(SharedHoverCardDelayTimer) && (SharedHoverCardDelayed = null, clearTimeout(SharedHoverCardDelayTimer))
+} function IMNIsDescendant(a, b) {
+    if (!Boolean(a) || !Boolean(b)) return !1; for (; Boolean(a) && a != b;) a = a.parentNode; return a == b
+}
+function IsPeopleHoverCardEnabled() { }
+function IMNGetPosition(a) {
+    for (var b = new Object, c = 0, d = 0, e = IMNGetSharepointWorkspace() ; null != a && a != e;) c += a.offsetTop, d += a.offsetLeft, a = a.offsetParent; return b.X = d, b.Y = c, b
+}
+function IMNGetDocumentClientWidth() {
+    var a = 0, b = IMNGetSharepointWorkspace(); return Boolean(b) && Boolean(b.clientWidth) ? a = b.clientWidth : Boolean(document.documentElement) && Boolean(document.documentElement.clientWidth) && (a = document.documentElement.clientWidth), a
+}
+function IMNGetSharepointWorkspace() {
+    var a = null; return "undefined" != typeof g_Workspace && (a = document.getElementById(g_Workspace)), null == a && (a = document.body), a
+}
+function IMNGetPresence(a) {
+    var b = 0; if ("" != a && EnsureIMNControl()) try { b = IMNControlObj.GetStatus(a, ""), b = IMNControlObj.GetStatus(a, ""), b = MapIMNPresenceToOWAPresence(b) } catch (a) { } return b
+}
+function MapIMNPresenceToOWAPresence(a) {
+    var b = 0; switch (a) { case 0: case 11: b = 2; break; case 1: case 12: b = 1; break; case 2: case 4: case 6: case 8: case 13: case 16: case 17: b = 3; break; case 3: case 5: case 7: case 10: case 14: case 19: case 20: case 21: b = 4; break; case 9: case 15: b = 6; case 18: b = 5; break; default: b = 0 } return b
+}
+function IMN_RenderPresenceStatusText(a, b) {
+    if ("" != a && "" != b && EnsureIMNControl() && (Boolean(IMNDictionaryPresenceTextObj) || (IMNDictionaryPresenceTextObj = new Object, IMNNameDictionaryPresenceTextObj = new Object), IMNNameDictionaryPresenceTextObj[b] || (IMNNameDictionaryPresenceTextObj[b] = a), "undefined" == typeof IMNDictionaryPresenceTextObj[b] && (IMNDictionaryPresenceTextObj[b] = 1), "undefined" != typeof g_presenceEnabled && g_presenceEnabled && IMNControlObj.PresenceEnabled)) {
+        var c = 1; if ("undefined" != typeof IMNControlObj.GetStatus && (c = IMNControlObj.GetStatus(a, b)), IMNIsOnlineState(c)) {
+            var d = document.getElementById(b); IMNUpdatePresenceText(d, c), IMNDictionaryPresenceTextObj[b] = c
+        }
+    }
+}
+function IMNUpdatePresenceText(a, b) { if ("undefined" != typeof a) { var c = IMNGetStatusImage(b, !0); a.innerHTML = c.alt } }
+function _spBodyOnPageShow(a) { HMG_spFormOnSubmitCalled = !1 }
+function _spResetFormOnSubmitCalledFlag(a, b) { HMG_spFormOnSubmitCalled = !1 } /*function _ribbonReadyForInit() { return HMG_spBodyOnLoadCalled }*/
+function _spBodyOnLoadWrapper() {
+    if (!HMG_spBodyOnLoadCalled) {
+        if (HMG_spBodyOnLoadCalled = !0, HMG_spBodyOnPageShowRegistered || "undefined" == typeof browseris || browseris.ie || "function" != typeof window.addEventListener || (window.addEventListener("pageshow", _spBodyOnPageShow, !1), _spBodyOnPageShowRegistered = !0), "undefined" != typeof Sys && "undefined" != typeof Sys.WebForms && "undefined" != typeof Sys.WebForms.PageRequestManager) {
+            var a = Sys.WebForms.PageRequestManager.getInstance(); HMG_spPageLoadedRegistered || null == a || (a.add_pageLoaded(HMG_spPageLoaded), HMG_spPageLoadedRegistered = !0)
+        } HMG_spPageLoadedRegistered || HMG_spPageLoaded(), HMG_spFormOnSubmitCalled = !1, "undefined" != typeof Sys && "undefined" != typeof Sys.Net && "undefined" != typeof Sys.Net.WebRequestManager && Sys.Net.WebRequestManager.add_invokingRequest(_spResetFormOnSubmitCalledFlag), "undefined" != typeof NotifyBodyLoadedAndExecuteWaitingJobs && NotifyBodyLoadedAndExecuteWaitingJobs(), HMG_ExecuteOrDelayUntilScriptLoaded(HMG_ProcessDefaultOnLoad, "core.js"), "undefined" == typeof g_prefetch || 1 == g_prefetch || (EnsureScript("HMG_Strings.js", HMG_TypeofFullName("HMG_Strings"), null), EnsureScript("core.js", HMG_TypeofFullName("UpdateAnimationUserControl"), null))
+    }
+}
+function _spDelayAfterAllScripts(a) {
+    _spYield(a, HMG_g_numberOfYields)
+}
+function _spYield(a, b) { b > 0 ? window.setTimeout(function () { _spYield(a, b - 1) }, 0) : a() }
+function _spTrace(a) { }
+function HMG_spPageLoaded() { /*_spOriginalFormAction = null, InlineEditSetDefaultFocus()*/ }
+function HMG_ProcessDefaultOnLoad() {
+    ProcessPNGImages(), window.setTimeout("ProcessImn()", 10), /*ProcessOnLoadFunctionNames(_spBodyOnLoadFunctionNames), ProcessOnLoadFunctions(_spBodyOnLoadFunctions),*/ "undefined" != typeof _spUseDefaultFocus && DefaultFocus()/*, HMG_ProcessReliabilityLogs()*/
+}
+function ProcessOnLoadFunctions(a) {
+    a = []
+}
+function HMG_ExecuteOrDelayUntilEventNotified(a, b) {
+    var d = HMG_g_ExecuteOrWaitJobs[b]; return null != d && d.notified ? (null != d.args ? a.apply(null, d.args) : a(), !0) : (HMG_DelayUntilEventNotified(a, b), !1)
+}
+function HMG_DelayUntilEventNotified(a, b) {
+    var c = HMG_g_ExecuteOrWaitJobs[b]; null == c && (c = new Object, c.notified = !1, c.jobs = [], c.args = null, HMG_g_ExecuteOrWaitJobs[b] = c), c.jobs.push(a)
+}
+function HMG_NotifyEventAndExecuteWaitingJobs(a, b) {
+    if (Boolean(HMG_g_ExecuteOrWaitJobs)) { var c = HMG_g_ExecuteOrWaitJobs[a]; if (null == c || "undefined" == typeof c) c = new Object, c.notified = !0, c.jobs = [], c.args = b, HMG_g_ExecuteOrWaitJobs[a] = c; else { if (null != c.jobs) for (var d = 0; d < c.jobs.length; d++) { var e = c.jobs[d]; null != b ? e.apply(null, b) : e() } c.notified = !0, c.jobs = [], c.args = b } }
+}
+function HMG_ExecuteOrDelayUntilScriptLoaded(a, b) {
+    b = b.toLowerCase(); var c = "sp.scriptloaded-" + b; return HMG_ExecuteOrDelayUntilEventNotified(a, c)
+}
+function HMG_NotifyScriptLoadedAndExecuteWaitingJobs(a) {
+    if (a = a.toLowerCase(), "undefined" != typeof _v_dictSod) {
+        if ("undefined" == typeof _v_dictSod[a])
+            switch (a) {
+                case "ie55up.js": "undefined" == typeof _v_dictSod.browserScript && RegisterSod("browserScript", null), _v_dictSod["ie55up.js"] = _v_dictSod.browserScript; break;
+                case "sp.ribbon.js": "undefined" == typeof _v_dictSod.ribbon && RegisterSod("ribbon", null), _v_dictSod["sp.ribbon.js"] = _v_dictSod.ribbon; break;
+                case "inplview.js": "undefined" == typeof _v_dictSod.inplview && RegisterSod("inplview", null), _v_dictSod["inplview.js"] = _v_dictSod.inplview; break;
+                default: RegisterSod(a, null)
+            } _v_dictSod[a].state = 4
+    } var b = "sp.scriptloaded-" + a; if (HMG_NotifyEventAndExecuteWaitingJobs(b), "undefined" != typeof g_MinimalDownload && Boolean(g_MinimalDownload) && "undefined" != typeof RegisterModuleInit) { var c = a.lastIndexOf("/"); -1 != c && (a = a.substring(c + 1)); var d = a.lastIndexOf("."), e = null; e = -1 == d ? a : a.substring(0, d), e = e.replace(/\./g, "_"); var f = new RegExp("^[A-Za-z0-9_\\-$]+$"); if (Boolean(f.exec(e))) { e = "$_global_" + e; var g = null; try { g = window[e] } catch (a) { } null != g && RegisterModuleInit(a, g) } }
+}
+var g_supportFiles, g_MDNav, ULS, ULSCat, g_objDiagramLaunch, g_expDatabase, g_PNGImageIds, g_PNGImageSources,
+    IMNControlObj, bIMNControlInited, IMNDictionaryObj, IMNDictionaryPresenceTextObj, bIMNSorted, bIMNOnloadAttached, IMNOrigScrollFunc, bIMNInScrollFunc, IMNSortableObj, IMNHeaderObj, IMNNameDictionaryObj, IMNNameDictionaryPresenceTextObj, IMNShowOfflineObj,
+    imnCount, imnElems, imnElemsCount, imnMarkerBatchSize, imnMarkerBatchDelay, imnBatchDelay, HMG_spBodyOnLoadCalled, HMG_spFormOnSubmitCalled, HMG_spBodyOnPageShowRegistered, HMG_g_numberOfYields, HMG_spPageLoadedRegistered, HMG_g_fAreAllSodsLoaded, HMG_g_ExecuteOrWaitJobs; $_global_init();
+String.format = function () {
+    var formatString = arguments[0]; for (var i = 1; i < arguments.length; i++) { var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm"); formatString = formatString.replace(regEx, arguments[i]); } return formatString;
+}
+function createGuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); });
+}
+function GetPresence10x10(userId, userName, userEmail) {
+    var defaultHtml = HMG_Strings.Presence.DefaultHtml;
+    var sId = "imn_" + createGuid() + ",type=sip";
+    var presenceHtml = String.format(defaultHtml, userEmail, sId, userId, userName);
+    return presenceHtml;
+}
+function GetPresenceOnlyPicture(userId, userName, userEmail, userPictureUrl, extensionNumber, curuserId, companyNumber, phoneNumber, companyCode, locationCode) {
+    var defaultHtml = HMG_Strings.Presence.DefaultImageHtml40;
+    var sId = "imn_" + createGuid() + ",type=sip";
+
+    if (userPictureUrl == "") userPictureUrl = HMG_HostUrl + "/Shared/images/icon-anonymous.png";
+    else userPictureUrl = userPictureUrl + ", " + HMG_HostUrl + "/Shared/images/icon-anonymous.png";
+
+    extensionNumber = extensionNumber != undefined ? extensionNumber : "";
+    companyNumber = companyNumber != undefined ? companyNumber : "";
+    phoneNumber = phoneNumber != undefined ? phoneNumber : "";
+
+    GetPresenceConfig(curuserId, companyCode);
+
+    var mail = config.Mail == "Y" ? "on" : "off";
+    var lync = config.Lync == "Y" ? "on" : "off";
+    var mPlusNote = config.MPlusNote == "Y" ? "on" : "off";
+    var sendFile = config.SendFile == "Y" ? "on" : "off";
+    var phoneCall = config.PhoneCall == "Y" ? "on" : "off";
+    var sms = config.SMS == "Y" ? "on" : "off";
+    var like = config.Like == "Y" ? "on" : "off";
+
+    defaultHtml = defaultHtml.replace("{Mail}", mail).replace("{MailValue}", config.Mail);
+    defaultHtml = defaultHtml.replace("{Lync}", lync).replace("{LyncValue}", config.Lync);
+    defaultHtml = defaultHtml.replace("{MPlusNote}", mPlusNote).replace("{MPlusNoteValue}", config.MPlusNote);
+    defaultHtml = defaultHtml.replace("{SendFile}", sendFile).replace("{SendFileValue}", config.SendFile);
+    defaultHtml = defaultHtml.replace("{PhoneCall}", phoneCall).replace("{PhoneCallValue}", config.PhoneCall);
+    defaultHtml = defaultHtml.replace("{SMS}", sms).replace("{SMSValue}", config.SMS);
+    defaultHtml = defaultHtml.replace("{Like}", like).replace("{LikeValue}", config.Like);
+
+    var presenceHtml = String.format(defaultHtml, userPictureUrl, userId, userEmail, sId, extensionNumber,
+        HMG_Strings.Presence.CallOuts.UserInfo, HMG_Strings.Presence.CallOuts.MailTo, HMG_Strings.Presence.CallOuts.Lync, HMG_Strings.Presence.CallOuts.MPlusNote, HMG_Strings.Presence.CallOuts.SendFile, HMG_Strings.Presence.CallOuts.PhoneCall, HMG_Strings.Presence.CallOuts.SMS, HMG_Strings.Presence.CallOuts.Like, userName, curuserId, companyNumber, phoneNumber, HMG_Strings.Presence.CallOuts.ExtensionNumber, HMG_Strings.Presence.CallOuts.CompanyPhone, HMG_Strings.Presence.CallOuts.CellPhone, locationCode, companyCode);
+
+    return presenceHtml;
+}
+function GetPresenceOnlyPicture1(userId, userName, userEmail, userPictureUrl, extensionNumber, curuserId, companyNumber, phoneNumber, companyCode, locationCode) {
+    var defaultHtml = HMG_Strings.Presence.DefaultImageHtml30;
+    var sId = "imn_" + createGuid() + ",type=sip";
+
+    if (userPictureUrl == "") userPictureUrl = "url(" + HMG_HostUrl + "/Shared/images/icon-anonymous.png)";
+    else userPictureUrl = "url(" + userPictureUrl + "), url(/Shared/images/icon-anonymous.png)";
+
+    extensionNumber = extensionNumber != undefined ? extensionNumber : "";
+    companyNumber = companyNumber != undefined ? companyNumber : "";
+    phoneNumber = phoneNumber != undefined ? phoneNumber : "";
+
+    GetPresenceConfig(curuserId, companyCode);
+
+    var mail = config.Mail == "Y" ? "on" : "off";
+    var lync = config.Lync == "Y" ? "on" : "off";
+    var mPlusNote = config.MPlusNote == "Y" ? "on" : "off";
+    var sendFile = config.SendFile == "Y" ? "on" : "off";
+    var phoneCall = config.PhoneCall == "Y" ? "on" : "off";
+    var sms = config.SMS == "Y" ? "on" : "off";
+    var like = config.Like == "Y" ? "on" : "off";
+
+    defaultHtml = defaultHtml.replace("{Mail}", mail).replace("{MailValue}", config.Mail);
+    defaultHtml = defaultHtml.replace("{Lync}", lync).replace("{LyncValue}", config.Lync);
+    defaultHtml = defaultHtml.replace("{MPlusNote}", mPlusNote).replace("{MPlusNoteValue}", config.MPlusNote);
+    defaultHtml = defaultHtml.replace("{SendFile}", sendFile).replace("{SendFileValue}", config.SendFile);
+    defaultHtml = defaultHtml.replace("{PhoneCall}", phoneCall).replace("{PhoneCallValue}", config.PhoneCall);
+    defaultHtml = defaultHtml.replace("{SMS}", sms).replace("{SMSValue}", config.SMS);
+    defaultHtml = defaultHtml.replace("{Like}", like).replace("{LikeValue}", config.Like);
+
+    var presenceHtml = String.format(defaultHtml, userPictureUrl, userId, userEmail, sId, extensionNumber,
+        HMG_Strings.Presence.CallOuts.UserInfo, HMG_Strings.Presence.CallOuts.MailTo, HMG_Strings.Presence.CallOuts.Lync, HMG_Strings.Presence.CallOuts.MPlusNote, HMG_Strings.Presence.CallOuts.SendFile, HMG_Strings.Presence.CallOuts.PhoneCall, HMG_Strings.Presence.CallOuts.SMS, HMG_Strings.Presence.CallOuts.Like, userName, curuserId, companyNumber, phoneNumber, HMG_Strings.Presence.CallOuts.ExtensionNumber, HMG_Strings.Presence.CallOuts.CompanyPhone, HMG_Strings.Presence.CallOuts.CellPhone, locationCode, companyCode);
+
+    return presenceHtml;
+}
+function GetPresenceOnlyPicture2(userId, userName, userEmail, userPictureUrl, extensionNumber, curuserId, companyNumber, phoneNumber, companyCode, locationCode) {
+    var defaultHtml = HMG_Strings.Presence.DefaultImageHtml40;
+    var sId = "imn_" + createGuid() + ",type=sip";
+
+    if (userPictureUrl == "") userPictureUrl = "url(" + HMG_HostUrl + "/Shared/images/icon-anonymous.png)";
+    else userPictureUrl = "url(" + userPictureUrl + "), url(/Shared/images/icon-anonymous.png)";
+
+    extensionNumber = extensionNumber != undefined ? extensionNumber : "";
+    companyNumber = companyNumber != undefined ? companyNumber : "";
+    phoneNumber = phoneNumber != undefined ? phoneNumber : "";
+
+    GetPresenceConfig(curuserId, companyCode);
+
+    var mail = config.Mail == "Y" ? "on" : "off";
+    var lync = config.Lync == "Y" ? "on" : "off";
+    var mPlusNote = config.MPlusNote == "Y" ? "on" : "off";
+    var sendFile = config.SendFile == "Y" ? "on" : "off";
+    var phoneCall = config.PhoneCall == "Y" ? "on" : "off";
+    var sms = config.SMS == "Y" ? "on" : "off";
+    var like = config.Like == "Y" ? "on" : "off";
+
+    defaultHtml = defaultHtml.replace("{Mail}", mail).replace("{MailValue}", config.Mail);
+    defaultHtml = defaultHtml.replace("{Lync}", lync).replace("{LyncValue}", config.Lync);
+    defaultHtml = defaultHtml.replace("{MPlusNote}", mPlusNote).replace("{MPlusNoteValue}", config.MPlusNote);
+    defaultHtml = defaultHtml.replace("{SendFile}", sendFile).replace("{SendFileValue}", config.SendFile);
+    defaultHtml = defaultHtml.replace("{PhoneCall}", phoneCall).replace("{PhoneCallValue}", config.PhoneCall);
+    defaultHtml = defaultHtml.replace("{SMS}", sms).replace("{SMSValue}", config.SMS);
+    defaultHtml = defaultHtml.replace("{Like}", like).replace("{LikeValue}", config.Like);
+
+    var presenceHtml = String.format(defaultHtml, userPictureUrl, userId, userEmail, sId, extensionNumber,
+        HMG_Strings.Presence.CallOuts.UserInfo, HMG_Strings.Presence.CallOuts.MailTo, HMG_Strings.Presence.CallOuts.Lync, HMG_Strings.Presence.CallOuts.MPlusNote, HMG_Strings.Presence.CallOuts.SendFile, HMG_Strings.Presence.CallOuts.PhoneCall, HMG_Strings.Presence.CallOuts.SMS, HMG_Strings.Presence.CallOuts.Like, userName, curuserId, companyNumber, phoneNumber, HMG_Strings.Presence.CallOuts.ExtensionNumber, HMG_Strings.Presence.CallOuts.CompanyPhone, HMG_Strings.Presence.CallOuts.CellPhone, locationCode, companyCode);
+
+    return presenceHtml;
+}
+function Imn_OpenPhoneList(obj, extensionNumber, companyNumber, phoneNumber, locationCode, companyCode, useYN) {
+    if (companyCode != undefined && locationCode != undefined) {
+        if ((companyCode == "H101" || companyCode == "K101") && locationCode != "1") {
+            alert(HMG_Strings.Presence.Ready);
+            return;
+        }
+    }
+
+    if (useYN.toUpperCase() == "Y") {
+        Imn_OpenPhoneCall(extensionNumber, useYN);
+    }
+    return;
+    var $numbers = $(obj).parent().find(".c-user-profile__phone-numbers");
+
+    if (extensionNumber == "" && companyNumber == "" && phoneNumber == "") {
+        alert("No Phone number.");
+    }
+    else {
+        if (extensionNumber == "") {
+            $numbers.find(".c-user-profile__phone-number").eq(0).hide();
+        }
+
+        if (companyNumber == "") {
+            $numbers.find(".c-user-profile__phone-number").eq(1).hide();
+        }
+
+        if (phoneNumber == "") {
+            $numbers.find(".c-user-profile__phone-number").eq(2).hide();
+        }
+
+        //전화걸기 툴팁 토글
+        if ($numbers.hasClass("active")) {
+            $(obj).parent().find(".c-tooltip__box").show();
+        }
+        else {
+            $(obj).parent().find(".c-tooltip__box").hide();
+        }
+
+        //전화걸기 목록 토글
+        $numbers.toggleClass("active");
+    }
+}
+function Imn_OpenUserProfile(id) {
+    $("#NCUserID").val(id);
+    var sFeatures = "scrollbars=0, toolbar=0";
+    var d_width = 390;
+    var d_height = 400;
+
+    sFeatures += ',width=' + d_width;
+    sFeatures += ',height=' + d_height;
+
+    var dualScreeLeft = window.screenLeft;
+    var dualScreeTop = window.screenTop;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    this.window.open("", "PopUpOpenUserProfileWindow", sFeatures);
+
+    var OpenUserProfile = document.frmPopUpOpenUserProfile;
+    OpenUserProfile.target = "PopUpOpenUserProfileWindow";
+    OpenUserProfile.submit();
+}
+
+function Imn_OpenMail(id, name, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    //$("#mode").val("WINDOW");
+    //$("#cmd").val("PORTAL");
+    var mailData = "<MailInfo><Receiver><To><Name>" + name + "</Name><Email>" + id + "</Email></To></Receiver><Subject></Subject><BodyType>HTML</BodyType><Body></Body><Files></Files></MailInfo>";
+    $("#MailData").val(encodeURIComponent(mailData));
+
+    url = mailDomain + "/WebMail/Mail/Write.aspx";
+
+    var sFeatures = "scrollbars=yes, toolbar=no, resizable=yes";
+    var d_width = window.screen.width;;
+    var d_height = (window.screen.height - 82);
+
+    sFeatures += ',width=' + d_width;
+    sFeatures += ',height=' + d_height;
+
+    var dualScreeLeft = window.screenLeft;
+    var dualScreeTop = window.screenTop;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var left = ((width / 2) - (d_width / 2)) + dualScreeLeft;
+    var top = ((height / 2) - (d_height / 2)) + dualScreeTop;
+    sFeatures += ',left=0,top=0';
+
+    this.window.open(mailDomain + "/Blank.aspx", "PopUpOpenMailWindow", sFeatures);
+
+    var OpenMailForm = document.frmPopUpOpenMail;
+
+    if (OpenMailForm != null) OpenMailForm.focus();
+    setTimeout(function () {
+        OpenMailForm.target = "PopUpOpenMailWindow";
+        OpenMailForm.submit();
+    });
+}
+function Imn_OpenMessage(sip, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    document.location.href = 'sip:' + sip;
+}
+function Imn_OpenMPlusNote(email, menuID, menuName, screenCode, screenName, id, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    $("#receiver").val(id);
+    $("#receiverMail").val(email);
+    $("#MenuID").val(menuID);
+    $("#MenuName").val(menuName);
+    $("#ScreenCode").val(screenCode);
+    $("#ScreenName").val(screenName);
+    $("#IsPopup").val('true');
+
+    var sFeatures = "scrollbars=0, toolbar=0";
+    var d_width = 560;
+    var d_height = 460;
+
+    sFeatures += ',width=' + d_width;
+    sFeatures += ',height=' + d_height;
+
+    var dualScreeLeft = window.screenLeft;
+    var dualScreeTop = window.screenTop;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var left = ((width / 2) - (d_width / 2)) + dualScreeLeft;
+    var top = ((height / 2) - (d_height / 2)) + dualScreeTop;
+    sFeatures += ',left=' + left;
+    sFeatures += ',top=' + top;
+
+    var url = HMG_HostUrl + "/main/MPlus/Note.aspx";
+
+    this.window.open("", "PopUpMPlusNoteWindow", sFeatures);
+
+    var MPlusNoteForm = document.frmPopUpMPlusNote;
+    MPlusNoteForm.target = "PopUpMPlusNoteWindow";
+    MPlusNoteForm.submit();
+}
+
+function Imn_OpenPhoneCall(tel, useYN) {
+    //document.location.href = 'callto:' + tel;
+    try {
+        if (useYN.toUpperCase() != "Y") {
+            return;
+        }
+
+        var simpleLogin = new ActiveXObject("HMGPlugIn.SimpleLogin");
+        if (simpleLogin == null) {
+            // HMGPlugIn.SimpleLogin이 시스템에 설치되지 않은 경우의 처리.
+            alert("HMGPlugIn.SimpleLogin was not installed.");
+        }
+        else {
+            var rtn = simpleLogin.Exec("ucvoice\nM\nD\n" + tel);
+            if (rtn == "2")
+                alert("실행파일이 없습니다.");
+        }
+    }
+    catch (e) {
+        alert("HMGPlugIn.SimpleLogin was not installed.");
+    }
+}
+function Imn_OpenSMS(id, email, menuID, menuName, screenCode, screenName, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    $("#SMSUserID").val(id);
+    $("#SMSEmail").val(email);
+    $("#SMSMenuID").val(menuID);
+    $("#SMSMenuName").val(menuName);
+    $("#SMSScreenCode").val(screenCode);
+    $("#SMSScreenName").val(screenName);
+    $("#SMSIsPopup").val('true');
+
+    var sFeatures = "scrollbars=0, toolbar=0";
+    var d_width = 460;
+    var d_height = 450;
+
+    sFeatures += ',width=' + d_width;
+    sFeatures += ',height=' + d_height;
+
+    var dualScreeLeft = window.screenLeft;
+    var dualScreeTop = window.screenTop;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var left = ((width / 2) - (d_width / 2)) + dualScreeLeft;
+    var top = ((height / 2) - (d_height / 2)) + dualScreeTop;
+    sFeatures += ',left=' + left;
+    sFeatures += ',top=' + top;
+
+    var url = HMG_HostUrl + "/main/MPlus/SMS.aspx";
+
+    this.window.open("", "PopUpSMSWindow", sFeatures);
+
+    var SMSForm = document.frmPopUpSMS;
+    SMSForm.target = "PopUpSMSWindow";
+    SMSForm.submit();
+}
+function Imn_SendFile(sender, receiver, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    try {
+        var simpleLogin = new ActiveXObject("HMGPlugIn.SimpleLogin");
+        if (simpleLogin == null) {
+            // HMGPlugIn.SimpleLogin이 시스템에 설치되지 않은 경우의 처리.
+            alert("HMGPlugIn.SimpleLogin was not installed.");
+        }
+        else {
+            if (sender == "undefined" || $.isEmptyObject(sender)) {
+                alert("발신자 메일 정보가 없습니다.");
+                return;
+            }
+            else if (receiver == "undefined" || $.isEmptyObject(receiver)) {
+                alert("수신자 메일 정보가 없습니다.");
+                return;
+            }
+
+            var rtn = simpleLogin.Exec("axonmsg\nfile\n/sip:" + sender + "\n/Contacts=<sip:" + receiver + ">");
+            if (rtn == "2")
+                alert("실행파일이 없습니다.");
+        }
+    }
+    catch (e) {
+        alert("HMGPlugIn.SimpleLogin was not installed.");
+    }
+}
+function Imn_Like(id, useYN) {
+    if (useYN.toUpperCase() != "Y") {
+        return;
+    }
+
+    $("#LikeUserID").val(id);
+    var sFeatures = "scrollbars=0, toolbar=0";
+    var d_width = 420;
+    var d_height = 180;
+
+    sFeatures += ',width=' + d_width;
+    sFeatures += ',height=' + d_height;
+
+    var dualScreeLeft = window.screenLeft;
+    var dualScreeTop = window.screenTop;
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    this.window.open("", "PopUpOpenLikeUserWindow", sFeatures);
+
+    var OpenLikeUserForm = document.frmPopUpOpenLikeUser;
+    OpenLikeUserForm.target = "PopUpOpenLikeUserWindow";
+    OpenLikeUserForm.submit();
+}
+function ClearProfileCard() {
+    $('.c-user-profile--open').toggleClass('c-user-profile--open');
+}
+
+// presence Config 데이터 가져오기 (2018-11-28 추가)
+function GetPresenceConfig(userId, companyCode) {
+
+    if (config == null || config == undefined) {
+        $.ajax({
+            type: "POST",
+            url: HMG_HostUrl + "/_vti_bin/exapi/Config/GetPresenceConfig",
+            cache: false,
+            data: 'CompanyCode=' + companyCode + '&UserID=' + userId,
+            async: false,
+            datatype: "json",
+            success: function (data) {
+                config = data;
+            },
+            error: function (response) {
+                config = {
+                    Mail: "Y"
+                    , Lync: "Y"
+                    , MPlusNote: "Y"
+                    , SendFile: "Y"
+                    , PhoneCall: "Y"
+                    , SMS: "Y"
+                    , Like: "Y"
+                };
+                //config = [];
+                //config.push({
+                //    Mail: "Y"
+                //    , Lync: "Y"
+                //    , MPlusNote: "Y"
+                //    , SendFile: "Y"
+                //    , PhoneCall: "Y"
+                //    , SMS: "Y"
+                //    , Like: "Y"
+                //});
+                //config.Mail = "Y";
+                //config.Lync = "Y";
+                //config.MPlusNote = "Y";
+                //config.SendFile = "Y";
+                //config.PhoneCall = "Y";
+                //config.SMS = "Y";
+                //config.Like = "Y";
+            }
+        });
+    }
+}
+
+
+$(document).ready(function () {
+    $('.c-user-profile__visual').on('click', function (e) {
+        if ($(this).parent().hasClass('c-user-profile--open'))
+            ClearProfileCard();
+        else {
+            ClearProfileCard();
+            $(this).parent().toggleClass('c-user-profile--open');
+        }
+        //e.preventDefault();
+    });
+
+    // R&D 구분
+    if (HMG_HostUrl.toLowerCase().indexOf("rnd") > -1 || HMG_HostUrl.toLowerCase().indexOf("rndwf") > -1 || HMG_HostUrl.toLowerCase().indexOf("rndmail") > -1) {
+        HMG_HostUrl = location.protocol + "//rndportal" + "." + HMG_Domain;
+    }
+    else if (HMG_Domain == "") {
+        HMG_HostUrl = HMG_HostUrl;
+    }
+    else {
+        HMG_HostUrl = location.protocol + "//autoway" + "." + HMG_Domain;
+    }
+
+    $('body').append("<div style='display:none;'><form name='frmPopUpOpenUserProfile' method='post' target='PopUpOpenUserProfileWindow' action='" + HMG_HostUrl + "/Main/UserInfoPop/NameCard.aspx'><input name='NCUserID' id='NCUserID' type='hidden' value=''/></form>" +
+        "<form name='frmPopUpMPlusNote' method='post' target='PopUpMPlusNoteWindow' action='" + HMG_HostUrl + "/Main/MPlus/Note.aspx'><input name='receiver' id='receiver' type='hidden' value=''/><input name='receiverMail' id='receiverMail' type='hidden' value=''/><input name='MenuID' id='MenuID' type='hidden' value=''/><input name='MenuName' id='MenuName' type='hidden' value=''/><input name='ScreenCode' id='ScreenCode' type='hidden' value=''/><input name='ScreenName' id='ScreenName' type='hidden' value=''/><input name='IsPopup' id='IsPopup' type='hidden' value=''/></form>" +
+        "<form name='frmPopUpOpenMail' method='post' target='PopUpOpenMailWindow' action='" + mailDomain + "/WebMail/Mail/Write.aspx'><input name='mode' id='mode' type='hidden' value='WINDOW'/><input name='cmd' id='cmd' type='hidden' value='PORTAL'/><input name='MailData' id='MailData' type='hidden' value=''/></form>" +
+        "<form name='frmPopUpSMS' method='post' target='PopUpSMSWindow' action='" + HMG_HostUrl + "/main/MPlus/SMS.aspx'><input name='SMSUserID' id='SMSUserID' type='hidden' value=''/><input name='SMSEmail' id='SMSEmail' type='hidden' value=''/><input name='SMSMenuID' id='SMSMenuID' type='hidden' value=''/><input name='SMSMenuName' id='SMSMenuName' type='hidden' value=''/><input name='SMSScreenCode' id='SMSScreenCode' type='hidden' value=''/><input name='SMSScreenName' id='SMSScreenName' type='hidden' value=''/><input name='SMSIsPopup' id='SMSIsPopup' type='hidden' value=''/></form>" +
+        "<form name='frmPopUpOpenLikeUser' method='post' target='PopUpOpenLikeUserWindow' action='" + HMG_HostUrl + "/Main/UserInfoPop/LikeUser.aspx'><input name='LikeUserID' id='LikeUserID' type='hidden' value=''/></form></div>");
+});

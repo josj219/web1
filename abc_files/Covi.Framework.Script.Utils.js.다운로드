@@ -1,0 +1,1109 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>김형복</creator> 
+///<createDate>2011.10.10</createDate> 
+///<lastModifyDate>2011.10.10</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///Framework 제공되는 유틸리티 스크립트(Prefix "CFN_")
+///</summary>
+///<ModifySpc>
+///여기에 변경내역을 변경일자(변경자) : 변경내용으로 기록합니다. 
+///</ModifySpc>
+*/
+
+////////////////////////////////////////// JavaScript StringBuilder ////////////////////////////////
+// 스트링 빌더 객체 생성
+var StringBuilder = function () {
+    this.buffer = new Array();
+}
+
+//순서대로 문자열을 추가한다.
+StringBuilder.prototype.Append = function (strValue) {
+    this.buffer[this.buffer.length] = strValue;
+    // this.buffer.push( strValue ); //IE5.5 NS4
+}
+// 문자열의 형식을 지정해서 추가한다.
+StringBuilder.prototype.AppendFormat = function () {
+    var count = arguments.length;
+    if (count < 2) return "";
+    var strValue = arguments[0];
+    for (var i = 1; i < count; i++) {
+        //strValue = strValue.replace("{" + (i - 1) + "}", arguments[i]);
+        //if (strValue.indexOf("{" + (i - 1) + "}") > -1) {
+        //    i = i - 1;
+        //}
+        strValue = strValue.replace(new RegExp("[{]" + (i - 1) + "[}]", "g"), arguments[i]);
+    }
+    this.buffer[this.buffer.length] = strValue;
+}
+// 해당하는 위치에 문자열을 추가한다. (문자위치가 아님);
+StringBuilder.prototype.Insert = function (idx, strValue) {
+    this.buffer.splice(idx, 0, strValue);     //IE5.5 NS4 
+}
+// 해당문자열을 새로운 문자열로 바꾼다. 
+// (배열방 단위로 바꾸므로 배열방 사이에 낀 문자열은 바꾸지 않음)
+StringBuilder.prototype.Replace = function (from, to) {
+    for (var i = this.buffer.length - 1; i >= 0; i--)
+        this.buffer[i] = this.buffer[i].replace(new RegExp(from, "g"), to); //IE4  NS3 
+}
+// 문자열로 반환한다.
+StringBuilder.prototype.ToString = function () {
+    return this.buffer.join("");    //IE4 NS3
+}
+// 문자열을 초기화함.
+StringBuilder.prototype.Clear = function () {
+    this.buffer = new Array();
+}
+
+// 스트링포멧
+if (!String.format) {
+    String.format = function (format) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return format.replace(/{(\d+)}/g, function (match, number) {
+            return typeof args[number] != 'undefined'
+              ? args[number]
+              : match
+            ;
+        });
+    };
+}
+
+////////////////////////////////////////// ie외 입력박스 OnKeyUp 이벤트 발생 ////////////////////////////////
+/*
+* on-key event fix for FF on Korean input
+* fires 'keyup' event when contents of input form change
+* requires jQuery 1.2.x
+* example: var watchInput = keyFix(inputId);
+* author: Hoya, http://hoya.tistory.com
+*/
+
+if (typeof (OnKeyUpNotIE) == "undefined")
+    _OnKeyUpNotIE = OnKeyUpNotIE = {};
+
+if (typeof (_OnKeyUpNotIE.fix) == "undefined")
+    _OnKeyUpNotIE.fix = {};
+
+if (typeof (window.OnKeyUpNotIE.instances) == "undefined")
+    window.OnKeyUpNotIE.instances = new Array();
+
+_OnKeyUpNotIE.fix = function (targetId) {
+    // this fix is only for mozilla browsers
+    if (_ie == true)
+        return false;
+
+    var thisClass = this;
+    this.keyEventCheck = null;
+    this.targetId = targetId;
+    window.OnKeyUpNotIE.instances[this.targetId] = this;
+
+    var focusFunc = function () {
+        if (!thisClass.keyEventCheck) thisClass.watchInput();
+    };
+
+    var blurFunc = function () {
+        if (thisClass.keyEventCheck) {
+            window.clearInterval(thisClass.keyEventCheck);
+            thisClass.keyEventCheck = null;
+        }
+    };
+
+    $("#" + this.targetId).bind("focus", focusFunc);
+    $("#" + this.targetId).bind("onblur", blurFunc);
+};
+
+_OnKeyUpNotIE.fix.prototype.watchInput = function () {
+    $("#" + this.targetId).trigger('onkeyup');
+
+    if (this.keyEventCheck) window.clearInterval(this.keyEventCheck);
+    this.keyEventCheck = window.setInterval("window.OnKeyUpNotIE.instances['" + this.targetId + "'].watchInput()", 100);
+};
+
+$(window).load(function () {
+    if (!_ie) {
+        $("input").each(function () {
+            if ($(this).attr("type") == "text") {
+                var keyFix = new OnKeyUpNotIE.fix(this.id);
+            }
+        })
+    }
+});
+
+//////////////////////////////////////////  모바일용 스크롤링 ////////////////////////////////
+// 모바일용 스크롤링을 만들어 주는 함수
+// pTargetDiv, [pPosition(포지션 속성), pWidth(넓이), pHeight(높이), pIsDestroy(만들어진 스크롤링의 초기화 여부), pIsOnlyMobile(모바일에서만 스크롤을 생성할지 여부)]
+// pTargetDiv[필수] : 모바일용 스크롤을 만들 Div
+// ----- 이하 파라메터는 필수값이 아님(지정하지 않아도 무방 즉 CFN_MoblieDivScrolling("divID") 사용가능)
+// pPosition [null | absolute | relative] : Div의 포지션 속성
+// pWidth, pHeight [null | "50px"] : 넓이 및 높이 속성
+// pIsDestroy [null | true | false(default)] : 이미 모바일용 스크롤링을 제거함
+// pIsOnlyMobile [null | true(default) | false] : 모바일에서만 스크롤링을 만들지 여부
+function CFN_MoblieDivScrolling(pTargetDiv, pPosition, pWidth, pHeight, pIsDestroy, pIsOnlyMobile) {
+    try {
+        if ($("#" + pTargetDiv) != null) {
+            var l_CreateScrolling = true;
+            if (pIsDestroy == null || typeof pIsDestroy == "undefined") { pIsDestroy = false; }
+            if (pIsOnlyMobile == null || typeof pIsOnlyMobile == "undefined") { pIsOnlyMobile = true; }
+
+            // 모바일에서만 스크롤을 만들지 설정
+            if (pIsOnlyMobile) { if (_mobile) { l_CreateScrolling = true; } else { l_CreateScrolling = false; } }
+
+            // 모바일용 스크롤 생성 OK
+            // l_CreateScrolling = true; // TestCode
+            if (l_CreateScrolling) {
+                if (pPosition != null && typeof pPosition != "undefined") { $("#" + pTargetDiv).css("position", pPosition); }
+                if (pWidth != null && typeof pWidth != "undefined") { $("#" + pTargetDiv).css("width", pWidth); }
+                if (pHeight != null && typeof pHeight != "undefined") { $("#" + pTargetDiv).css("height", pHeight); }
+
+                // 두번째 생성
+                if (_MobileScroll[pTargetDiv] != null) {
+                    var iScrolling = _MobileScroll[pTargetDiv];
+                    iScrolling.destroy();
+                    if (!pIsDestroy) {
+                        _MobileScroll[pTargetDiv] = new iScroll(pTargetDiv, {
+                            useTransform: true,
+                            zoom: false,
+                            onBeforeScrollStart: function (e) {
+                                var target = e.target;
+                                while (target.nodeType != 1) target = target.parentNode;
+                                if (target.tagName != 'SELECT' && target.tagName != 'INPUT' && target.tagName != 'TR' && target.tagName != 'TD')
+                                    e.preventDefault();
+                            }
+                        });
+                    } else {
+                        _MobileScroll[pTargetDiv] = null;
+                    }
+                    // 처음 생성
+                } else if (!pIsDestroy) {
+                    var iScrolling = new iScroll(pTargetDiv, {
+                        useTransform: true,
+                        zoom: false,
+                        onBeforeScrollStart: function (e) {
+                            var target = e.target;
+                            while (target.nodeType != 1) target = target.parentNode;
+                            if (target.tagName != 'SELECT' && target.tagName != 'INPUT' && target.tagName != 'TR' && target.tagName != 'TD')
+                                e.preventDefault();
+                        }
+                    });
+                    _MobileScroll[pTargetDiv] = iScrolling;
+                }
+            }
+        }
+    } catch (e) { }
+}
+
+////////////////////////////////////////// Base Utils  ////////////////////////////////
+// Get 방식으로 호출되는 페이지에서 QueryString을 파싱하여 파라메터를 가져오는 함수
+function CFN_GetQueryString(pParamName) {
+    var _QureyObject = {};
+    if (_QureyObject[pParamName] == "undefined" || _QureyObject[pParamName] == null) {
+        var queryString = location.search.replace('?', '').split('&');
+        for (var i = 0; i < queryString.length; i++) {
+            var name = queryString[i].split('=')[0];
+            var value = queryString[i].split('=')[1];
+            _QureyObject[name] = value;
+        }
+        if (_QureyObject[pParamName] == "undefined" || _QureyObject[pParamName] == null) {
+            return "undefined";
+        } else {
+            try {
+                return _QureyObject[pParamName];
+            } finally {
+                _QureyObject = null;
+            }
+        }
+    } else {
+        try {
+            return _QureyObject[pParamName];
+        } finally {
+            _QureyObject = null;
+        }
+    }
+}
+
+// PNG 파일의 배경 처리를 위한 함수
+function CFN_SetPNGTransform(obj) {
+    obj.width = obj.height = 1;
+    obj.className = obj.className.replace(/\bpng24\b/i, '');
+    obj.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + obj.src + "',sizingMethod='image');"
+    obj.src = '';
+    return '';
+}
+
+// 서버컨트롤의 아이디로 객체 가져오기
+//function CFN_GetCtrlById(pId) {
+//	return document.getElementById(eval("id_" + pId));
+//}
+
+// 서버컨트롤의 네임으로 객체 가져오기
+//function CFN_GetCtrlByName(pName) {
+//    return document.getElementsByName(eval("nm_" + pName))[0];
+//}
+
+// 2016-05-20 SSG Ajax Render 수정 by cjh
+// 서버컨트롤의 아이디로 객체 가져오기
+function CFN_GetCtrlById(pId) {
+    var ctrl = new Object();
+    try {
+        ctrl = document.getElementById(eval("id_" + pId));
+    } catch (e) {
+        if (jQuery != null && typeof (jQuery) == "function") {
+            var obj = jQuery("[id*='" + pId + "']");
+            if (obj.length > 0) ctrl = obj.get(0);
+        }
+    }
+    return ctrl;
+}
+
+// 2016-05-20 SSG Ajax Render 수정 by cjh
+// 서버컨트롤의 네임으로 객체 가져오기
+function CFN_GetCtrlByName(pName) {
+    var ctrl = new Object();
+    try {
+        ctrl = document.getElementsByName(eval("nm_" + pName))[0];
+    } catch (e) {
+        if (jQuery != null && typeof (jQuery) == "function") {
+            var obj = jQuery("[nm_*='" + pName + "']");
+            if (obj.length > 0) ctrl = obj.get(0);
+        }
+    }
+    return ctrl;
+}
+
+
+
+////////////////////////////////////////// window open  Strat ////////////////////////////////
+var g_Win;
+//일반window.open
+function CFN_OpenWindow(fileName, windowName, theWidth, theHeight, etcParam, isFullSize) {
+    var x = Number(theWidth);
+    var y = Number(theHeight);
+    // 화면 사이즈 보다 팝업이 큰경우 높이값 조정
+    if (window.screen.height < (y + 82)) {
+        y = window.screen.height - 82;
+    }
+
+    var sy = window.screen.height / 2 - parseInt(y) / 2 - 70;
+    var sx = window.screen.width / 2 - parseInt(x) / 2;
+
+    if (etcParam == 'fix') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=0";
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'resize') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=1,resizable=1,channelmode=1";
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'scroll') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=0";
+    } else if (etcParam == 'both') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1,resizable=1,channelmode=1";
+    } else if (etcParam == 'all') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,resizable=1,channelmode=1";
+    } else if (etcParam == 'scroll_resize') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1";
+    }
+
+    if (isFullSize == "1") {
+        etcParam = etcParam.replace("channelmode=1", "channelmode=0");
+    }
+
+    if (sy < 0) { sy = 0; }
+
+    var sz = ",top=" + sy + "px,left=" + sx + "px";
+
+    if (windowName == null || windowName == "" || windowName == "newMessageWindow") {
+        windowName = new String(Math.round(Math.random() * 100000));
+    }
+
+    if (fileName.indexOf("?") > -1) {
+        fileName = fileName + "&CFN_OpenWindowName=" + windowName;
+    }
+    else {
+        fileName = fileName + "?CFN_OpenWindowName=" + windowName;
+    }
+
+    // 파라메터 암호화 관련 처리
+    if (fileName.indexOf("EncryptURL=") > -1) {
+        if (fileName.indexOf("EncryptURL=M") > -1) {
+            var l_param = fileName.split("?")[1];
+            fileName = Common.GetEncryptURL(fileName) + "&" + l_param.replace("&EncryptURL=M", "");
+        } else {
+            fileName = Common.GetEncryptURL(fileName);
+        }
+    }
+
+    if (windowName == "FORMS") {
+        g_Win = window.open(fileName, windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+    } else {
+        try {
+            //IE8 windowName 버그
+            var g_Win2 = window.open(fileName, windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+            if (g_Win2) g_Win2.focus();
+            else window.open(fileName, null, etcParam + ",width=" + x + ",height=" + y + sz);
+        } catch (e) {
+            window.open(fileName, null, etcParam + ",width=" + x + ",height=" + y + sz);
+        }
+    }
+}
+
+
+/*******************************************************
+CFN_OpenWindowPostTranslation 함수 : Translation용 Post방식 팝업 열기. 기존 파라미터는 본문에 & 포함 불가. 해당 부분 수정된 함수.
+인수 1 fileName : 주소
+2 theWidth : 창 넓이
+3 theHeight : 창 높이 
+4 windowName :윈도우이름
+5 etcParam : Pararam
+반환 1 objNewWin : 생성된 window오브젝트
+********************************************************/
+
+function CFN_OpenWindowPostTranslation(fileName, theWidth, theHeight, windowName, etcParam, blankURL) {
+    var objNewWin;
+    var x = theWidth;
+    var y = theHeight;
+    // 화면 사이즈 보다 팝업이 큰경우 높이값 조정
+    if (window.screen.height < (y + 82)) {
+        y = window.screen.height - 82;
+    }
+    var sy = window.screen.height / 2 - y / 2 - 70;
+
+    if (etcParam == 'fix') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=0";
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'resize') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=1,channelmode=1";
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'scroll') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=0";
+    } else if (etcParam == 'both') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1,channelmode=1";
+    } else if (etcParam == 'all') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,channelmode=1";
+    }
+
+    var sx = window.screen.width / 2 - x / 2;
+    if (sy < 0) { sy = 10; }
+    var sz = ",top=" + sy + ",left=" + sx;
+    if (!windowName || windowName == "newMessageWindow" || windowName == "") {
+        windowName = new String(Math.round(Math.random() * 100000));
+    }
+
+    windowName = windowName.replace('-', '');
+
+    var sPageName;
+
+    var $form = $("<form>");
+
+    
+    // 파라메터 암호화 관련 처리
+    /*
+    if (fileName.indexOf("EncryptURL=") > -1) {
+        if (fileName.indexOf("EncryptURL=M") > -1) {
+            var l_param = fileName.split("?")[1];
+            fileName = Common.GetEncryptURL(fileName) + "&" + l_param.replace("&EncryptURL=M", "");
+        } else {
+            fileName = Common.GetEncryptURL(fileName);
+        }
+    }*/
+
+    if (fileName.indexOf('?') > 0) {
+        var aParams = new Array();
+        var aValues = new Array();
+        var aParameter = new Array();
+
+        sPageName = fileName.split('?')[0];
+        var sParams = fileName.substring(fileName.indexOf("?") + 1, fileName.length)//?로 split시, ? 가 본문에 있는 경우 중간에 잘리는 현상 발생하여 ?뒤로 모두 파라미터로 취급하도록 수정.
+
+        if (sParams != "") {
+            aParameter = sParams.split(Common.GetBaseConfig("MachineTranslationSeparator"));//&★¿& 기존함수에서 &로 자르니 R&D같은 텍스트가 들어가면 잘림.
+
+            //url파라미터를 파라미터와 값으로 분류
+            for (var i = 0; i < aParameter.length; i++) {
+                aParams.push(aParameter[i].substring(0, aParameter[i].indexOf('=')));
+                aValues.push(unescape(aParameter[i].substring(aParameter[i].indexOf('=') + 1, aParameter[i].length)));
+            }
+        }
+
+        //url파라미터를 form안에 hidden태그로 생성
+        for (var i = 0; i < aParameter.length; i++) {
+            $form.append($("<input>").attr({ "type": "hidden", "name": aParams[i], "value": aValues[i] }));
+        }
+    } else {
+        sPageName = fileName;
+    }
+    if (blankURL != undefined && blankURL != null && blankURL != "") {
+        //objNewWin = window.open(blankURL, windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+        //objNewWin = window.open(blankURL);
+    } else {
+        //objNewWin = window.open("about:blank", windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+        //objNewWin = window.open("about:blank");  
+    }
+    if (objNewWin != null) objNewWin.focus();
+    setTimeout(function () {
+        $form.attr({ "method": "post", "target": windowName, "action": sPageName });
+        $form.appendTo($(document.body));
+        $form.submit();
+    }, 500);
+
+    return objNewWin;
+}
+
+
+/*******************************************************
+CFN_OpenWindowPost 함수 : Post방식 팝업 열기
+인수 1 fileName : 주소
+2 theWidth : 창 넓이
+3 theHeight : 창 높이 
+4 windowName :윈도우이름
+5 etcParam : Pararam
+반환 1 objNewWin : 생성된 window오브젝트
+********************************************************/
+
+function CFN_OpenWindowPost(fileName, theWidth, theHeight, windowName, etcParam, blankURL) {
+    var objNewWin;
+    var x = theWidth;
+    var y = theHeight;
+    // 화면 사이즈 보다 팝업이 큰경우 높이값 조정
+    if (window.screen.height < (y + 82)) {
+        y = window.screen.height - 82;
+    }
+    var sy = window.screen.height / 2 - y / 2 - 70;
+
+    if (etcParam == 'fix') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=0";
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'resize') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=0,resizable=1,channelmode=1"; 
+        sy = window.screen.height / 2 - parseInt(y) / 2 - 40;
+    } else if (etcParam == 'scroll') {
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=0";
+    } else if (etcParam == 'both') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1,channelmode=1";
+    } else if (etcParam == 'all') {    //전자결재 문서 오픈시 스크롤:O, 리사이즈:X (중앙미디어)
+        etcParam = "toolbar=1,location=1,directories=1,status=1,menubar=1,scrollbars=1,resizable=1,channelmode=1";
+    }
+
+    var sx = window.screen.width / 2 - x / 2;
+    if (sy < 0) { sy = 10; }
+    var sz = ",top=" + sy + ",left=" + sx;
+    if (!windowName || windowName == "newMessageWindow" || windowName == "") {
+        windowName = new String(Math.round(Math.random() * 100000));
+    }
+
+    windowName = windowName.replace('-', '');
+
+    var sPageName;
+
+    var $form = $("<form>");
+
+    // 파라메터 암호화 관련 처리
+    if (fileName.indexOf("EncryptURL=") > -1) {
+        if (fileName.indexOf("EncryptURL=M") > -1) {
+            var l_param = fileName.split("?")[1];
+            fileName = Common.GetEncryptURL(fileName) + "&" + l_param.replace("&EncryptURL=M", "");
+        } else {
+            fileName = Common.GetEncryptURL(fileName);
+        }
+    }
+
+    if (fileName.indexOf('?') > 0) {
+        var aParams = new Array();
+        var aValues = new Array();
+        var aParameter = new Array();
+
+        sPageName = fileName.split('?')[0];
+        var sParams = fileName.split('?')[1];
+
+        if (sParams != "") {
+            aParameter = sParams.split('&');
+
+            //url파라미터를 파라미터와 값으로 분류
+            for (var i = 0; i < aParameter.length; i++) {
+                aParams.push(aParameter[i].substring(0, aParameter[i].indexOf('=')));
+                aValues.push(unescape(aParameter[i].substring(aParameter[i].indexOf('=') + 1, aParameter[i].length)));
+            }
+        }
+
+        //url파라미터를 form안에 hidden태그로 생성
+        for (var i = 0; i < aParameter.length; i++) {
+            $form.append($("<input>").attr({ "type": "hidden", "name": aParams[i], "value": aValues[i] }));
+        }
+    } else {
+        sPageName = fileName;
+    }
+    if (blankURL != undefined && blankURL != null && blankURL != "") {
+        objNewWin = window.open(blankURL, windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+    } else {
+        objNewWin = window.open("about:blank", windowName, etcParam + ",width=" + x + ",height=" + y + sz);
+    }
+    if (objNewWin != null) objNewWin.focus();
+    setTimeout(function () {
+        $form.attr({ "method": "post", "target": windowName, "action": sPageName });
+        $form.appendTo($(document.body));
+        $form.submit();
+    }, 500);
+
+    return objNewWin;
+}
+////////////////////////////////////////// window open  End ////////////////////////////////
+
+////////////////////////////////////////// String Utils  Start ////////////////////////////////
+// 왼쪽에 특정문자를 채워 반환
+function CFN_PadLeft(pString, pCount, pPadChar) {
+    var l_PadString = '';
+    pString = pString.toString();
+
+    if (pString.length < pCount) {
+        for (i = 0; i < pCount - pString.length; i++) {
+            l_PadString += pPadChar;
+        }
+    }
+    return l_PadString + pString;
+}
+
+// 오른쪽에 특정문자를 채워 반환
+function CFN_PadRight(pString, pCount, pPadChar) {
+    var l_PadString = '';
+    pString = pString.toString();
+
+    if (pString.length < pCount) {
+        for (i = 0; i < pCount - pString.length; i++) {
+            l_PadString += pPadChar;
+        }
+    }
+    return pString + l_PadString;
+}
+
+// 문자열 바이트로 잘라 내기
+function CFN_AdjustLenByte(strText, maximum) {
+    var inc = 0;
+    var nbytes = 0;
+    var strReturn = '';
+    var szLen = strText.length;
+
+    for (i = 0; i < szLen; i++) {
+        var chr = strText.charAt(i);
+        if (escape(chr).length > 4) {
+            inc = 2;
+        } else if (chr != '\r') {
+            inc = 1;
+        }
+        if ((nbytes + inc) > maximum) {
+            break;
+        }
+        nbytes += inc;
+        strReturn += chr;
+    }
+    return strReturn;
+}
+
+// 문자열 잘라내기
+function CFN_AdjustLen(strText, maximum) {
+    var inc = 0;
+    var nbytes = 0;
+    var strReturn = '';
+    var szLen = strText.length;
+
+    for (i = 0; i < szLen; i++) {
+        var chr = strText.charAt(i);
+        if (chr != '\r') {
+            inc = 1;
+        }
+        if ((nbytes + inc) > maximum) {
+            break;
+        }
+        nbytes += inc;
+        strReturn += chr;
+    }
+    return strReturn;
+}
+
+// 문자의 길이 바이트 체크
+function CFN_CalByte(strText) {
+    var nbytes = 0;
+    for (i = 0; i < strText.length; i++) {
+        var chr = strText.charAt(i);
+        if (escape(chr).length > 4) {
+            nbytes += 2;
+        } else if (chr != '\r') {
+            nbytes++;
+        }
+    }
+    return nbytes;
+}
+
+// 입력 문자 수자 인지 체크
+function CFN_IsNum(pKeyCode) {
+    if (pKeyCode == 8) {
+        return true;
+    } else if (pKeyCode < 48 || pKeyCode > 57) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// 숫자만 입력 (사용법 : onkeydown="CFN_NumberOnly(event);" )
+function CFN_NumberOnly(event) {
+    if (
+        event.keyCode == 8       // backspace
+        || event.keyCode == 9       // tab
+        || event.keyCode == 13      // enter
+        || event.keyCode == 27      // escape
+        || event.keyCode == 46      // delete
+        || (event.keyCode == 65 && event.ctrlKey === true)  // Ctrl+A    
+        || (event.keyCode >= 35 && event.keyCode <= 39)     // end(35), home(36), left(37), up(38), right(39)
+        ) {
+        return; // 해당 특수 문자만 허용
+    } else {
+        if (
+                event.shiftKey                              // shift 이거나
+            || (event.keyCode < 48 || event.keyCode > 57)   // 0 ~ 9 이외
+            && (event.keyCode < 96 || event.keyCode > 105)  // 0(Ins) ~ 9(PgUp) 이외
+            ) {
+            CFN_CancelEvent(event); // 금지
+        } else {
+            return; // 숫자키만 허용
+        }
+    }
+}
+
+// 이벤트 취소
+function CFN_CancelEvent(event) {
+    if ('cancelable' in event) {
+        if (event.cancelable) {
+            event.preventDefault();
+        }
+    } else {
+        event.returnValue = false;
+    }
+}
+
+// 천단위에 컴마 찍기
+function CFN_AddComma(objValue) {
+    var objTempDot = "";
+    var objTemp = "";
+    var objTempValue = '';
+    var objFlag = '';
+    if (objValue.indexOf(".") > -1) {
+        objTemp = objValue.split(".")[0];
+        objTempDot = objValue.split(".")[1];
+    } else {
+        objTemp = objValue;
+    }
+
+    objTemp = objTemp.replace(/,/g, '');
+    if (objTemp.charAt(0) == '-') {
+        objFlag = 'Y';
+        objTemp = objTemp.substring(1);
+    }
+
+    if (objTemp.length > 3) {
+        var tempV1 = objTemp.substring(0, objTemp.length % 3);
+        var tempV2 = objTemp.substring(objTemp.length % 3, objTemp.length);
+
+        if (tempV1.length != 0) {
+            tempV1 += ',';
+        }
+        objTempValue += tempV1;
+
+        for (i = 0; i < tempV2.length; i++) {
+            if (i % 3 == 0 && i != 0) {
+                objTempValue += ',';
+            }
+            objTempValue += tempV2.charAt(i);
+        }
+    } else {
+        objTempValue = objTemp;
+    }
+
+    if (objFlag == 'Y') {
+        objTempValue = '-' + objTempValue;
+    }
+
+    if (objTempDot != "") {
+        objTempValue = objTempValue + "." + objTempDot;
+    }
+    return objTempValue;
+}
+
+////////////////////////////////////////// String Utils  End ////////////////////////////////
+
+////////////////////////////////////////// Date Utils  Start ////////////////////////////////
+
+//시작, 종료일 비교
+function CFN_CheckDateStartEnd(startDate, endDate) {
+    var ArrStart, ArrEnd
+    var isLater = false;
+
+    if (startDate.indexOf("(") > -1) {
+        startDate = startDate.replace(startDate.substr(startDate.indexOf("("), (startDate.length - 1)), "");
+    }
+
+    if (endDate.indexOf("(") > -1) {
+        endDate = endDate.replace(endDate.substr(endDate.indexOf("("), (endDate.length - 1)), "");
+    }
+
+    if (startDate.indexOf("-") > -1) {
+        ArrStart = startDate.split("-")
+    } else if (startDate.indexOf(".") > -1) {
+        ArrStart = startDate.split(".")
+    } else if (startDate.indexOf("/") > -1) {
+        ArrStart = startDate.split("/")
+    } else {
+        var l_dateLength = startDate.length;
+        if (l_dateLength == 6) {
+            ArrStart = (startDate.substr(0, 4) + "-" + startDate.substr(4, 1) + "-" + startDate.substr(5, 1)).split("-");
+        } else if (l_dateLength == 7) {
+            ArrStart = (startDate.substr(0, 4) + "-" + startDate.substr(4, 1) + "-" + startDate.substr(5, 2)).split("-");
+        } else if (l_dateLength == 8) {
+            ArrStart = (startDate.substr(0, 4) + "-" + startDate.substr(4, 2) + "-" + startDate.substr(6, 2)).split("-");
+        }
+    }
+
+    if (endDate.indexOf("-") > -1) {
+        ArrEnd = endDate.split("-")
+    } else if (endDate.indexOf(".") > -1) {
+        ArrEnd = endDate.split(".")
+    } else if (startDate.indexOf("/") > -1) {
+        ArrEnd = endDate.split("/")
+    } else {
+        var l_dateLength = endDate.length;
+        if (l_dateLength == 6) {
+            ArrEnd = (endDate.substr(0, 4) + "-" + endDate.substr(4, 1) + "-" + endDate.substr(5, 1)).split("-");
+        } else if (l_dateLength == 7) {
+            ArrEnd = (endDate.substr(0, 4) + "-" + endDate.substr(4, 1) + "-" + endDate.substr(5, 2)).split("-");
+        } else if (l_dateLength == 8) {
+            ArrEnd = (endDate.substr(0, 4) + "-" + endDate.substr(4, 2) + "-" + endDate.substr(6, 2)).split("-");
+        }
+    }
+
+    if (Number(ArrStart[0]) > Number(ArrEnd[0])) {
+        isLater = true;
+    } else if (Number(ArrStart[0]) == Number(ArrEnd[0])) {
+        if (Number(ArrStart[1]) > Number(ArrEnd[1])) {
+            isLater = true;
+        } else if (Number(ArrStart[1]) == Number(ArrEnd[1])) {
+            if (Number(ArrStart[2]) > Number(ArrEnd[2])) {
+                isLater = true;
+            }
+        }
+    }
+    return isLater;
+}
+
+// 시작, 종료 시간 비교
+function CFN_CheckTimeStartEnd(startTime, endTime) {
+    var sTime = startTime.value.split(':');
+    var eTime = endTime.value.split(':');
+    var isLater = false;
+
+    if (Number(sTime[0]) > Number(eTime[0])) {
+        isLater = true;
+    } else if (Number(sTime[0]) == Number(eTime[0])) {
+        if (Number(sTime[1]) > Number(eTime[1])) {
+            isLater = true;
+        } else if (Number(sTime[1]) == Number(eTime[1])) {
+            if (Number(sTime[2]) > Number(eTime[2])) {
+                isLater = true;
+            }
+        }
+    }
+
+    return isLater;
+}
+
+// 시간 비교
+function CFN_DiffDate(pStartDate, pEndDate, type) {
+    //날짜 비교
+    var ReturnValue = '';
+    switch (type) {
+        case 'day': ReturnValue = ((((pEndDate - pStartDate) / 1000) / 60) / 60) / 24;
+            break;
+        case 'hour': ReturnValue = ((((pEndDate - pStartDate) / 1000) / 60) / 60);
+            break;
+        case 'min': ReturnValue = (((pEndDate - pStartDate) / 1000) / 60);
+            break;
+        case 'sec': ReturnValue = ((pEndDate - pStartDate) / 1000);
+            break;
+    }
+
+    return ReturnValue;
+}
+
+// 날짜 변환 반환
+function CFN_GetDateAddMilisecond(pTargetDate, pAddMilisecond) {
+    var dtDate = new Date();
+    if (pTargetDate != null || pTargetDate != undefined) {
+        dtDate = pTargetDate
+    }
+    var numb = Date.parse(dtDate);
+    dtDate.setTime(numb + pAddMilisecond);
+
+    return dtDate;
+}
+////////////////////////////////////////// Date Utils  End ////////////////////////////////
+
+////////////////////////////////////////// Layer Utils  Start ////////////////////////////////
+// 레이어에 Html 작성
+function CFN_WriteLayer(id, html) {
+    var layer = new CFN_GetLayerById(id);
+    if (_nn4) {
+        layer.obj.document.open();
+        layer.obj.document.write(html);
+        layer.obj.document.close();
+    } else {
+        layer.obj.innerHTML = '';
+        layer.obj.innerHTML = html;
+    }
+}
+
+// 레이어 위치 잡기(지정 객체 위에 올려놓음.)
+function CFN_SetLayerPosition(pObj, pLayerId, xOffset, yOffset) {
+    var newX = 0;
+    var newY = 0;
+    var targetObj = pObj;
+    if (pObj.offsetParent) {
+        // if called from href="CFN_SetLayerPosition(this,'example')" then obj will
+        // have no offsetParent properties. Use onClick= instead.
+        while (pObj.offsetParent) {
+            newX += pObj.offsetLeft;
+            newY += pObj.offsetTop;
+            pObj = pObj.offsetParent;
+        }
+    } else if (pObj.x) {
+        // nn4 - only works with "a" tags
+        newX += pObj.x;
+        newY += pObj.y;
+    }
+
+    // apply the offsets
+    newX += xOffset;
+    newY += yOffset;
+
+    // 높이계산(실제 Body 사이즈의 계산)
+    var bodyHeight = $("body").height();
+    $(targetObj).parentsUntil("body").each(function () {
+        var thisHeight = $(this).height();
+        if (thisHeight > bodyHeight) {
+            bodyHeight = thisHeight;
+        }
+    });
+    if ((newY + 216) > bodyHeight) { newY = newY - ((newY + 218) - bodyHeight); }
+    // 넓이계산
+    if ((newX + 197) > $("body").width()) { newX = newX - ((newX + 199) - $("body").width()); }
+
+    // apply the new positions to our layer
+    //var layer = new CFN_GetLayerById(id);
+    var layer = document.getElementById(pLayerId);
+    if (_nn4) {
+        layer.style.left = newX;
+        layer.style.top = newY;
+    } else {
+        // the px avoids errors with doctype strict modes
+        layer.style.left = newX + 'px';
+        layer.style.top = newY + 'px';
+    }
+}
+
+// 레이어 객체/스타일 가져오기
+function CFN_GetLayerById(id) {
+    if (_nn4) {
+        this.obj = document.layers[id];
+        this.style = document.layers[id];
+    } else if (_ie) {
+        this.obj = document.getElementById(id);
+        this.style = document.getElementById(id).style;
+    } else {
+        this.obj = document.getElementById(id);
+        this.style = document.getElementById(id).style;
+    }
+}
+
+// 레이어 보이기
+function CFN_ShowLayerById(id) {
+    var layer = new CFN_GetLayerById(id)
+    layer.style.display = "";
+}
+
+// 레이어 감추기
+function hideLayer(id) {
+    var layer = new CFN_GetLayerById(id);
+    layer.style.display = "none";
+}
+
+// 마우스 커서의 절대 위치 값 반환
+function CFN_GetMouseAbsPos(pEvent) {
+    if (!pEvent) pEvent = window.Event;
+    this.x = pEvent.clientX + (document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft);
+    this.y = pEvent.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
+    return this;
+}
+
+////////////////////////////////////////// Layer Utils  End ////////////////////////////////
+
+////////////////////////////////////////// Cookie Control Utils Start ////////////////////////////////
+// 쿠키를 생성합니다.
+// pStrKey : 키
+// pStrValue : 값
+// pDtExpires : 만료일 [지정하지 않을경우(==null) 1일로 설정, undefiend일 경우는 OneTime Cookie]
+function CFN_SetCookieDate(pStrKey, pStrValue, pDtExpires) {
+    if (pDtExpires == undefined || pDtExpires == "undefined") { // OneTime Colkies ie에서는 처리 안됨.
+        document.cookie = pStrKey + '=' + escape(pStrValue) + ';expires=Session;path=/';
+    } else if (pDtExpires == null) {
+        pDtExpires = CFN_GetDateAddMilisecond(null, 24 * 60 * 60 * 1000)
+    } else {
+        document.cookie = pStrKey + '=' + escape(pStrValue) + ';expires=' + pDtExpires.toGMTString() + ';path=/';
+    }
+}
+
+// pStrKey : 키
+// pStrValue : 값
+// pDtExpires : 유지기간(milisecond) [지정하지 않을경우(==null) 현재일에 1일을 더한 설정]
+function CFN_SetCookieDay(pStrKey, pStrValue, pExpiresDuration) {
+    var dtExpires = new Date();
+    if (pExpiresDuration == null || pExpiresDuration == 0) {
+        dtExpires = CFN_GetDateAddMilisecond(null, 24 * 60 * 60 * 1000);
+    } else {
+        dtExpires = CFN_GetDateAddMilisecond(null, pExpiresDuration);
+    }
+    document.cookie = pStrKey + '=' + escape(pStrValue) + ';expires=' + dtExpires.toGMTString() + ';path=/';
+}
+
+// 만료일을 과거로 설정하여 쿠키를 삭제합니다.
+// pStrKey : 키
+function CFN_DelCookie(pStrKey) {
+    var dtExpires = new Date(); // 오늘 날짜 
+    dtExpires = CFN_GetDateAddMilisecond(null, -24 * 60 * 60 * 1000)
+    document.cookie = pStrKey + "=;expires=" + dtExpires.toGMTString() + ';path=/';
+}
+
+// 쿠키를 조회합니다.
+// pStrKey : 키
+function CFN_GetCookie(pStrKey) {
+    var oCookies = document.cookie;
+    var aStrCookies = oCookies.split("; ");
+    for (var i = 0; i < aStrCookies.length; i++) {
+        var sKeyValues = aStrCookies[i].split("=");
+        if (sKeyValues[0] == pStrKey) {
+            return unescape(sKeyValues[1]);
+        }
+    }
+    return "";
+}
+////////////////////////////////////////// Cookie Control Utils END ////////////////////////////////
+
+////////////////////////////////////////// XmlDocument, XmlRequest 관련 ////////////////////////////////
+// XmlHttpRequest 생성
+function CreateXmlHttpRequest() {
+    if (window.ActiveXObject != undefined) {
+        try {
+            return new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (e) {
+            return new ActiveXObject("Msxml.XMLHTTP");
+        }
+    } else if (window.XMLHttpRequest) {
+        return new XMLHttpRequest();
+    } else {
+        return null;
+    }
+}
+
+// XmlDocument 생성
+function CreateXmlDocument() {
+    if (window.ActiveXObject != undefined) { // code for IE
+        try {
+            return new ActiveXObject("Msxml2.DOMDocument");
+        } catch (e) {
+            return new ActiveXObject("Msxml.DOMDocument");
+        }
+    } else if (document.implementation && document.implementation.createDocument) { // code for Mozilla, Firefox, Opera, etc.
+        return document.implementation.createDocument("", "", null);
+    } else {
+        Common.Warning(Common.GetDic("msg_NoSupportBrowse"));  //지원하지 않는 브라우져 입니다
+        return null;
+    }
+}
+
+// XmlDocument에 Node 추가
+function FcNodeText(strNodeName, strNodeText, oWrap) {
+    var strNode = oWrap.createElement(strNodeName);
+    strNode.appendChild(oWrap.createTextNode(strNodeText));  //크로스브라우징 후
+    oWrap.documentElement.appendChild(strNode);
+}
+
+// XmlDocument의 Node에 하위 Node 추가
+function FcNodeText2(strNodeName, strNodeText, oNode, oWrap) {
+    var strNode = oWrap.createElement(strNodeName);
+    strNode.appendChild(oWrap.createTextNode(strNodeText));  //크로스브라우징 후
+    oNode.appendChild(strNode);
+}
+
+// string을 xml파싱
+function CFN_DomLoadXmlString(xmlString, xmlDom) {
+    var returnValue = null;
+    if (window.ActiveXObject != undefined) {
+        xmlDom.loadXML(xmlString);
+    } else if (document.implementation && document.implementation.createDocument) {
+        var xmlDomParser = new domParser();
+        xmlDom = xmlDomParser.parseFromString(xmlString, "text/xml");
+        delete domParser;
+    }
+}
+
+// xml을 string으로 추출
+function CFN_GetXmlDocumentString(xmlDom) {
+    var returnValue;
+    if (xmlDom.xml) {
+        returnValue = xmlDom.xml;
+    } else {
+        var serializer = new XMLSerializer();
+        returnValue = serializer.serializeToString(xmlDom);
+    }
+    return returnValue;
+}
+
+// 객체의 배열에서 대상객체의 Index 가져오기
+function CFN_GetObjectIndex(pArrObjs, pObj) {
+    var l_returnValue;
+    for (var i = 0; i < pArrObjs.length; i++) {
+        if (pArrObjs[i] == pObj) {
+            l_returnValue = i;
+            break;
+        }
+    }
+    return l_returnValue;
+}
+
+////////////////////////////////////////// XML Control Utils Start ////////////////////////////////
+var g_XMLSerializer; // g_XMLSerializer 전역객체
+
+// Xml을 문자열로 반환
+function CFN_XmlToString(pXml) {
+    if (pXml.xml) { // IE 에서 
+        return pXml.xml;
+    } else {
+        if (g_XMLSerializer != null || g_XMLSerializer == undefined) {
+            g_XMLSerializer = new XMLSerializer();
+        }
+        return g_XMLSerializer.serializeToString(pXml);
+    }
+}
+
+// Jquery를 통해서 XmlNode를
+function CFN_XmlNodeToHtml(pXmlNode) {
+    if (_ie) { // IE8에서 
+        return $(pXmlNode)[0].xml;
+    } else {
+        return $(pXmlNode).html();
+    }
+}
+

@@ -1,0 +1,302 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>김형복</creator> 
+///<createDate>2011.10.24</createDate> 
+///<lastModifyDate>2014.06.26</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///2014.06.26 ( 임소희 ) : Copyright, ID Block 추가
+///</summary>
+///<ModifySpc>
+///여기에 변경내역을 변경일자(변경자) : 변경내용으로 기록합니다. 
+///</ModifySpc>
+*/
+
+// Load시 그려진 컨트롤 자동 으로 변환 
+$(window).load(function () {
+    XFN_NameControl_Presence_Onload();
+});
+
+// 타입에 따라서 포탈의 프리젠스 랜더링
+function XFN_NameControl_Presence_Onload() {
+    var l_CheckUserInfo = "";
+    // 사용자 정보가 부족한 사용자를 체크 
+    $(".PresenceCheckPre").each(function () {
+        var l_PresenceType = $(this).attr("PresenceType");
+        var l_PhoneNumber = $(this).attr("PhoneNumber");;
+        var l_PhotoPath = $(this).attr("PhotoPath");
+        var l_SipAddress = $(this).attr("SipAddress");
+        var l_EX_PrimaryMail = $(this).attr("EX_PrimaryMail");
+        var l_ExtentionNumber = $(this).attr("ExtentionNumber");
+        var l_CompanyNumber = $(this).attr("CompanyNumber");
+        if (XFN_IsNullOrEmpty(l_PhoneNumber) || XFN_IsNullOrEmpty(l_PhotoPath) || XFN_IsNullOrEmpty(l_SipAddress) || XFN_IsNullOrEmpty(l_EX_PrimaryMail) || XFN_IsNullOrEmpty(l_ExtentionNumber) || XFN_IsNullOrEmpty(l_CompanyNumber)) {
+            l_CheckUserInfo += $(this).attr("UserID") + ";";
+        }
+    });
+    // 사용자 정보를 일괄로 조회하여 사용자 속성정보를 체워 넣음.
+    if (l_CheckUserInfo != "") {
+        //var l_UserInfoJson = Common.GetObjectInfo('UR', l_CheckUserInfo, 'UR_Code,PhotoPath,AD_PhoneNumber,MSN_SipAddress')
+        var l_UserInfoJson = XFN_GetPresenseInfo(l_CheckUserInfo);
+        for (var i = 0; i < l_UserInfoJson.Table.length; i++) {
+            var l_UR_Code = l_UserInfoJson.Table[i].UR_Code;
+            var l_SipAddress = l_UserInfoJson.Table[i].MSN_SipAddress;
+            var l_PhotoPath = l_UserInfoJson.Table[i].PhotoPath;
+            var l_EX_PrimaryMail = _UR_EX_PrimaryMail;
+            var l_PhoneNumber = l_UserInfoJson.Table[i].AD_Mobile;
+            var l_ExtentionNumber = l_UserInfoJson.Table[i].PhoneNumberInter;
+            var l_CompanyNumber = l_UserInfoJson.Table[i].AD_PhoneNumber;
+            
+            if (XFN_IsNullOrEmpty(l_SipAddress)) {
+                l_SipAddress = "";
+            }
+            if (XFN_IsNullOrEmpty(l_PhoneNumber)) {
+                l_PhoneNumber = "";
+            }
+            if (XFN_IsNullOrEmpty(l_PhotoPath)) {
+                l_PhotoPath = "";
+            }
+            if (XFN_IsNullOrEmpty(l_EX_PrimaryMail)) {
+                l_EX_PrimaryMail = "";
+            }
+            if (XFN_IsNullOrEmpty(l_ExtentionNumber)) {
+                l_ExtentionNumber = "";
+            }
+            if (XFN_IsNullOrEmpty(l_CompanyNumber)) {
+                l_CompanyNumber = "";
+            }
+            $(".PresenceCheckPre[UserID='" + l_UR_Code + "']").attr("PhoneNumber", l_PhoneNumber).attr("PhotoPath", l_PhotoPath).attr("SipAddress", l_SipAddress).attr("EX_PrimaryMail", l_EX_PrimaryMail).attr("ExtentionNumber", l_ExtentionNumber).attr("CompanyNumber", l_CompanyNumber).attr("CompanyCode",_DN_Code).attr("LocationCode",_UR_RegionCode);
+        }
+    }
+    // 환전한 형태의 프리젠스를 그리고 클래스를 변경하여 줌.
+    $(".PresenceCheckPre").each(function () {
+        var l_PresenceType = $(this).attr("PresenceType");
+        var l_UserID = $(this).attr("UserID");
+        var l_UserName = XFN_GetDicInfo($(this).attr("UserName"));
+        var l_SipAddress = $(this).attr("SipAddress");
+        var l_EX_PrimaryMail = _UR_EX_PrimaryMail;
+        var l_ExtentionNumber = $(this).attr("ExtentionNumber");
+        var l_CompanyNumber = $(this).attr("CompanyNumber");
+        var l_PhoneNumber = "";
+        var l_PhotoPath = "";
+        var l_BackgroundImg = "";
+        if (l_PresenceType == "Name") {
+            $(this).html(GetPresence10x10(l_UserID, l_UserName, l_SipAddress));
+        } else if (l_PresenceType == "Picture") {
+            l_PhoneNumber = $(this).attr("PhoneNumber");
+            l_PhotoPath = $(this).attr("PhotoPath");
+            $(this).html(GetPresenceOnlyPicture2(l_UserID, l_UserName, l_SipAddress, l_PhotoPath, l_ExtentionNumber, l_EX_PrimaryMail,l_CompanyNumber,l_PhoneNumber,_DN_Code,_UR_RegionCode));
+            l_BackgroundImg = $(this).find(".c-user-profile > a").css("background-image");
+            //$(this).find(".c-user-profile > a").css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            $(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+                if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                    $(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+                }
+            });
+        } else if (l_PresenceType == "SmallPicture") {
+            l_PhoneNumber = $(this).attr("PhoneNumber");
+            l_PhotoPath = $(this).attr("PhotoPath");
+            $(this).html(GetPresenceOnlyPicture1(l_UserID, l_UserName, l_SipAddress, l_PhotoPath, l_ExtentionNumber, l_EX_PrimaryMail, l_CompanyNumber, l_PhoneNumber, _DN_Code, _UR_RegionCode));
+            l_BackgroundImg = $(this).find(".c-user-profile > a").css("background-image");
+            //$(this).find(".c-user-profile > a").css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            $(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+                if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                    $(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+                }
+            });
+        }
+        $(this).removeClass("PresenceCheckPre").addClass("PresenceCheckAfter");
+    });
+
+    $(".PresenceCheckAfter").each(function () {
+        var l_PresenceType = $(this).attr("PresenceType");
+        var l_BackgroundImg = "";
+        if (l_PresenceType == "Name") {
+        } else if (l_PresenceType == "Picture") {
+            l_BackgroundImg = $(this).find(".c-user-profile > a").css("background-image");
+        	//$(this).find(".c-user-profile > a").css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            //$(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+            //	if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+            //		$(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            //	}
+        	//});
+        	// 나와 다른회사인경우 이미지 안보여줌, 현대/기아는 예외
+            $(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+            	if (_DN_Code == "H101" || _DN_Code == "K101") {
+            		if ($(oElm).css("background-image").indexOf("/H101/") == -1 && $(oElm).css("background-image").indexOf("/K101/") == -1) {
+            			$(oElm).css("background-image", "url(\"/Shared/images/icon-anonymous.png\")");
+            		}
+            	} else if ($(oElm).css("background-image").indexOf("/" + _DN_Code + "/") == -1) {
+            		$(oElm).css("background-image", "url(\"/Shared/images/icon-anonymous.png\")");
+            	} else if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+            		$(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            	}
+            });
+        } else if (l_PresenceType == "SmallPicture") {
+            l_BackgroundImg = $(this).find(".c-user-profile > a").css("background-image");
+            //$(this).find(".c-user-profile > a").css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            //$(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+            //    if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+            //        $(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            //    }
+        	//});
+        	// 나와 다른회사인경우 이미지 안보여줌, 현대/기아는 예외
+            $(this).find(".c-user-profile > a").each(function (nIndex, oElm) {
+            	if (_DN_Code == "H101" || _DN_Code == "K101") {
+            		if ($(oElm).css("background-image").indexOf("/H101/") == -1 && $(oElm).css("background-image").indexOf("/K101/") == -1) {
+            			$(oElm).css("background-image", "url(\"/Shared/images/icon-anonymous.png\")");
+            		}
+            	} else if ($(oElm).css("background-image").indexOf("/" + _DN_Code + "/") == -1) {
+            		$(oElm).css("background-image", "url(\"/Shared/images/icon-anonymous.png\")");
+            	}else if ($(oElm).css("background-image").indexOf("/Shared/images/icon-anonymous.png") == -1) {
+            		$(oElm).css("background-image", l_BackgroundImg + ",url(\"/Shared/images/icon-anonymous.png\")");
+            	}
+            });
+        }
+    });
+    ProcessImn();
+}
+
+
+// 타입에 따라서 포탈의 프리젠스 랜더링
+function XFN_NameControl_Presence_Onload2(pObjTargetElm) {
+    if (pObjTargetElm != null) {
+        var aObjTarget = pObjTargetElm.querySelectorAll(".PresenceCheckAfter");
+        for (var i = 0; i < aObjTarget.length; i++) {
+            var l_PresenceType = aObjTarget[i].getAttribute("PresenceType");
+            if (l_PresenceType == "Name") {
+            } else if (l_PresenceType == "Picture") {
+                var aObjTemp = aObjTarget[i].querySelectorAll(".c-user-profile > a");
+                for (var j = 0; j < aObjTemp.length; j++) {
+                	// 나와 다른회사인경우 이미지 안보여줌, 현대/기아는 예외
+                    //if (aObjTemp[j].style.backgroundImage.indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                    //    aObjTemp[j].style.backgroundImage = aObjTemp[j].style.backgroundImage + ",url(\"/Shared/images/icon-anonymous.png\")";
+                    //}
+                    if (_DN_Code == "H101" || _DN_Code == "K101") {
+                    	if (aObjTemp[j].style.backgroundImage.indexOf("/H101/") == -1 && aObjTemp[j].style.backgroundImage.indexOf("/K101/") == -1) {
+                    		aObjTemp[j].style.backgroundImage = "url(\"/Shared/images/icon-anonymous.png\")";
+                    	}
+                    } else if (aObjTemp[j].style.backgroundImage.indexOf("/" + _DN_Code + "/") == -1) {
+                    	aObjTemp[j].style.backgroundImage = "url(\"/Shared/images/icon-anonymous.png\")";
+                    } else if (aObjTemp[j].style.backgroundImage.indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                    	aObjTemp[j].style.backgroundImage = aObjTemp[j].style.backgroundImage + ",url(\"/Shared/images/icon-anonymous.png\")";
+                    }
+                }
+            } else if (l_PresenceType == "SmallPicture") {
+                var aObjTemp = aObjTarget[i].querySelectorAll(".c-user-profile > a");
+                for (var j = 0; j < aObjTemp.length; j++) {
+                	// 나와 다른회사인경우 이미지 안보여줌, 현대/기아는 예외
+                    //if (aObjTemp[j].style.backgroundImage.indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                    //    aObjTemp[j].style.backgroundImage = aObjTemp[j].style.backgroundImage + ",url(\"/Shared/images/icon-anonymous.png\")";
+                	//}
+                	if (_DN_Code == "H101" || _DN_Code == "K101") {
+                		if (aObjTemp[j].style.backgroundImage.indexOf("/H101/") == -1 && aObjTemp[j].style.backgroundImage.indexOf("/K101/") == -1) {
+                			aObjTemp[j].style.backgroundImage = "url(\"/Shared/images/icon-anonymous.png\")";
+                		}
+                	} else if (aObjTemp[j].style.backgroundImage.indexOf("/" + _DN_Code + "/") == -1) {
+                		aObjTemp[j].style.backgroundImage = "url(\"/Shared/images/icon-anonymous.png\")";
+                	} else if (aObjTemp[j].style.backgroundImage.indexOf("/Shared/images/icon-anonymous.png") == -1) {
+                		aObjTemp[j].style.backgroundImage = aObjTemp[j].style.backgroundImage + ",url(\"/Shared/images/icon-anonymous.png\")";
+                	}
+                }
+            }
+        }
+    }
+    ProcessImn();
+}
+
+/// <summary>
+/// 프리젠스(10X10) 컨트롤 컨테이터 랜더링
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <returns>프레젠스 컨테이너</returns>
+function XFN_PresenceName(pUserID, pUserName, pSipAddress) {
+    var l_Result = "<span class=\"PresenceCheckAfter\" PresenceType=\"Name\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\">" + GetPresence10x10(pUserID, pUserName, pSipAddress) + "</span>";
+    return l_Result;
+}
+
+/// <summary>
+/// 프리젠스(사진만) 컨트롤 컨테이너 랜더링 - 발신자
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <param name="pPhotoPath">사용자이미지</param>
+/// <returns>프레젠스 컨테이너 컨트롤</returns>
+function XFN_PresencePicture(pUserID, pUserName, pSipAddress, pPhotoPath, pExtentionNumber, l_EX_PrimaryMail, pCompanyNumber, pPhoneNumber, pCompanyCode, pLocationCode) {
+    var l_Result = "<span class=\"PresenceCheckAfter\" PresenceType=\"Picture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\" ExtentionNumber=\"" + pExtentionNumber + "\" EX_PrimaryMail=\"" + l_EX_PrimaryMail + "\" CompanyNumber=\"" + pCompanyNumber + "\" PhoneNumber=\"" + pPhoneNumber + "\" CompanyCode=\"" + pCompanyCode + "\" LocationCode=\"" + pLocationCode + "\">" + GetPresenceOnlyPicture1(pUserID, pUserName, pSipAddress, pPhotoPath, pExtentionNumber, l_EX_PrimaryMail, pCompanyNumber, pPhoneNumber, pCompanyCode, pLocationCode) + "</span>";
+    //var l_Result = "<span class=\"PresenceCheckAfter\" PresenceType=\"SmallPicture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\">";
+    //l_Result += '<div class="c-user-profile">';
+    //l_Result += '    <a tabindex="0" class="c-user-profile__visual" style=\'background-image: url("' + pPhotoPath + '");\' href="#"></a>';
+    //l_Result += '    <a class="c-user-profile__indicator c-user-profile__indicator--on"></a>';
+    //l_Result += '</div>';
+    //l_Result += "</span>";
+    return l_Result;
+}
+
+/// <summary>
+/// 프리젠스(작은 사진만) 컨트롤 컨테이너 랜더링 - 수신자
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <param name="pPhotoPath">사용자이미지</param>
+/// <returns>프레젠스 컨테이너 컨트롤</returns>
+function XFN_PresenceSmallPicture(pUserID, pUserName, pSipAddress, pPhotoPath, pExtentionNumber, l_EX_PrimaryMail, pCompanyNumber, pPhoneNumber, pCompanyCode, pLocationCode) {
+    var l_Result = "<span class=\"PresenceCheckAfter\" PresenceType=\"SmallPicture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\" ExtentionNumber=\"" + pExtentionNumber + "\" EX_PrimaryMail=\"" + l_EX_PrimaryMail + "\" CompanyNumber=\"" + pCompanyNumber + "\" PhoneNumber=\"" + pPhoneNumber + "\" CompanyCode=\"" + pCompanyCode + "\" LocationCode=\"" + pLocationCode + "\">" + GetPresenceOnlyPicture1(pUserID, pUserName, pSipAddress, pPhotoPath, pExtentionNumber, l_EX_PrimaryMail, pCompanyNumber, pPhoneNumber, pCompanyCode, pLocationCode) + "</span>";
+    //var l_Result = "<span class=\"PresenceCheckAfter\" PresenceType=\"SmallPicture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\">";
+    //l_Result += '<div class="c-user-profile c-user-profile--small">';
+    //l_Result += '   <a tabindex="0" class="c-user-profile__visual" style=\'background-image: url("' + pPhotoPath + '");\' href="#"></a>';
+    //l_Result += '   <a class="c-user-profile__indicator c-user-profile__indicator--on"></a>';
+    //l_Result += '</div>';
+    //l_Result += "</span>";
+    return l_Result;
+}
+
+/// <summary>
+/// 프리젠스(10X10) 컨트롤 컨테이터 랜더링(스크립트 이벤트에 의해서 랜더링됨.)
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <returns>프레젠스 컨테이너</returns>
+function XFN_PresenceNamePre(pUserID, pUserName, pSipAddress) {
+    var l_Result = "<span class=\"PresenceCheckPre\" PresenceType=\"Name\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\">" + XFN_GetDicInfo(pUserName) + "</span>";
+    return l_Result;
+}
+
+/// <summary>
+/// 프리젠스(사진만) 컨트롤 컨테이너 랜더링 - 발신자
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <param name="pPhotoPath">사용자이미지</param>
+/// <returns>프레젠스 컨테이너 컨트롤</returns>
+function XFN_PresencePicturePre(pUserID, pUserName, pSipAddress, pPhotoPath, pPhoneNumber, l_EX_PrimaryMail) {
+    var l_Result = "<span class=\"PresenceCheckPre\" PresenceType=\"Picture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\" PhoneNumber=\"" + pPhoneNumber + "\" EX_PrimaryMail=\"" + l_EX_PrimaryMail + "\">" + XFN_GetDicInfo(pUserName) + "</span>";
+    return l_Result;
+}
+
+/// <summary>
+/// 프리젠스(작은 사진만) 컨트롤 컨테이너 랜더링 - 수신자
+/// </summary>
+/// <param name="pUserID">사용자 아이디</param>
+/// <param name="pUserName">사용자명</param>
+/// <param name="pSipAddress">SipAddress</param>
+/// <param name="pPhotoPath">사용자이미지</param>
+/// <returns>프레젠스 컨테이너 컨트롤</returns>
+function XFN_PresenceSmallPicturePre(pUserID, pUserName, pSipAddress, pPhotoPath, pPhoneNumber, l_EX_PrimaryMail) {
+    var l_Result = "<span class=\"PresenceCheckPre\" PresenceType=\"SmallPicture\" UserID=\"" + pUserID + "\" UserName=\"" + pUserName + "\" SipAddress=\"" + pSipAddress + "\"  PhotoPath=\"" + pPhotoPath + "\" PhoneNumber=\"" + pPhoneNumber + "\" EX_PrimaryMail=\"" + l_EX_PrimaryMail + "\">" + XFN_GetDicInfo(pUserName) + "</span>";
+    return l_Result;
+}

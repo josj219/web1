@@ -1,0 +1,3610 @@
+﻿/* 프로그램 저작권 정보
+// 이 프로그램에 대한 저작권을 포함한 지적재산권은 (주)코비젼에 있으며,
+// (주)코비젼이 명시적으로 허용하지 않은 사용, 복사, 변경, 제3자에의 공개, 배포는 엄격히 금지되며,
+// (주)코비젼의 지적재산권 침해에 해당됩니다.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+//
+// You are strictly prohibited to copy, disclose, distribute, modify, or use  this program in part or
+// as a whole without the prior written consent of Covision Co., Ltd. Covision Co., Ltd.,
+// owns the intellectual property rights in and to this program.
+// (Copyright ⓒ 2011 Covision Co., Ltd. All Rights Reserved)
+
+///<creator>전준호</creator> 
+///<createDate>2011.01.14</createDate> 
+///<lastModifyDate>2011.01.14</lastModifyDate> 
+///<version>1.1.0</version>
+///<summary> 
+///프레임워크에서 제공하는 공통적으로 사용되는 공용 스크립트 정의(Prefix "CFN_")
+///</summary>
+///<ModifySpc>
+///여기에 변경내역을 변경일자(변경자) : 변경내용으로 기록합니다. 
+///</ModifySpc>
+*/
+
+
+
+////////////////////////////////////////// UxLeftMenu_Tree ////////////////////
+
+/*************************************************************************************************************************
+* Create by joonho, jeon
+* Date 11.06.22
+* Summary client script control for left tree menu 
+* Usage
+$("#left-treemenu").uxinit().uxonclick(function () {}).uxonmouserightclick(function () {});
+$("#left-treemenu").uxfolderextend("", 1); 
+$("#left-treemenu").uxstateselectedextend(); 
+$("#left-treemenu").uxselectedexpend(leftMenuID);
+$("#top-navigation").uxmouse(); 
+***************************************************************************************************************************/
+(function ($) {
+    //tree init and event settting
+    $.fn.uxinit = function () {
+        return j.init(this, "");
+    };
+    //set top menu event 
+    $.fn.uxmouse = function (t) {
+        return f(this, t);
+    };
+    //set onclick event
+    $.fn.uxonclick = function (eventHandler) {
+        return j.setEvent(this, "a.tree_label", "uxmenu.onclick", eventHandler);
+    };
+    //set onmouserightclick event  //트리메뉴에서 마우스우클릭
+    $.fn.uxonmouserightclick = function (eventHandler) {
+        return j.setEvent(this, "a.tree_label", "uxmenu.onmouserightclick", eventHandler);
+    };
+    //tree init state
+    $.fn.uxselectedextend = function (id) {
+        j.selectedextend(id);
+    };
+    //tree init state
+    $.fn.uxstateselectedextend = function (t) {
+        j.stateselectedextend(this, t);
+    };
+    //tree extend configure that default depth
+    $.fn.uxfolderextend = function (t, level) {
+        j.folderextend(v(this, t), level);
+    };
+    //tree close configure that default depth
+    $.fn.uxfolderclose = function (t, level) {
+        j.folderclose(v(this, t), level);
+    };
+    $.uxmenu = {
+        o: function (p, c) { return (c) ? $(c, p) : p; }, T: "a",
+        // 초기화 함수
+        init: function (e, t) {
+            var k = this.o(e, t);
+            return this._extendbar(e, this._extendbar(e, k, ".tree_ico").undelegate(".tree_ex2", "uxmenu.ontogglefolder").delegate(".tree_ex2", "uxmenu.ontogglefolder", j._foldertoggle).undelegate(".tree_ex2", "uxmenu.onstatetogglefolder").delegate(".tree_ex2", "uxmenu.onstatetogglefolder", j._statefoldertoggle), ".tree_ex2");
+        },
+        setEvent: function (s, k, p, h) {
+            s = this.o(s);
+            var tag = k || this.T;
+            s.undelegate(tag, p, h);
+            s.delegate(tag, p, h);
+            return s.find(tag).click(function (event) {
+                if (!event.isPropagationStopped()) {
+                    event.stopPropagation();
+                    $(this).trigger("uxmenu.onclick");
+                }
+            }).mousedown(function (event) {
+                if (event.which == 3) {//cross browsing {chrome11,ie9}
+                    if (!event.isPropagationStopped()) {
+                        event.stopPropagation();
+                        $(this).trigger("uxmenu.onmouserightclick");
+                    }
+                }
+            }).end();
+        },
+        selectedextend: function (jq) {
+            $("#" + jq).parents("ul").each(function (i, e) {
+                $(this).show();
+                $(this).prevAll(".tree_ex2").children().attr({ "src": option.dash_minus, "alt": "dash_minus" });
+                var icon = $(this).prevAll(".tree_ico").children(), src = icon.attr("src");
+                if (src != undefined)
+                    icon.attr("src", src.replace(/_close./i, "_open."));
+            });
+        },
+        stateselectedextend: function (e, t) {
+            var k = this.o(e, t);
+            this._stateInit(this._getState(), k);
+        },
+        folderextend: function (jq, level) {
+            for (var i = 0; i <= level; i++) {
+                jq.find("ul[alt='level_" + i + "']").each(function () {
+                    $(this).show();
+                    $(this).siblings(".tree_ex2").children().attr({ "src": option.dash_minus, "alt": "dash_minus" });
+                    var $this = $(this).siblings(".tree_ico").children();
+                    $this.attr("src", $this.attr("src").replace(/_close./i, "_open."));
+                });
+            }
+        },
+        folderclose: function (jq, level) {
+            for (var i = 10; i >= level; i--) {
+                jq.find("ul[alt='level_" + i + "']").each(function () {
+                    $(this).hide();
+                    $(this).siblings(".tree_ex2").children().attr({ "src": option.dash_plus, "alt": "dash_plus" });
+                    var $this = $(this).siblings(".tree_ico").children();
+                    $this.attr("src", $this.attr("src").replace(/_open./i, "_close."));
+                });
+            }
+        },
+        _toJSON: function (object) {
+            var results = [];
+            for (var property in object) {
+                var value = object[property];
+                if (value)
+                    results.push('"' + property.toString() + '"' + ': "' + value + '"');
+            }
+            return '{' + results.join(', ') + '}';
+        },
+        _foldertoggle: function () {
+            var $t = $(this).closest("li").children(".tree_ico").find("img"), src = $t.attr("src"), start = $t.attr("src").lastIndexOf("/") + 1,
+			img = $t.attr("src").substr(start, src.length - start);
+            if (img.search(/_open./i) > 0) {
+                $t.attr("src", root + img.replace(/_open./i, "_close."));
+            }
+            else {
+                $t.attr("src", root + img.replace(/_close./i, "_open."));
+            }
+        },
+        _statefoldertoggle: function (e, a) {
+            var $t = $(this).closest("li").children(".tree_ico").find("img"), src = $t.attr("src"), start = $t.attr("src").lastIndexOf("/") + 1,
+					img = $t.attr("src").substr(start, src.length - start);
+            if (!eval(a)) {
+                $t.attr("src", root + img.replace(/_open./i, "_close."));
+            } else {
+                $t.attr("src", root + img.replace(/_close./i, "_open."));
+            }
+        },
+        _extendbar: function (e, t, selector) {
+            var obj = j._getState();
+            return j._dispose(v(e, t), selector, "click").find(selector).on("click", function (event) {
+                var $this = $(this).closest("li").children(".tree_ex2").find("img"), alt = $this.attr("alt");
+                if (!event.isDefaultPrevented()) event.preventDefault();
+                switch (alt) {
+                    case "dash_plus": obj[$this.attr("id")] = "true"; $this.attr({ "src": option.dash_minus, "alt": "dash_minus" }).trigger("uxmenu.ontogglefolder").closest("li").children("ul").toggle(); break;
+                    case "dash_minus": obj[$this.attr("id")] = "false"; $this.attr({ "src": option.dash_plus, "alt": "dash_plus" }).trigger("uxmenu.ontogglefolder").closest("li").children("ul").toggle(); break;
+                    default: break;
+                }
+                j._setState(obj);
+            }).end();
+        },
+        _setState: function (stateObj) {
+            var oldObj = this._getState();
+            $.extend(oldObj, stateObj);
+            window.sessionStorage.setItem("TreeMenuArray", this._toJSON(oldObj));
+        },
+        _getState: function () {
+            return $.parseJSON(window.sessionStorage.getItem("TreeMenuArray")) || {};
+        },
+        _stateInit: function (object, k) {
+            if (typeof object == undefined || object == null) return;
+            for (var pro in object) {
+                var $this = k.find("#" + pro);
+                var b = eval(object[pro]);
+                if (b) {
+                    $this.attr({ "src": option.dash_minus, "alt": "dash_minus" }).trigger("uxmenu.onstatetogglefolder", b).closest("li").children("ul").css("display", "");
+                } else {
+                    $this.attr({ "src": option.dash_plus, "alt": "dash_plus" }).trigger("uxmenu.onstatetogglefolder", b).closest("li").children("ul").css("display", "none");
+                }
+            }
+        },
+        // 체크박스 하위까지 선택
+        _checkboxInit: function (jq) {
+            if (jq.find(":checkbox[name='__chk_menu_tree__']").length > 0) {//apply entire checkbox 
+                jq.undelegate(":checkbox[name='__chk_menu_tree__']", "uxmenu.oncheckbox").delegate(":checkbox[name='__chk_menu_tree__']", "uxmenu.oncheckbox", j._checkboxtoggle);
+                jq.find(":checkbox[name='__chk_menu_tree__']").click(function () { $(this).trigger("uxmenu.oncheckbox"); })
+            }
+        },
+        _checkboxtoggle: function () { $(this).closest("li").find(":checkbox[name='__chk_menu_tree__']").prop("checked", $(this).prop("checked")); },
+        _dispose: function (ob, tg, ev) {
+            //return ob.find(tg).die(ev).end();
+            return ob.find(tg).off(ev).end();
+        }
+    };
+    $.fn.equalizeHeights = function () {
+        var maxHeight = this.map(function (i, e) {
+            return $(e).height();
+        }).get();
+
+        return this.height(Math.max.apply(this, maxHeight));
+    };
+    // 멤버 변수
+    var root = $("#hidTreeRootDir").val() || _controlsPath + "Tree/", option = { folder: root + "folder.gif", file: root + "file.gif", dash_minus: root + "minus.gif", dash_plus: root + "plus.gif" }
+	, j = $.uxmenu, v = j.o, f = function (e, t) {
+	    return j._dispose(v(e, t), "li", "mouseover mouseout").find("li").on("mouseover mouseout", function (event) {
+	        $(this).children('ul').toggle();
+	    }).end();
+	}
+})($);
+
+
+////////////////////////////////////////// UxLeftMenu_Tree ////////////////////
+
+var Collection = function (i) {
+    if (typeof i != "number") i = null;
+    this.Index = (i != null && i > 0) ? [i] : [];
+}
+Collection.prototype.Add = function (key, data) {
+    this.Index.push({ name: key, value: data });
+}
+Collection.prototype.Get = function (key) {
+    var s = "";
+    for (var i = 0; i < this.Index.length; i++) {
+        if (this.Index[i].name === key) {
+            s = this.Index[i].value;
+            break;
+        }
+    }
+    return s;
+}
+
+var SecurityManager = {};
+SecurityManager.Https = "https://" + document.location.hostname + ":";
+SecurityManager.Http = "http://" + document.location.hostname;
+SecurityManager.MoveTo = function (protocol, url) {
+    var collection = new Collection();
+
+    try {
+        var map = document.location.protocol + "//" + document.location.hostname + ((document.location.port) ? ":" + document.location.port : "");
+
+        CFN_CallAjaxJson(map + "/Common/Base/Controls/WebService.asmx/GetConfiguration", "{}", true, function returnAjaxValue(data) {
+            $.each(data.d, function (i, config) {
+                collection.Add(config.Key, config.Value);
+            });
+
+            if (collection.Get("SSLUse") === "True") {
+                if (protocol.toLowerCase() === "http") {
+                    document.location.href = SecurityManager.Http + url;
+                }
+                else if (protocol.toLowerCase() === "https") {
+                    document.location.href = SecurityManager.Https + collection.Get("HTTPSPort") + url;
+                }
+            }
+        });
+
+        if (collection.Get("SSLUse") === "True") {
+            if (protocol.toLowerCase() === "http") {
+                document.location.href = SecurityManager.Http + url;
+            }
+            else if (protocol.toLowerCase() === "https") {
+                document.location.href = SecurityManager.Https + collection.Get("HTTPSPort") + url;
+            }
+        }
+
+    }
+    catch (ex) {
+        alert("protocol move error : " + ex.Message);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////// div popup
+
+var Common = {
+    minWidth: 30,
+    minHeight: 20,
+    align: "center",
+    toTop: function (id) {
+        var str = id.substr(id.length - 2);
+        var rid = id;
+        if (str != "_p") {
+            rid += "_p"
+        }
+
+        var zMax = parseInt($("#" + rid).css("zIndex"), 10); // 자신의 Z-Index를 가져옴.
+
+        $(".layer_divpop").each(function () {
+            if ($(this).attr("id") != $("#" + rid).attr("id") && $(this).attr("ModalLayer") == $("#" + rid).attr("ModalLayer")) {
+                if (parseInt($(this).css("zIndex"), 10) > zMax) {
+                    zMax = $(this).css("zIndex")
+                }
+            }
+        });
+
+        //var val = parseInt(zMax, 10) + 1;
+        var val = parseInt(zMax, 10) + 100;
+        $("#" + rid).css("zIndex", val);
+    },
+    toCenter: function (id) {
+        var top = parseInt($(window).scrollTop(), 10);
+        var left = parseInt($(window).scrollLeft(), 10);
+        var rid = id + "_p";
+        var pos = $("#" + rid).offset();
+        var box_x = parseInt($("#" + rid).width(), 10);
+        var box_y = parseInt($("#" + rid).height(), 10);
+        var winWidth = (window.innerWidth || document.body.clientWidth);
+        var winHeight = (window.innerHeight || document.body.clientHeight);
+        var center_x = parseInt(winWidth, 10) / 2 - box_x / 2 + left;
+        var center_y = parseInt(winHeight, 10) / 2 - box_y / 2 + top;
+        if (center_y < 0) { center_y = 0; }
+        if (center_x < 0) { center_x = 0; }
+
+        // 띄우려고 하는 위치에 레이어가 존재한다면 
+        $(".layer_divpop").each(function () {
+            if ($(this).attr("id") != $("#" + rid).attr("id") && $(this).attr("ModalLayer") == $("#" + rid).attr("ModalLayer")) {
+                if (parseInt($(this).css("left"), 10) == parseInt(center_x)) {
+                    center_x = center_x + 22;
+                }
+
+                if (parseInt($(this).css("top"), 10) == parseInt(center_y)) {
+                    center_y = center_y + 32;
+                }
+            }
+        });
+
+        $("#" + rid).css({ left: center_x, top: center_y })
+    },
+    toResize: function (object_id, w, h) {
+        //var l_HederSize = $(".divpop_header").height();
+        var l_HederSize = $(".divpop_header").outerHeight(true);
+        $("#" + object_id + "_pc").css({ "width": w, "height": h }) // 팝업 레이어 창에 대한 사이즈 조정
+        $//("#" + object_id + "_ph").css({ "width": w }) // 팝업 레이어 창에 해더에 대한 사이즈 조정(제목 말줄임을 위해)
+        $("#" + object_id + "_p").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) + l_HederSize }) // 팝업 레이어 창에 대한 사이즈 조정
+        $("#" + object_id + "_hideDiv").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        $("#" + object_id + "_hideIfram").attr({ "width": parseInt(w, 10), "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        if ($("#" + object_id + "_if").length > 0) {
+            $("#" + object_id + "_if").css("height", $("#" + object_id + "_p").height() - l_HederSize);
+            $("#" + object_id + "_if").css("width", $("#" + object_id + "_p").width());
+        }
+    },
+    close: function (object_id) {
+        // 창을 닫기전 타입이 ContainerId였다면 팝업에 있는 컨텐츠를 다시 불러온 페이지 넣어줌.
+        if ($("#" + object_id + "_p").attr("layerType") == "id") {
+            if ($("#" + object_id + "_p").attr("pProperty").indexOf("contentMove") > -1) { // 객체를 이동시킴
+                $("#" + $("#" + object_id + "_p").attr("source")).append($("#" + object_id + "_pc").children());
+            } else {
+                $("#" + $("#" + object_id + "_p").attr("source")).html($("#" + object_id + "_pc").html());
+            }
+        }
+        //모달인 경우 먼저 overlay 레이어를 닫음.
+        if ($("#" + object_id + "_overlay").length > 0) {
+            $("#" + object_id + "_overlay").hide();
+            $("#" + object_id + "_overlay").detach();
+        }
+
+        $("#" + object_id + "_container").slideUp(500, function () {
+            // 하위위의 존재하는 컨텐츠 들도 제거
+            $("#" + object_id + "_ph").detach();
+            $("#" + object_id + "_hideIfram").detach();
+            $("#" + object_id + "_hideDiv").detach();
+            $("#" + object_id + "_pc").detach();
+
+            if ($("#" + object_id + "_if").length > 0) {
+                $("#" + object_id + "_if").detach();
+            }
+            $("#" + object_id + "_p").detach();
+        });
+    },
+
+    // 레이어 팝업 형태 생성
+    CreatePopup: function (object_id, w, h, type, source, pIsModal, pProperty, pReSize, pVisible) {
+        // 모달일 경우는 기존 레이어 보다 상위로 올림
+        var l_LayerZindex = "50";
+        if (pIsModal) { l_LayerZindex = "100"; }
+
+        // id 인경우만 창을 닫을때 되돌려 주기위해~~!
+        var l_source = source;
+        if (type != "id") { l_source = type }
+
+        //컨텐츠가 로드 되기전 레이어 표시를 위해 기본 사이즈를 표시
+        var l_pcStyle = "";
+        l_pcStyle = "width:" + w + ";height:" + h;
+
+        //Body Layer의 Property 조정
+        var l_bodyProperty = "overflow:hidden;";
+        if (pProperty.indexOf("bodyScroll") > -1) {
+            l_bodyProperty = "overflow:auto;";
+        }
+        var popupwrapper = "";
+        if (!pVisible) {
+            popupwrapper = '<div id="' + object_id + '_p" class="layer_divpop" pProperty="' + pProperty + '" layerType="' + type + '" ModalLayer="' + pIsModal + '" source="' + l_source + '" style="visibility:hidden;z-index:' + l_LayerZindex + '">';
+        } else {
+            popupwrapper = '<div id="' + object_id + '_p" class="layer_divpop" pProperty="' + pProperty + '" layerType="' + type + '" ModalLayer="' + pIsModal + '" source="' + l_source + '" style="z-index:' + l_LayerZindex + '">';
+        }
+        // ActiveX에 대한 Z-Index 조정을 위한 Iframe 삽입
+        popupwrapper += '<div id="' + object_id + '_hideDiv" style="top:-3px;left:-3px;position:absolute;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + object_id + '_hideIfram"></iframe></div>'
+        popupwrapper += '<div id="' + object_id + '_container" class="divpop_contents">';
+        if (type.indexOf("iframe") > -1 || type.indexOf("url") > -1) {
+            // 리사이즈 이벤트 처리
+            if (pReSize) {
+                popupwrapper += '<div id="' + object_id + '_ph"><h4 id="' + object_id + '_Title" class="divpop_header"></h4>' +
+                    '<div class="pop_btn_wrap"><a id="' + object_id + '_px" class="divpop_close" style="cursor:pointer;"></a>' +
+                    '</div></div>';
+            } else {
+                popupwrapper += '<div id="' + object_id + '_ph"><h4 id="' + object_id + '_Title" class="divpop_header"></h4>' +
+                    '<div class="pop_btn_wrap"><a id="' + object_id + '_px" class="divpop_close" style="cursor:pointer;"></a>' +
+                    '</div></div>';
+            }
+        } else {
+            popupwrapper += '<div id="' + object_id + '_ph"><h4 id="' + object_id + '_Title" class="divpop_header"></h4>' +
+                '<div class="pop_btn_wrap"><a id="' + object_id + '_px" class="divpop_close" style="cursor:pointer"></a>' +
+                //'<a class="divpop_mini" style="cursor:pointer;" onclick="Common.ScreenMini(\'' + object_id + '\', $(this))"></a>' +
+                '</div></div>';
+        }
+
+        popupwrapper += '<div class="divpop_body" style="' + l_bodyProperty + '">';
+        popupwrapper += '<div id="' + object_id + '_pc" style="' + l_pcStyle + '"><div style="position:absolute;top:43%;left:43%;"><img src="/Images/Images/Controls/Progress/' + _progressImage + '"></div></div>'; // 컨텐츠 삽입 장소
+        popupwrapper += '</div>';
+        popupwrapper += '</div>';
+        //popupwrapper += '<div id="' + object_id + '_ps" class="jqpopup_resize"></div>';
+        popupwrapper += '</div>';
+
+        try {
+            return popupwrapper
+        } finally {
+            popupwrapper = null;
+        }
+    },
+    open: function (button_id, object_id, title, source, w, h, pMode, pIsModal, posX, posY, pReSize, pVisible) {
+        var l_Mode = "" // 컨텐츠 로드 방식
+        var l_Property = "" // 레이어 및 하위 컨텐츠 속성 설정
+        if (pMode.split("-").length > 1) { // 프로퍼티 처리
+            l_Mode = pMode.split("-")[0];
+            l_Property = pMode.split("-")[1];
+        } else {
+            l_Mode = pMode;
+        }
+
+        var content = this.CreatePopup(object_id, w, h, l_Mode, source, pIsModal, l_Property, pReSize, pVisible);
+        if ($("#" + object_id + "_p").length > 0) {
+            Common.toTop(object_id);
+            return false;
+        }
+
+        $("body").append(content);
+
+        // 레이어 팝업의 X버튼 처리(특정 서버 PC에 문제점)
+        $('#' + object_id + '_px').bind("click", function () {
+            Common.close(object_id);
+        });
+
+        //var l_HederSize = $(".divpop_header").height() + 6;
+        var l_HederSize = $(".divpop_header").outerHeight(true);
+        // 컨텐츠 사이즈 지정
+        if (parseInt(w, 10) == 0 || parseInt(h, 10) == 0) {
+            $("#" + object_id + "_p").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) }) // 팝업 레이어 창에 대한 사이즈 조정
+            //$("#" + object_id + "_ph").css({ "width": w }) // 팝업 레이어 창에 해더에 대한 사이즈 조정(제목 말줄임을 위해)
+            $("#" + object_id + "_hideDiv").css({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+            $("#" + object_id + "_hideIfram").attr({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        } else {
+            $("#" + object_id + "_p").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) + l_HederSize }) // 팝업 레이어 창에 대한 사이즈 조정
+            //$("#" + object_id + "_ph").css({ "width": w }) // 팝업 레이어 창에 해더에 대한 사이즈 조정(제목 말줄임을 위해)
+            $("#" + object_id + "_hideDiv").css({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+            $("#" + object_id + "_hideIfram").attr({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        }
+        // 파라메터 암호화 관련 처리
+        if (l_Mode == "iframe" || l_Mode == "url") {
+            if (source.indexOf("EncryptURL=") > -1) {
+                if (source.indexOf("EncryptURL=M") > -1) {
+                    var l_param = source.split("?")[1]
+                    source = Common.GetEncryptURL(fileName) + "&" + l_param.replace("&EncryptURL=M", "");
+                } else {
+                    source = Common.GetEncryptURL(fileName)
+                }
+            }
+        }
+        // 받은 URL로 iframe을 삽입하고 경로를 설정함.
+        if (l_Mode == "iframe") {
+            var l_iframeProperty = 'scrolling = "auto"';
+            if (l_Property.indexOf("ifNoScroll") > -1) {
+                l_iframeProperty = 'scrolling = "no"';
+            }
+            if (source.indexOf("?") > -1) { source += "&CFN_OpenLayerName=" + object_id; } else { source += "?CFN_OpenLayerName=" + object_id; }
+            html = '<iframe id="' + object_id + '_if" name="' + object_id + '_if" class="bgiframe" frameborder="0" src="' + source + '" style="display:block;position:relative;width:100%;" ' + l_iframeProperty + '/>';
+            $("#" + object_id + "_pc").html(html);
+            // URL을 받아서 Ajax로 컨텐츠를 받아다가 로드시킴.
+        } else if (l_Mode == "url") {
+            if (source.indexOf("?") > -1) { source += "&CFN_OpenLayerName=" + object_id; } else { source += "?CFN_OpenLayerName=" + object_id; }
+            $("#" + object_id + "_pc").load(source, null, function (response, status, xhr) {
+                if (status == "error") {
+                    var msg = "Sorry but there was an error: ";
+                    Common.Error(msg + xhr.status + " " + xhr.statusText, "Error");
+                }
+            });
+            // html 컨텐츠를 바로 삽입함.
+        } else if (l_Mode == "html") {
+            $("#" + object_id + "_pc").html(source);
+            // 컨테이너 아이디를 받아서 컨텐츠 꺼내어 넣어줌.
+        } else if (l_Mode == "id") {
+            if (l_Property.indexOf("contentMove") > -1) { // 객체를 이동시킴
+                $("#" + object_id + "_pc").html("");
+                $("#" + object_id + "_pc").append($("#" + source).children());
+            } else {
+                $("#" + object_id + "_pc").html($("#" + source).html());
+                $("#" + source).html("");
+            }
+        }
+
+        if (parseInt(w, 10) == 0 || parseInt(h, 10) == 0) {
+            $("#" + object_id + "_p").css({ "width": 0, "height": 0 })
+            $("#" + object_id + "_ph").hide();
+            // Layer Draggable 처리
+            //$("#" + object_id + "_p").draggable("destroy").draggable({ handle: $("#" + object_id + "_pc") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+            $("#" + object_id + "_p").draggable("destroy").draggable({ handle: $("#" + object_id + "_pc") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+        } else {
+            // Layer Draggable 처리
+            $("#" + object_id + "_p").draggable({ handle: $("#" + object_id + "_Title") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+            //$("#" + object_id + "_p").draggable("destroy").draggable({ handle: $("#" + object_id + "_Title") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+        }
+
+        // 모달일 경우 바닥을 까는 레이어를 추가함.
+        if (pIsModal) {
+            $("body").append(overlay = $('<div id="' + object_id + '_overlay" class="divpop_overlay"></div>'));
+            $('#' + object_id + '_overlay').bind("click", function (e) {
+                if (_ie) { $('#' + object_id + '_p').hide(5).show(10) }
+                else { $('#' + object_id + '_p').hide(5).show(5).hide(5).show(5) }
+            });
+            $('#' + object_id + '_overlay').css({
+                position: (_OS == "Win10" || (_ie && _ieVer <= 6)) ? 'absolute' : 'fixed',
+                zIndex: 59,
+                top: '0px',
+                left: '0px',
+                width: '100%',
+                height: $("body").height() + 20,
+                background: "#000000",
+                opacity: "0.1"
+            });
+        } else {
+            // 최상위로 올리는 처리
+            $("#" + object_id + "_p").bind("click", function () {
+                Common.toTop(object_id);
+            });
+        }
+
+        if (posX == undefined || posY == undefined || posX == null || posY == null) {
+            Common.toCenter(object_id);
+        } else {
+            if (posX == "target") { posX = $(button_id).offset().left + 15; }
+            if (posY == "target") { posY = $(button_id).offset().top + 15; }
+            $("#" + object_id + "_p").css({ left: posX, top: posY });
+        }
+
+        // Layer Title 설정
+        if (title.split("|||").length > 1) { // 프로퍼티가 있다면
+            $("#" + object_id + "_ph .divpop_header").html('<span class="divpop_header_ico">' + title.split("|||")[0] + '</span>');
+            //$("#" + object_id + "_ph .divpop_header").append("<span class='menubar_gray5'>&nbsp;I&nbsp;</span> <span class='txt_gn11'>" + title.split("|||")[1] + "</span>");
+        } else {
+            $("#" + object_id + "_ph .divpop_header").html('<span class="divpop_header_ico">' + title + '</span>');
+        }
+        // iframe의 사이즈 조정
+        if ($("#" + object_id + "_if").length > 0) {
+            $("#" + object_id + "_if").css("height", $("#" + object_id + "_p").height() - l_HederSize);
+        }
+
+        // 현재 띄운 창을 가장 위로 올림.
+        Common.toTop(object_id);
+
+        // z-Index 조정
+        if (pIsModal) {
+            $("#" + object_id + "_overlay").css("zIndex", parseInt($("#" + object_id + "_p").css("zIndex"), 10) - 1);
+        }
+
+        //pVisible일경우 iframe 로드 완료 후 visible을 풀도록 처리
+        if (!pVisible) {
+            $("#" + object_id + "_if").load(function () {
+                $("#" + object_id + "_p").css("visibility","visible");
+            });
+        }
+    },
+    CreateBalloon: function (object_id, title, content, halign, balloonType) {
+        var balloonwrapper = '<div id="' + object_id + '_p" class="layer_balloon' + balloonType + '" style="z-index:40">';
+        if (_ie) {
+            if (_ieVer < 9) {
+                balloonwrapper += '<div id="' + object_id + '_hideDiv" style="position:absolute;top:0px;left:0px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe style="margin-left:-1px;" frameborder="0" id="' + object_id + '_hideIfram"></iframe></div>'
+            } else {
+                balloonwrapper += '<div id="' + object_id + '_hideDiv" style="position:absolute;top:-1px;left:-1px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + object_id + '_hideIfram"></iframe></div>'
+            }
+        } else {
+            balloonwrapper += '<div id="' + object_id + '_hideDiv" style="position:absolute;top:-1px;left:-1px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + object_id + '_hideIfram"></iframe></div>'
+        }
+
+        balloonwrapper += '<div id="' + object_id + '_pc" style="position:absolute;"><strong>' + title + '</strong>';
+        balloonwrapper += '<p>' + content + '</p>';
+        balloonwrapper += '</div>'
+        //<!--꼭지가 우측에 있어야 할때는 edge_rgt 클래스 사용 --> 
+        if (halign == "center") {
+            balloonwrapper += '<div id="' + object_id + '_xyTop" class="edge_cen">';
+        } else if (halign == "right") {
+            balloonwrapper += '<div id="' + object_id + '_xyTop" class="edge_rgt">';
+        } else if (halign == "left") {
+            balloonwrapper += '<div id="' + object_id + '_xyTop" class="edge_lgt">';
+        }
+
+        balloonwrapper += '</div>';
+        balloonwrapper += '</div>';
+
+        try {
+            return balloonwrapper
+        } finally {
+            balloonwrapper = null;
+        }
+    },
+    openballoon: function (pParentid, pObjectId, pTitle, pContent, pW, pH, pPosX, pPosY, pAlign, pEvent, pBalloonType) {
+        var l_width, l_height // 컨텐츠의 사이즈
+        if ($("#" + pObjectId + "_p")) {
+            $("#" + pObjectId + "_p").hide();
+            $("#" + pObjectId + "_p").detach();
+        }
+        var balloon = this.CreateBalloon(pObjectId, pTitle, pContent, ((pAlign == undefined) ? this.align : pAlign), pBalloonType);
+        $("body").append(balloon);
+
+        // 레이어의 사이즈 조절 width
+        if (pW == null || pW == "") {// 레이어의 사이즈가 정해지 않은 경우
+            l_width = $("#" + pObjectId + "_pc").width();
+            if (l_width < this.minWidth) {
+                l_width = this.minWidth;
+            }
+        } else {  // 레이어의 w 사이즈가 정해진 경우
+            l_width = pW;
+        }
+        $("#" + pObjectId + "_p").css({ "width": l_width })
+
+        // 레이어의 사이즈 조절 height
+        if (pH == null || pH == "") { // 레이어의 사이즈가 정해지 않은 경우
+            l_height = $("#" + pObjectId + "_pc").height();
+            if (l_height < this.minHeight) {
+                l_height = this.minHeight;
+            }
+        } else { // 레이어의 h 사이즈가 정해진 경우
+            l_height = pH;
+        }
+        $("#" + pObjectId + "_p").css({ "height": l_height })
+
+        // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        $("#" + pObjectId + "_hideDiv").css({ "width": l_width, "height": l_height })
+        if (_ie) {
+            if (_ieVer < 9) {
+                $("#" + pObjectId + "_hideIfram").attr({ "width": $("#" + pObjectId + "_p").width() + 12, "height": parseInt($("#" + pObjectId + "_p").height(), 10) + 11 })
+            } else {
+                $("#" + pObjectId + "_hideIfram").attr({ "width": $("#" + pObjectId + "_p").width() + 12, "height": parseInt($("#" + pObjectId + "_p").height(), 10) + 12 })
+            }
+        } else {
+            $("#" + pObjectId + "_hideIfram").attr({ "width": $("#" + pObjectId + "_p").width() + 12, "height": parseInt($("#" + pObjectId + "_p").height(), 10) + 12 })
+        }
+
+        // 레이어를 보여줄 위치를 지정하지 않은 경우
+        if (pPosX == null || pPosX == undefined || pPosY == undefined) {
+            var e = (typeof pEvent !== "undefined") ? pEvent : event; // Firefox 경우 객체가 틀림
+            var popup_x = 0;
+            var popup_y = 0;
+            if (_ie) { // IE
+                popup_x = e.clientX
+                popup_y = e.clientY
+            } else if (_firefox || _opera) { // Firefox, Opera
+                popup_x = e.clientX
+                popup_y = e.clientY
+            } else { // 그외의 브라우져
+                popup_x = event.x;
+                popup_y = event.y;
+            }
+
+            if (typeof (window.pageYOffset) == "number") {
+                // 스크롤의 상태 적용
+                popup_y = parseInt(popup_y + window.pageYOffset, 10)
+                popup_x = parseInt(popup_x + window.pageXOffset, 10)
+            } else if (typeof (document.documentElement.scrollTop) == "number") {
+                // 스크롤의 상태 적용
+                popup_y = parseInt(popup_y + document.documentElement.scrollTop, 10)
+                popup_x = parseInt(popup_x + document.documentElement.scrollLeft, 10)
+            }
+
+            if (pAlign == "center") {
+                popup_x = popup_x - (parseInt($("#" + pObjectId + "_p").width() / 2, 10) + 6)
+            } else if (pAlign == "left") {
+                popup_x = popup_x - 14
+            } else if (pAlign == "right") {
+                popup_x = popup_x - (parseInt($("#" + pObjectId + "_p").width(), 10) - 2)
+            }
+
+            // 컨텐츠가 레이어 영역을 벗어 났을때 처리(레이어인 경우만)
+            if (document.getElementById("divFixWrap") == null && $("body").height() > 200) {
+                if ((popup_y + $("#" + pObjectId + "_p").height()) > ($("body").height())) {
+                    popup_y = (popup_y - ((popup_y + $("#" + pObjectId + "_p").height()) - $("body").height())) - 43;
+                    $("#" + pObjectId + "_xyTop").hide();
+                }
+                if ((popup_x + $("#" + pObjectId + "_p").width()) > $("body").width()) {
+                    popup_x = (popup_x - ((popup_x + $("#" + pObjectId + "_p").width()) - $("body").width())) - 5;
+                    $("#" + pObjectId + "_xyTop").hide();
+                }
+            } 
+            $("#" + pObjectId + "_p").css({ left: popup_x, top: popup_y });
+        } else if (pObjectId.toUpperCase() == "BALLOONFLAGCONTEXTMENU") {
+            if ($("body").height() > 200) {
+                if ((pPosY + $("#" + pObjectId + "_p").height()) > ($("body").height())) {
+                    pPosY = (pPosY - ((pPosY + $("#" + pObjectId + "_p").height()) - $("body").height())) - 43;
+                    $("#" + pObjectId + "_xyTop").hide();
+                }
+                if ((pPosX + $("#" + pObjectId + "_p").width()) > $("body").width()) {
+                    pPosX = (pPosX - ((pPosX + $("#" + pObjectId + "_p").width()) - $("body").width())) - 5;
+                    $("#" + pObjectId + "_xyTop").hide();
+                }
+            }
+
+            $("#" + pObjectId + "_p").css({ left: pPosX, top: pPosY });
+        } else {
+            $("#" + pObjectId + "_p").css({ left: pPosX, top: pPosY });
+        }
+
+        $("#" + pObjectId + "_p").show("slow");
+
+        // 내용 크릭시 레이어가 사라지지 않도록 처리
+        $("#" + pObjectId + "_p").mouseover(function () {
+            $("#" + pObjectId + "_p").attr("layerout", "N")
+        });
+        $("#" + pObjectId + "_p").mouseout(function () {
+            $("#" + pObjectId + "_p").attr("layerout", "Y")
+        });
+
+        // 기존 이벤트가 있다면 저장
+        if (document.onmouseup) {
+            document.oldMouseEvent = document.onmouseup
+        }
+        // 컨트롤 말풍선 외의 공간을 클릭시 레이어 사라짐.
+        document.onmouseup = function () {
+            if ($("#" + pObjectId + "_p").attr("layerout") != "N") {
+                $("#" + pObjectId + "_p").hide();
+                $("#" + pObjectId + "_p").detach();
+                // 기존 이벤트가 있다면 복구
+                if (document.oldMouseEvent) {
+                    document.onmouseup = document.oldMouseEvent;
+                }
+            }
+        }
+    },
+
+    closeBalloon: function (pObjectId) {
+        $("#" + pObjectId + "_p").hide();
+        $("#" + pObjectId + "_p").detach();
+        // 기존 이벤트가 있다면 복구
+        if (document.oldMouseEvent) {
+            document.onmouseup = document.oldMouseEvent;
+        }
+    },
+
+    openimage: function (object_id, source, w, h) {
+        var content = this.CreateImagePopup(object_id, w, h);
+        if ($("#" + object_id + "_p").length > 0) {
+            Common.toTop(object_id);
+            return false;
+        }
+
+        $("body").append(content);
+
+        //var l_HederSize = $(".divpop_header").height() + 6;
+        var l_HederSize = $(".divpop_header").outerHeight(true);
+        // 컨텐츠 사이즈 지정
+        if (parseInt(w, 10) == 0 || parseInt(h, 10) == 0) {
+            $("#" + object_id + "_p").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) }) // 팝업 레이어 창에 대한 사이즈 조정
+            $("#" + object_id + "_hideDiv").css({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+            $("#" + object_id + "_hideIfram").attr({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        } else {
+            $("#" + object_id + "_p").css({ "width": parseInt(w, 10), "height": parseInt(h, 10) + l_HederSize }) // 팝업 레이어 창에 대한 사이즈 조정
+            $("#" + object_id + "_hideDiv").css({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+            $("#" + object_id + "_hideIfram").attr({ "width": parseInt(w, 10) + 6, "height": parseInt(h, 10) + l_HederSize + 6 }) // ActiveX에 대한 레이어 숨김 현상을 막기 위해
+        }
+
+        var l_Html = '<img id="' + object_id + '_imgpop" name="' + object_id + '_imgpop" src="' + source + '" style="position:absolute; max-width:100%; max-height:100%; margin:auto; top:0; bottom:0; left:0; right:0;" />';
+        $("#" + object_id + "_pc").html(l_Html);
+
+        $('#' + object_id + '_imgpop').bind("load", function (e) {
+            if ($(this).width() > $(this).height()) {
+                $(this).css("width", "100%");
+                $(this).css("height", "auto");
+            } else {
+                $(this).css("width", "auto");
+                $(this).css("height", "100%");
+            }
+        });
+        $("#" + object_id + "_pc").bind("click", function (e) {
+            // 먼저 overlay 레이어를 닫음.
+            $("#" + object_id + "_overlay").hide();
+            $("#" + object_id + "_overlay").detach();
+
+            $("#" + object_id + "_container").slideUp(500, function () {
+                // 하위의 존재하는 컨텐츠 들도 제거
+                $("#" + object_id + "_hideIfram").detach();
+                $("#" + object_id + "_hideDiv").detach();
+                $("#" + object_id + "_pc").detach();
+
+                if ($("#" + object_id + "_if").length > 0) {
+                    $("#" + object_id + "_if").detach();
+                }
+                $("#" + object_id + "_p").detach();
+            });
+        });
+
+        $("body").append(overlay = $('<div id="' + object_id + '_overlay" class="divpop_overlay"></div>'));
+        $('#' + object_id + '_overlay').bind("click", function (e) {
+            if (_ie) { $('#' + object_id + '_p').hide(5).show(10) }
+            else { $('#' + object_id + '_p').hide(5).show(5).hide(5).show(5) }
+        });
+        $('#' + object_id + '_overlay').css({
+            position: (_OS == "Win10" || (_ie && _ieVer <= 6)) ? 'absolute' : 'fixed',
+            zIndex: 59,
+            top: '0px',
+            left: '0px',
+            width: '100%',
+            height: $("body").height() + 20,
+            background: "#000000",
+            opacity: "0.1"
+        });
+
+        Common.toCenter(object_id);
+
+        // 현재 띄운 창을 가장 위로 올림.
+        Common.toTop(object_id);
+
+        // z-Index 조정
+        $("#" + object_id + "_overlay").css("zIndex", parseInt($("#" + object_id + "_p").css("zIndex"), 10) - 1);
+    },
+    CreateImagePopup: function (object_id, w, h) {
+        // 모달일 경우는 기존 레이어 보다 상위로 올림
+
+        var popupwrapper = '<div id="' + object_id + '_p" class="layer_divpop" style="z-index:100">';
+        // ActiveX에 대한 Z-Index 조정을 위한 Iframe 삽입
+        popupwrapper += '<div id="' + object_id + '_hideDiv" style="top:-3px;left:-3px;position:absolute;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + object_id + '_hideIfram"></iframe></div>'
+        popupwrapper += '<div id="' + object_id + '_container" class="divpop_contents">';
+        popupwrapper += '<div class="divpop_body" style="overflow:hidden;">';
+        popupwrapper += '<div id="' + object_id + '_pc" style="width:' + w + ';height:' + h + ';position:relative;"></div>'; // 컨텐츠 삽입 장소
+        popupwrapper += '</div>';
+        popupwrapper += '</div>';
+        popupwrapper += '</div>';
+
+        try {
+            return popupwrapper
+        } finally {
+            popupwrapper = null;
+        }
+    }
+};
+
+// Usage:
+//		Common.Show(targetid, id, title, doc, width, height, isDocUrl, [posX, posY])
+//		Common.ShowDialog(targetid, id, title, doc, width, height, isDocUrl, [posX, posY])
+//      target : target object [object id | '']
+//      id      : this identity
+//      title   : title
+//      doc    : document contents ['<html><body></body></html>' | '/Common/SampleUrl.aspx']
+//      width : Unit [pixel]
+//      height :Unit [pixel]
+//      isDocUrl: document contents type boolean [true: document type url | false: document type html string]
+//      [posX, posY] : Optional setting, shows the location [pixel , pixel]
+//      [pResize] : Enable ReSize setting, shows the button "Full"[true|fale]
+//      [pVisible] : Enable Visivle setting[true,false]
+Common.Show = function (pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize, pVisible) {
+    // 자신기준으로 포지션 설정
+    if (pTargetId != "") {
+        if ($("#" + pTargetId)) {
+            if (pOsX == "self") {
+                pOsX = $("#" + pTargetId).width() + $("#" + pTargetId).position().left;
+            }
+            if (pOsY == "self") {
+                pOsY = $("#" + pTargetId).height() + $("#" + pTargetId).position().top;
+            }
+        }
+    }
+    if (pReSize == undefined || pReSize != true) { pReSize = false; }
+    if (pVisible == undefined || pVisible != false) { pVisible = true; }
+    // 프레임워크의 윈도우 팝업 기능으로 팝업을 연 경우 레이어 오픈
+    if (CFN_GetQueryString("CFN_OpenWindowName") != "undefined" && CFN_GetQueryString("CFN_OpenedWindow") == "true") {
+        // WindowMode
+        if (Common.GetBaseConfig("AllowWindowModeInnerWindow") == "Window") {
+            if ((pMode.indexOf('url') > -1 || pMode.indexOf('iframe') > -1)) {
+                var l_url = pContent.toLowerCase();
+                if (l_url.indexOf('write') == -1 && l_url.indexOf('modify') == -1 && l_url.indexOf('create') == -1 && l_url.indexOf('creation') == -1) {
+                    parent.CFN_OpenWindow(pContent + "&CFN_OpenWindowName=" + pSelfId, pSelfId, pWidth.replace("px", "") + "px", pHeight.replace("px", "") + "px", (pReSize) ? "fix" : "resize");
+                } else {
+                    Common.Warning("The window mode not supported by the current function.");
+                }
+            } else if (pMode.indexOf('html') > -1) {
+                //윈도우 크기 비교해서 더 크거나 작거나 하면 조절하기
+                Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, true, pOsX, pOsY, pReSize, pVisible);
+            } else {
+                Common.Warning("The window mode not supported by the current function.");
+            }
+            // Layer
+        } else if (Common.GetBaseConfig("AllowWindowModeInnerWindow") == "Layer") {
+            Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, false, pOsX, pOsY, pReSize, pVisible);
+            // Deny
+        } else {
+            Common.Warning("The window mode not supported by the current function.");
+        }
+    } else {
+        Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, false, pOsX, pOsY, pReSize, pVisible);
+    }
+};
+
+Common.LoadShow = function (pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize) {
+    Common.Show(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize, false);
+}
+
+Common.ShowDialog = function (pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize, pVisible) {
+    // 자신기준으로 포지션 설정
+    if (pTargetId != "") {
+        if ($("#" + pTargetId)) {
+            if (pOsX == "self") {
+                pOsX = $("#" + pTargetId).width() + $("#" + pTargetId).position().left;
+            }
+            if (pOsY == "self") {
+                pOsY = $("#" + pTargetId).height() + $("#" + pTargetId).position().top;
+            }
+        }
+    }
+    if (pReSize == undefined || pReSize != true) { pReSize = false; }
+    if (pVisible == undefined || pVisible != false) { pVisible = true; }
+    // 프레임워크의 윈도우 팝업 기능으로 팝업을 연 경우 레이어 오픈
+    if (CFN_GetQueryString("CFN_OpenWindowName") != "undefined" && CFN_GetQueryString("CFN_OpenedWindow") == "true") {
+        // Window Mode
+        if (Common.GetBaseConfig("AllowWindowModeInnerWindow") == "Window") {
+            if ((pMode.indexOf('url') > -1 || pMode.indexOf('iframe') > -1)) {
+                var l_url = pContent.toLowerCase();
+                if (l_url.indexOf('write') == -1 && l_url.indexOf('modify') == -1 && l_url.indexOf('create') == -1 && l_url.indexOf('creation') == -1) {
+                    parent.CFN_OpenWindow(pContent + "&CFN_OpenWindowName=" + pSelfId, pSelfId, pWidth.replace("px", "") + "px", pHeight.replace("px", "") + "px", (pReSize) ? "fix" : "resize");
+                } else {
+                    Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, true, pOsX, pOsY, pReSize, pVisible);
+                }
+            } else if (pMode.indexOf('html') > -1) {
+                //윈도우 크기 비교해서 더 크거나 작거나 하면 조절하기
+                Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, true, pOsX, pOsY, pReSize, pVisible);
+            } else {
+                Common.Warning("The window mode not supported by the current function.");
+            }
+            // Layer
+        } else if (Common.GetBaseConfig("AllowWindowModeInnerWindow") == "Layer") {
+            Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, true, pOsX, pOsY, pReSize, pVisible);
+            // Deny
+        } else {
+            Common.Warning("The window mode not supported by the current function.");
+        }
+    } else {
+        Common.open(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, true, pOsX, pOsY, pReSize, pVisible);
+    }
+};
+
+Common.LoadShowDialog = function (pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize) {
+    Common.ShowDialog(pTargetId, pSelfId, pTitle, pContent, pWidth, pHeight, pMode, pOsX, pOsY, pReSize, false);
+}
+
+Common.ShowBalloon = function (pTargetID, pSelfId, pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e) {
+    if (pSelfId == null || pSelfId == undefined) {
+        Common.openballoon(pTargetID, "BolloonDivPopupLayer", pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e, "");
+    } else {
+        Common.openballoon(pTargetID, pSelfId, pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e, "");
+    }
+};
+
+Common.ShowContext = function (pTargetID, pSelfId, pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e) {
+    if (pSelfId == null || pSelfId == undefined) {
+        Common.openballoon(pTargetID, "BolloonDivPopupLayer", pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e, "_c");
+    } else {
+        Common.openballoon(pTargetID, pSelfId, pTitle, pContent, pWidth, pHeight, posX, posY, pAlign, e, "_c");
+    }
+};
+
+Common.Close = function (pLayerId) {
+    // Popup Window 오픈인 경우
+    if (opener != null && CFN_GetQueryString("CFN_OpenWindowName") != "undefined" && (pLayerId == undefined || pLayerId == "")) {
+        window.close();
+    } else {
+        if (pLayerId == undefined || pLayerId == "") {
+            pLayerId = CFN_GetQueryString("CFN_OpenLayerName");
+            parent.Common.close(pLayerId);
+        } else {
+            Common.close(pLayerId);
+        }
+    }
+};
+
+Common.CloseAll = function () {
+    $(".layer_divpop").each(function () {
+        if (!$(this).hasClass("pt-layer-chat-popup")) {
+            $(this).remove();
+        }
+    });
+
+    //overlay 가 존재하는 현상이 있어서 강제 삭제 2016-06-02 by cjh
+    $(".divpop_overlay").each(function () {
+        $(this).remove();
+    });
+
+    $("#alert_overlay, .layer_alert").each(function () {
+        $(this).remove();
+    });
+
+    $(".IndicatorLayer").each(function () {
+        $(this).remove();
+    });
+};
+
+// 화면 사이즈 확대/축소(컨텐츠 레이어 내에서 사이즈 조정)
+Common.ScreenZoom = function (pWidth, pHeight, pLayerId) {
+    if (pLayerId == undefined || pLayerId == "") { pLayerId = CFN_GetQueryString("CFN_OpenLayerName"); }
+    var l_pcWidth = parent.$("#" + pLayerId + "_pc").width() + pWidth;
+    var l_pcHeight = parent.$("#" + pLayerId + "_pc").height() + pHeight;
+    if ($(window).width() < l_pcWidth) {
+        l_pcWidth = $(window).width();
+    }
+    _ShowLayerSize[pLayerId] = l_pcWidth + "|" + l_pcHeight;
+    parent.Common.toResize(pLayerId, l_pcWidth + "px", l_pcHeight + "px");
+    parent.Common.toCenter(pLayerId)
+};
+
+// 레이어 사이즈 확대
+Common.ScreenFull = function (pLayerId, obj) {
+    var l_pcWidth = $(window).width();
+    var l_pcHeight = $("#" + pLayerId + "_pc").height();
+
+    // 최초 사이즈 기억
+    if (_ShowLayerSize[pLayerId] == undefined) {
+        _ShowLayerSize[pLayerId] = $("#" + pLayerId + "_pc").width() + "|" + $("#" + pLayerId + "_pc").height();
+    }
+
+    if (obj.hasClass("divpop_full")) {
+        if ($("a.divpop_origin2")) { $("a.divpop_origin2").attr('class', 'divpop_mini'); }
+        obj.attr('class', 'divpop_origin');
+        //l_pcHeight = $(window).height() - ($(".divpop_header").height() + 6);
+        l_pcHeight = $(window).height() - $(".divpop_header").outerHeight(true);
+    } else if (obj.hasClass("divpop_origin")) {
+        obj.attr('class', 'divpop_full');
+        l_pcWidth = _ShowLayerSize[pLayerId].split("|")[0];
+        l_pcHeight = _ShowLayerSize[pLayerId].split("|")[1];
+    }
+
+    Common.toResize(pLayerId, (l_pcWidth - 10) + "px", l_pcHeight + "px");
+    Common.toCenter(pLayerId);
+};
+
+// 레이어 사이즈 최소화
+Common.ScreenMini = function (pLayerId, obj) {
+    var l_pcWidth = 250;
+    var l_pcHeight = 0;
+
+    // 최초 사이즈 기억
+    if (_ShowLayerSize[pLayerId] == undefined) {
+        _ShowLayerSize[pLayerId] = $("#" + pLayerId + "_pc").width() + "|" + $("#" + pLayerId + "_pc").height();
+    }
+
+    if (obj.hasClass("divpop_mini")) {
+        //최대화 했다가 최소화 할 경우, 이미 divpop_origin이 사용되고 있기 때문에 바꿔줘야 한다.
+        //만약 이미 divpop_origin 이 있다면 바꿔주고, 그 다음에 obj를 divpop_origin 으로 바꿔준다.
+        if ($("a.divpop_origin")) { $("a.divpop_origin").attr('class', 'divpop_full'); }
+        obj.attr('class', 'divpop_origin2');
+        Common.toResize(pLayerId, l_pcWidth + "px", l_pcHeight + "px");
+        $("#" + pLayerId + "_p").find(".pro_today_x").hide();
+        // 원래 위치로 복원
+        if (_ShowLayerPosition[pLayerId] != undefined) {
+            $("#" + pLayerId + "_p").css({ left: _ShowLayerPosition[pLayerId].split("|")[0], top: _ShowLayerPosition[pLayerId].split("|")[1] });
+            // 바닥으로 내리기
+        } else {
+            // 띄우려고 하는 위치에 레이어가 존재한다면
+            var l_Left_y = $("#" + pLayerId).css("top");
+            var l_Left_x = $("#" + pLayerId).css("left");
+            $("#" + pLayerId + "_p").css({ left: l_Left_x, top: l_Left_y });
+        }
+    } else if (obj.hasClass("divpop_origin2")) {
+        obj.attr('class', 'divpop_mini');
+        l_pcWidth = _ShowLayerSize[pLayerId].split("|")[0];
+        l_pcHeight = _ShowLayerSize[pLayerId].split("|")[1];
+        _ShowLayerPosition[pLayerId] = $("#" + pLayerId + "_p").css("left") + "|" + $("#" + pLayerId + "_p").css("top");
+        Common.toResize(pLayerId, l_pcWidth + "px", l_pcHeight + "px");
+        Common.toCenter(pLayerId);
+        $("#" + pLayerId + "_p").find(".pro_today_x").show();
+    }
+};
+
+// 레이어 타이틀 변경
+Common.ChangeTitle = function (pTitle, pLayerId) {
+    if (pTitle.split("|||").length > 1) { // 프로퍼티가 있다면
+        $("#" + pLayerId + "_ph .divpop_header").html('<span class="divpop_header_ico">' + pTitle.split("|||")[0] + '</span>');
+        //$("#" + pLayerId + "_ph .divpop_header").append("<span class='menubar_gray5'>&nbsp;I&nbsp;</span> <span class='txt_gn11'>" + pTitle.split("|||")[1] + "</span>");
+    } else {
+        $("#" + pLayerId + "_ph .divpop_header").html('<span class="divpop_header_ico">' + pTitle + '</span>');
+    }
+};
+
+// 레이어 윈도우 팝업으로 재오픈
+Common.LayerToWindow = function (pUrl, pParentID, pWidth, pHeight, pOpenType) {
+    // 기본은 Fix
+    if (pOpenType == undefined) { pOpenType = "fix"; }
+    parent.CFN_OpenWindow(pUrl + "&CFN_OpenWindowName=" + pParentID + "&CFN_OpenedWindow=true", pParentID, pWidth + "px", pHeight + "px", pOpenType);
+    parent.Common.Close(pParentID);
+};
+
+// 윈도우 팝업으로 재오픈 버튼 표시
+Common.ButtonToWindow = function (pLayerId) {
+    // Popup Window 오픈인 경우
+    if (opener != null && CFN_GetQueryString("CFN_OpenWindowName") != "undefined") {
+    } else {
+        if (pLayerId == undefined || pLayerId == "") {
+            pLayerId = CFN_GetQueryString("CFN_OpenLayerName");
+            $("#" + pLayerId + "_LayertoWindow", parent.document).show();
+        } else {
+            $("#" + pLayerId + "_LayertoWindow").show();
+        }
+    }
+};
+
+// 이미지 크게보기
+Common.ShowImage = function (pSelfId, pContent) {
+    var sWidth = ((window.innerWidth || document.body.clientWidth) - 20) + "px";
+    var sHeight = ((window.innerHeight || document.body.clientHeight) - 20) + "px";
+
+    Common.openimage(pSelfId, pContent, sWidth, sHeight);
+};
+/////////////////////////////////////////////////////////////////////////////////////////////// alert & confirm
+
+// Usage:
+//		Common.Alert( message, [title, callback] )
+//		Common.Confirm( message, [title, callback] )
+//		Common.Prompt( message, [value, title, callback] )
+(function ($) {
+
+    $.alerts = {
+        // These properties can be read/written by accessing $.alerts.propertyName from your scripts at any time
+        verticalOffset: -75,                // vertical offset of the dialog from center screen, in pixels
+        horizontalOffset: 0,                // horizontal offset of the dialog from center screen, in pixels/
+        repositionOnResize: true,           // re-centers the dialog on window resize
+        overlayOpacity: 0.10,                // transparency level of overlay
+        overlayColor: '#000',               // base color of overlay
+        //draggable: true,                    // make the dialogs draggable (requires UI Draggables plugin)
+        draggable: false,
+        dialogClass: null,                  // if specified, this class will be applied to all dialogs
+        minWidth: 230,
+        maxWidth: 450,
+
+        // Public methods
+        inform: function (message, title, callback) {
+            if (title == null || title == "" || title == undefined || title == "Information Dialog" || title == "Information") title = Common.GetDic("lbl_InformTitle");
+            $.alerts._show(title, message, null, 'inform', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+            /*
+            if (callback == "" || typeof callback == "undefined") {
+                $.alerts._show(title, message, null, 'inform');
+            } else {
+                $.alerts._show(title, message, null, 'inform', function (result) {
+                    if (typeof (callback) == "string" && callback != "") {
+                        if (result == null)
+                            eval(callback + "(null)");
+                        else
+                            eval(callback + "('" + result + "')");
+                    } else if (typeof (callback) == "function") {
+                        callback(result);
+                    }
+                });
+            }
+            */
+        },
+
+        progress: function (message, title, callback) {
+            var strMessage = Common.GetDic("msg_Processing");
+            if (title == null || title == "" || title == undefined || title == "progress") title = strMessage;
+            if (message == null || message == undefined || message == "" || message == "undefined") { message = strMessage }
+            $.alerts._show(title, message, null, 'progress', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+        },
+
+        warning: function (message, title, callback) {
+            if (title == null || title == "" || title == undefined || title == "Warning Dialog") title = Common.GetDic("lbl_WarningTitle");
+            $.alerts._show(title, message, null, 'warning', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+        },
+
+        error: function (message, title, callback) {
+            if (title == null || title == "" || title == undefined || title == "Error" || title == "Error Dialog") title = Common.GetDic("lbl_apv_error");
+            $.alerts._show(title, message, null, 'error', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+        },
+
+        customconfirm: function (message, title, callback) {
+            if (title == null || title == "" || title == undefined || title == "Confirm Dialog" || title == "Confirmation Dialog" || title == "Confirmation Dialog") title = Common.GetDic("btn_apv_confirm");
+            $.alerts._show(title, message, null, 'customconfirm', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+        },
+
+        prompt: function (message, value, title, callback) {
+            if (title == null || title == "" || title == undefined) title = 'Prompt';
+            $.alerts._show(title, message, value, 'prompt', function (result) {
+                if (result != null) {
+                    result = result.replace(/'/gi, "＇").replace(/"/gi, "〃");
+                }
+                if (callback) {
+                    if (typeof (callback) == "string" && callback != "") {
+                        if (result == null)
+                            eval(callback + "(null)");
+                        else
+                            eval(callback + "('" + result + "')");
+                    } else if (typeof (callback) == "function") {
+                        callback(result);
+                    }
+                }
+            });
+        },
+
+        promptArea: function (message, value, title, callback) {
+            if (title == null || title == "" || title == undefined) title = 'Prompt';
+            $.alerts._show(title, message, value, 'promptArea', function (result) {
+                if (result != null) {
+                    result = result.replace(/'/gi, "＇").replace(/"/gi, "〃").replace(/\r/gi, "").replace(/\n/gi, "");
+                }
+                if (callback) {
+                    if (typeof (callback) == "string" && callback != "") {
+                        if (result == null)
+                            eval(callback + "(null)");
+                        else
+                            eval(callback + "('" + result + "')");
+                    } else if (typeof (callback) == "function") {
+                        callback(result);
+                    }
+                }
+            });
+        },
+
+        password: function (message, value, title, callback) {
+            if (title == null || title == "" || title == undefined) title = Common.GetDic("lbl_PasswordTitle");
+            $.alerts._show(title, message, value, 'password', function (result) {
+                if (callback) {
+                    if (typeof (callback) == "string" && callback != "") {
+                        if (result == null)
+                            eval(callback + "(null)");
+                        else
+                            eval(callback + "('" + result + "')");
+                    } else if (typeof (callback) == "function") {
+                        callback(result);
+                    }
+                }
+            });
+        },
+
+        confirm: function (message, title, callback) {
+            if (title == null || title == "" || title == undefined || title == "Confirm Dialog" || title == "Confirmation Dialog" || title == "Confirmation Dialog") title = Common.GetDic("btn_apv_confirm");
+            $.alerts._show(title, message, null, 'confirm', function (result) {
+                if (typeof (callback) == "string" && callback != "") {
+                    if (result == null)
+                        eval(callback + "(null)");
+                    else
+                        eval(callback + "('" + result + "')");
+                } else if (typeof (callback) == "function") {
+                    callback(result);
+                }
+            });
+        },
+
+        // Private methods
+        _show: function (title, msg, value, type, callback) {
+            if (typeof msg == "string")
+                msg = msg.toString().replace(/\n/g, '<br />');// 개행에 대한 처리
+            $("#AlertLayer").remove();
+            $.alerts._maintainPosition(false);
+            $.alerts._overlay('show');
+            if (type == "error") {
+                $("#AlertLayer_Error").remove();
+            }
+
+            if (_ieVer < 9) {
+                $("BODY").append(
+			        '<div id="AlertLayer" class="layer_alert" AlertType="' + type + '" style="z-index:150000">' +
+                    '<div id="alert_container" class="alert_content">' +
+                        '<div id="' + type + '_hideDiv" style="position:absolute;top:0px;left:0px;filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe style="margin-left:-3px; margin-top:-3px;" frameborder="0" id="' + type + '_hideIfram"></iframe></div>' +
+				        '<div id="popup_content" style="position:relative;"><h4 id="popup_title" class="alert_header"></h4>' +
+				        '<div class="alert_body">' +
+				            '<div id="popup_message" style="txt-align:center;overflow-y:auto;"></div>' +
+				        '</div>' +
+                        '<a id="btn_AlertCloseX" onclick="$.alerts._hide()" style="cursor:pointer;" class="ly_close"><img alt="Close Alert" src="/Images/Images/Controls/Popup/btn_Layer_close.gif" onmouseover="this.src = this.src.replace(\'.gif\', \'_ov.gif\')" onmouseout="this.src = this.src.replace(\'_ov.gif\', \'.gif\')"></a>' +
+                    '</div></div>' +
+			        '</div>');
+            } else {
+                if (type == "progress") {
+                    $("BODY").append(
+                        '<div id="AlertLayer" class="layer_alert" AlertType="' + type + '" style="z-index:150000">' +
+                        '<div id="alert_container" class="alert_content" style="border:1px solid #CCC">' +
+                            '<div id="' + type + '_hideDiv" style="position:absolute;top:-3px;left:-3px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + type + '_hideIfram"></iframe></div>' +
+                            '<div id="popup_content" style="position:relative;"><h4 id="popup_title" class="alert_header"></h4>' +
+                            '<div class="alert_body">' +
+                                '<div id="popup_message" style="txt-align:center;overflow-y:auto;"></div>' +
+                            '</div>' +
+                            '<a id="btn_AlertCloseX" onclick="$.alerts._hide()" style="cursor:pointer;" class="ly_close"><img alt="Close Alert" src="/Images/Images/Controls/Popup/btn_Layer_close.gif" onmouseover="this.src = this.src.replace(\'.gif\', \'_ov.gif\')" onmouseout="this.src = this.src.replace(\'_ov.gif\', \'.gif\')"></a>' +
+                        '</div></div>' +
+                        '</div>');
+                } else if (type == "error") {
+                    $("BODY").append(
+                        '<div id="AlertLayer_Error" class="layer_alert" AlertType="' + type + '" style="z-index:150000">' +
+                        '<div id="alert_container_Error" class="alert_content" style="border:1px solid #CCC">' +
+                            '<div id="' + type + '_hideDiv" style="position:absolute;top:-3px;left:-3px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + type + '_hideIfram"></iframe></div>' +
+                            '<div id="popup_content" style="position:relative;"><h4 id="popup_titleError" class="alert_header"></h4>' +
+                            '<div class="alert_body">' +
+                                '<div id="popup_messageError" style="txt-align:center;overflow:hidden;font-size:12px;"></div>' +
+                            '</div>' +
+                            '<a id="btn_AlertCloseX" onclick="$.alerts._hideError()" style="cursor:pointer;" class="ly_close"><img alt="Close Alert" src="/Images/Images/Controls/Popup/btn_Layer_close.gif" onmouseover="this.src = this.src.replace(\'.gif\', \'_ov.gif\')" onmouseout="this.src = this.src.replace(\'_ov.gif\', \'.gif\')"></a>' +
+                        '</div></div>' +
+                        '</div>');
+                } else {
+                    $("BODY").append(
+                        '<div id="AlertLayer" class="layer_alert" AlertType="' + type + '" style="z-index:150000">' +
+                        '<div id="alert_container" class="alert_content">' +
+                            '<div id="' + type + '_hideDiv" style="position:absolute;top:-3px;left:-3px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="' + type + '_hideIfram"></iframe></div>' +
+                            '<div id="popup_content" style="position:relative;"><h4 id="popup_title" class="alert_header"></h4>' +
+                            '<div class="alert_body">' +
+                                '<div id="popup_message" style="txt-align:center;overflow-y:auto;"></div>' +
+                            '</div>' +
+                            '<a id="btn_AlertCloseX" onclick="$.alerts._hide()" style="cursor:pointer;" class="ly_close"><img alt="Close Alert" src="/Images/Images/Controls/Popup/btn_Layer_close.gif" onmouseover="this.src = this.src.replace(\'.gif\', \'_ov.gif\')" onmouseout="this.src = this.src.replace(\'_ov.gif\', \'.gif\')"></a>' +
+                        '</div></div>' +
+                        '</div>');
+                }
+            }
+
+            // 컨테이너의 스타일을 줌
+            //if ($.alerts.dialogClass) $("#alert_container").addClass($.alerts.dialogClass);
+            // IE6 Fix
+            var pos = ((_OS == "Win10" && _WebRoot != "APPROVAL") || (_ie && _ieVer <= 6)) ? 'absolute' : 'fixed';
+            if (!_mobile) {// 특정 모바일기기에서 활성화시 레이어를 선택할 수 없는 오류 발생시킴!!
+                if (type == "error") {
+                    $("#alert_container_Error").css({ position: pos });
+                } else {
+                    $("#alert_container").css({ position: pos });
+                }
+            }
+
+            if (type == "error") {
+                if (_mobile) {
+                    $("#popup_titleError").html('<span class="alert_header_ico" id="alert_header_Error" >' + title + '</span>');
+                    $("#popup_messageError").text(msg);
+                    $("#popup_messageError").html("<div class='approval_ok_box' style='display:inline-table;'><div class='approval_ok'><div class='" + type + "'></div>" + $("#popup_messageError").text() + "<div></div>");
+                } else {
+                    $("#popup_titleError").html('<span id="alert_header_Error">' + title + '</span>');
+                    $("#popup_messageError").text(msg);
+                    $("#popup_messageError").html("<p><div class='join_" + type + "'></div> " + $("#popup_messageError").text() + "</p>");
+                }
+            } else if (type != "progress") {
+                if (_mobile) {
+                    $("#popup_title").html('<span class="alert_header_ico">' + title + '</span>');
+                    $("#popup_message").text(msg);
+                    $("#popup_message").html("<div class='approval_ok_box' style='display:inline-table;'><div class='approval_ok'><div class='" + type + "'></div>" + $("#popup_message").text() + "<div></div>");
+                } else {
+                    $("#popup_title").html('<span>' + title + '</span>');
+                    $("#popup_message").text(msg);
+                    $("#popup_message").html("<p><div class='join_" + type + "'></div> " + $("#popup_message").text() + "</p>");
+                }
+            } else { // 상태 표시인 경우
+                $("#popup_title").hide();
+                if (title == "loading") {
+                    $("#popup_message").html("<p><div style='min-width:100px;min-height:15px;'><img src='/Images/Images/Controls/Progress/" + _lodingImage + "' />&nbsp;&nbsp;&nbsp;<strong>" + msg + "</strong></div></p>");
+                } else if (title == "Indicator") {
+                    $("#popup_message").html("<p><div style='min-width:100px;min-height:15px;'><img src='/Images/Images/Controls/Progress/" + _IndicatorImage + "' />&nbsp;&nbsp;&nbsp;<strong>" + msg + "</strong></div></p>");
+                } else {
+                    $("#popup_message").html("<p><div style='min-width:100px;min-height:15px;'><img src='/Images/Images/Controls/Progress/" + _progressImage + "' /></div><div style='min-height:20px;min-width:100px;padding-top:10px;'><strong>" + msg + "</storn></div></p>");
+                }
+            }
+
+            if (type == "error") {
+                $.alerts._repositionError();
+            } else {
+                $.alerts._reposition();
+            }
+            $.alerts._maintainPosition(true);
+
+            switch (type) {
+                case 'confirm':
+                    $("#popup_message").after(
+                          '<div class="l-popup__footer">'
+                        + '<div style="display:inline-flex;">'
+                        + '<div class="l-popup__function-item"><a class="c-button c-button--strong" id="popup_other"  type="button" style="cursor:pointer;display:none;">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                        + '<div class="l-popup__function-item" style="margin-left:6px;"><a class="c-button c-button--strong" id="popup_ok" type="button" style="cursor:pointer;">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                        + '<div class="l-popup__function-item" style="margin-left:6px;"><a class="c-button" id="popup_cancel" type="button" style="cursor:pointer;">' + $.alerts._getBtnDicionary("btn_Cancel") + '</a></div>'
+                        + '</div>'
+                        + '</div>');
+                    $("#popup_other").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback("other");
+                    });
+                    $("#popup_ok").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(true);
+                    });
+                    $("#popup_cancel").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(false);
+                    });
+                    $("#popup_ok").focus();
+                    $("#popup_ok, #popup_cancel").keypress(function (e) {
+                        if (e.keyCode == 27) $("#popup_cancel").trigger('click');
+                    });
+                    $("#btn_AlertCloseX").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(false);
+                    });
+                    break;
+                case 'prompt':
+                    $("#popup_message").append('<br /><input type="text" size="30" id="popup_prompt" />').after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                        + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_ok" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                        + '<div class="l-popup__function-item" style="margin-left:6px;"><a style="cursor:pointer" id="popup_cancel" class="c-button">' + $.alerts._getBtnDicionary("btn_Cancel") + '</a></div>'
+                        + '</div></div>');
+                    $("#popup_prompt").width($("#popup_message").width() - 10);
+                    $("#popup_ok").click(function () {
+                        var val = $("#popup_prompt").val();
+                        $.alerts._hide();
+                        if (callback) callback(val);
+                    });
+                    $("#popup_cancel").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(null);
+                    });
+                    $("#popup_prompt, #popup_ok, #popup_cancel").keypress(function (e) {
+                        if (e.keyCode == 13) $("#popup_ok").trigger('click');
+                        if (e.keyCode == 27) $("#popup_cancel").trigger('click');
+                    });
+                    if (value) $("#popup_prompt").val(value);
+                    $("#popup_prompt").focus().select();
+                    break;
+                case 'promptArea':
+                    $("#popup_message").append('<br /><textarea name="popup_prompt" rows="4" cols="20" id="popup_prompt" onkeydown="return CFN_CheckMaxLength(this, \'500\')" style="width:250px;vertical-align:middle;text-align:left;overflow:auto;border:1px solid #c2c2c2;"></textarea>').after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                       + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_ok" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                       + '<div class="l-popup__function-item" style="margin-left:6px;"><a style="cursor:pointer" id="popup_cancel" class="c-button">' + $.alerts._getBtnDicionary("btn_Cancel") + '</a></div>'
+                       + '</div></div>');
+                    $("#popup_prompt").width($("#popup_message").width() - 20);
+                    $("#popup_ok").click(function () {
+                        var val = $("#popup_prompt").val();
+                        $.alerts._hide();
+                        if (callback) callback(val);
+                    });
+                    $("#popup_cancel").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(null);
+                    });
+                    $("#popup_ok, #popup_cancel").keypress(function (e) {
+                        if (e.keyCode == 13) $("#popup_ok").trigger('click');
+                        if (e.keyCode == 27) $("#popup_cancel").trigger('click');
+                    });
+                    if (value) $("#popup_prompt").val(value);
+                    $("#popup_prompt").focus().select();
+                    break;
+                case 'password':
+                    if (title.indexOf("◈") == -1) {
+                        $("#popup_message").append('<br /><input type="password" size="30" id="popup_prompt" />').after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                           + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_ok" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                           + '<div class="l-popup__function-item" style="margin-left:6px;"><a style="cursor:pointer" id="popup_cancel" class="c-button">' + $.alerts._getBtnDicionary("btn_Cancel") + '</a></div>'
+                           + '</div></div>');
+                    } else {
+                        $("#popup_message").append('<br /><input type="password" size="30" id="popup_prompt" />').after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                           + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_ok" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                           + '</div></div>');
+                    }
+                    $("#popup_prompt").width($("#popup_message").width() - 10);
+                    $("#popup_ok").click(function () {
+                        var val = $("#popup_prompt").val();
+                        $.alerts._hide();
+                        if (callback) callback(val);
+                    });
+                    $("#popup_cancel").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(null);
+                    });
+                    $("#popup_prompt, #popup_ok, #popup_cancel").keypress(function (e) {
+                        if (e.keyCode == 13) $("#popup_ok").trigger('click');
+                        if (e.keyCode == 27) $("#popup_cancel").trigger('click');
+                    });
+                    if (value) $("#popup_prompt").val(value);
+                    $("#popup_prompt").focus().select();
+                    $("#btn_AlertCloseX").hide();
+                    break;
+                case 'progress':
+                    $("#btn_AlertCloseX").hide();
+                    break;
+                case 'error':
+                    $("#popup_messageError").after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                       + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_okError" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                       + '</div></div>');
+                    $("#popup_okError").click(function () {
+                        $.alerts._hideError();
+                        if (callback) callback(true);
+                    });
+                    $("#popup_okError").focus().keypress(function (e) {
+                        if (e.keyCode == 27) $("#popup_okError").trigger('click');
+                    });
+                    // 확인창에서는 X을 눌러도 확인이 되도록 
+                    $("#btn_AlertCloseXError").click(function () {
+                        $.alerts._hideError();
+                        if (callback) callback(true);
+                    });
+                    $("#btn_AlertCloseXError").focus().keypress(function (e) {
+                        if (e.keyCode == 13 || e.keyCode == 27) $("#popup_okError").trigger('click');
+                    });
+                    break;
+                case 'customconfirm':
+                    $("#popup_message").after(
+                          '<div class="l-popup__footer">'
+                        + '<div style="display:inline-flex;">'
+                        + '<div class="l-popup__function-item"><a class="c-button c-button--strong" id="popup_other"  type="button" style="cursor:pointer;">' + $.alerts._getBtnDicionary("btnAlertDispatch") + '</a></div>'
+                        + '<div class="l-popup__function-item" style="margin-left:6px;"><a class="c-button c-button--strong" id="popup_ok" type="button" style="cursor:pointer;">' + $.alerts._getBtnDicionary("btnAlertImmediately") + '</a></div>'
+                        + '<div class="l-popup__function-item" style="margin-left:6px;"><a class="c-button" id="popup_cancel" type="button" style="cursor:pointer;">' + $.alerts._getBtnDicionary("btn_Cancel") + '</a></div>'
+                        + '</div>'
+                        + '</div>');
+                    $("#popup_other").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback("L");
+                    });
+                    $("#popup_ok").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback("M");
+                    });
+                    $("#popup_cancel").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback("R");
+                    });
+                    $("#popup_ok").focus();
+                    $("#popup_ok, #popup_cancel").keypress(function (e) {
+                        if (e.keyCode == 27) $("#popup_cancel").trigger('click');
+                    });
+                    $("#btn_AlertCloseX").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(false);
+                    });
+                    break;
+                default:
+                    $("#popup_message").after('<div class="l-popup__footer"><div style="display:inline-flex;">'
+                      + '<div class="l-popup__function-item"><a style="cursor:pointer" id="popup_ok" class="c-button c-button--strong">' + $.alerts._getBtnDicionary("btn_Ok") + '</a></div>'
+                      + '</div></div>');
+                    $("#popup_ok").click(function () {
+                        if (_DN_Code == 'H104' &&  $("#popup_message").text().indexOf("FAIL_SAP") > -1) {
+                            if (g_IS_TabUI == "Y") {
+                                var currentTabID = parent.document.getElementById("hidMasterCurrentTab").value;
+                                $.alerts._hide();
+                                parent.Master_TabClose_OnClick(currentTabID);
+                            }
+                            else {
+                                $.alerts._hide();
+                                self.close();
+                                if (callback) callback(true);
+                            }
+                        }
+                        else{
+                        $.alerts._hide();
+                        if (callback) callback(true);
+                        }
+                    });
+                    $("#popup_ok").focus().keypress(function (e) {
+                        if (e.keyCode == 27) $("#popup_ok").trigger('click');
+                    });
+                    // 확인창에서는 X을 눌러도 확인이 되도록 
+                    $("#btn_AlertCloseX").click(function () {
+                        $.alerts._hide();
+                        if (callback) callback(true);
+                    });
+                    $("#btn_AlertCloseX").focus().keypress(function (e) {
+                        if (e.keyCode == 13 || e.keyCode == 27) $("#popup_ok").trigger('click');
+                    });
+                    break;
+            }
+
+            // Make draggable
+            //if ($.alerts.draggable) {
+            if (true) {
+                try {
+                    if (type == "error") {
+                        $("#AlertLayer_Error").draggable({ handle: $("#alert_header_Error").parent() }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+                        $("#alert_header_Error").parent().css({ cursor: 'move' });
+                    } else if (type != "progress") {
+                        $("#AlertLayer").draggable({ handle: $("#popup_title") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+                        $("#popup_title").css({ cursor: 'move' });
+                    } else {
+                        $("#AlertLayer").draggable({ handle: $("#popup_message") }).draggable({ iframeFix: true }).draggable({ containment: 'document' });
+                        $("#popup_message").css({ cursor: 'move' });
+                    }
+                } catch (e) { }
+            }
+
+            if (type == "error") {
+                if ($("#alert_container_Error").outerWidth() < $.alerts.minWidth) { // 최소 사이즈를 지정함.
+                    $("#alert_container_Error").css({
+                        width: $.alerts.minWidth + 10
+                    });
+                } else if ($("#alert_container_Error").outerWidth() > $.alerts.maxWidth) { // 최소 사이즈를 지정함.
+                    $("#alert_container_Error").css({
+                        width: $.alerts.maxWidth + 10
+                    });
+                } else {
+                    $("#alert_container_Error").css({
+                        minWidth: $("#alert_container_Error").outerWidth() + 10,
+                        maxWidth: $("#alert_container_Error").outerWidth() + 10
+                    });
+                }
+
+                $("#" + type + "_hideIfram").attr({ "width": $("#alert_container_Error").outerWidth() + 6, "height": parseInt($("#alert_container_Error").outerHeight(), 10) + 6 })
+
+            } else {
+                if ($("#alert_container").outerWidth() < $.alerts.minWidth) { // 최소 사이즈를 지정함.
+
+                    if (_OS == "Win10" && _WebRoot != "APPROVAL") {
+                        if ($("#alert_container").outerWidth() > 190) {
+                            $("#alert_container").css({
+                                width: $.alerts.maxWidth + 10
+                            });
+                        } else {
+                            $("#alert_container").css({
+                                width: $.alerts.minWidth + 120
+                            });
+                        }
+                    } else {
+                        $("#alert_container").css({
+                            width: $.alerts.minWidth + 10
+                        });
+                    }
+                } else if ($("#alert_container").outerWidth() > $.alerts.maxWidth) { // 최소 사이즈를 지정함.
+
+                    if (_OS == "Win10" && _WebRoot != "APPROVAL") {
+                        $("#alert_container").css({
+                            width: $.alerts.maxWidth + 120
+                        });
+                    } else {
+                        $("#alert_container").css({
+                            width: $.alerts.maxWidth + 10
+                        });
+                    }
+                    
+                } else {
+                    $("#alert_container").css({
+                        minWidth: $("#alert_container").outerWidth() + 10,
+                        maxWidth: $("#alert_container").outerWidth() + 10
+                    });
+                }
+                //ActiveX 컨트롤 위로 레이어를 올리기 위해
+                if (type != "progress") {
+                    $("#" + type + "_hideIfram").attr({ "width": $("#alert_container").outerWidth() + 6, "height": parseInt($("#alert_container").outerHeight(), 10) + 6 })
+                } else {
+                    $("#" + type + "_hideIfram").attr({ "width": $("#alert_container").outerWidth() + 6, "height": parseInt($("#alert_container").outerHeight(), 10) + 6 })
+                }
+            }
+        },
+        // 알림창 닫기
+        _hide: function () {
+            $("#alert_container").slideUp(300, function () {
+                $("#AlertLayer").detach();
+                $.alerts._overlay('hide');
+                $.alerts._maintainPosition(false);
+            })
+        },
+        // 로딩바 닫기
+        _hideLoading: function () {
+            $("#progress_hideDiv").parent().slideUp(300, function () {
+                $("#progress_hideDiv_hideDiv").parent().parent().detach();
+                $.alerts._overlay('hide');
+                $.alerts._maintainPosition(false);
+            })
+        },
+        // 에러창 닫기
+        _hideError: function () {
+            $("#alert_container_Error").slideUp(300, function () {
+                $("#AlertLayer_Error").detach();
+                $.alerts._overlay('hide');
+                $.alerts._maintainPosition(false);
+            })
+        },
+        // 레이어 처리
+        _overlay: function (status) {
+            switch (status) {
+                case 'show':
+                    $.alerts._overlay('hide');
+                    $("BODY").append('<div id="alert_overlay"></div>');
+                    $("#alert_overlay").bind("click", function (e) {
+                        if (_ie) { $("#AlertLayer").hide(10).delay(10).show(10).hide(10).delay(10).show(10) }
+                        else { $("#AlertLayer").hide(20).show(20).hide(20).delay(20).show(20).hide(20).show(20) }
+                    });
+                    $("#alert_overlay").css({
+                        position: (_OS == "Win10" || (_ie && _ieVer <= 6)) ? 'absolute' : 'fixed',
+                        zIndex: 149,
+                        top: '0px',
+                        left: '0px',
+                        width: '100%',
+                        height: $("body").height() + 20
+                        //, background: $.alerts.overlayColor,
+                        // opacity: $.alerts.overlayOpacity
+                    });
+                    break;
+                case 'hide':
+                    $("#alert_overlay").detach();
+                    break;
+            }
+        },
+
+        _reposition: function () {
+            //var top = (($(window).height() / 2) - ($("#alert_container").outerHeight() / 2)) + $.alerts.verticalOffset;
+        	//var left = (($(window).width() / 2) - ($("#alert_container").outerWidth() / 2)) + $.alerts.horizontalOffset;
+
+			// 내용이 개행 없이 길 경우 팝업이 좌축으로 치우침
+            //var top = (($(window).height() / 2) - ($("#alert_container").height() / 2)) + $.alerts.verticalOffset;
+        	//var teleft = (($(window).width() / 2) - ($("#alert_container").width() / 2)) + $.alerts.horizontalOffset;
+        	var _cal_Width = $("#alert_container").width();
+        	if (_cal_Width > $.alerts.maxWidth) {
+        		_cal_Width = $.alerts.maxWidth + 10;
+        	}
+        	var top = (($(window).height() / 2) - ($("#alert_container").height() / 2)) + $.alerts.verticalOffset;
+        	var left = (($(window).width() / 2) - (_cal_Width / 2)) + $.alerts.horizontalOffset;
+
+        	if (top < 0) {
+        	    if (_OS != "Win10") { top = 0; }
+        	    else
+        	    {
+        	        if (_WebRoot == "WEBMAIL") {
+        	            //top = (((($(window).height() / 2) - ($.alerts.verticalOffset) / 2)) - ($("#alert_container").height() / 2));
+        	            top = (($(window).height() / 2) - ($("#alert_container").height() / 2));
+        	            if (top < 0) { top = 0; }
+        	        }
+        	        else{
+                         top = $(window).height() / 3;
+        	        }
+        	    }
+        	} 
+        	if (left < 0) left = 0;
+        	else {
+        	    if (_OS == "Win10")
+        	        left = left - 30;
+        	}
+
+            // IE6 fix
+            if (_ie && _ieVer <= 6) top = top + $(window).scrollTop();
+            $("#AlertLayer").css({ top: top + 'px', left: left + 'px' });
+            $("#alert_overlay").height($(document).height() + $(window).scrollTop());
+
+            if (_OS != "Win10" && $(window).height() < $("#alert_container").outerHeight()) {
+                $("#alert_container").css("height", $(window).height() - 8);
+                $("#popup_message").css("height", $(window).height() - 50);
+                $(".alert_body").css("padding-right", 0);
+            }
+        },
+
+        _repositionError: function () {
+            var top = (($(window).height() / 2) - ($("#alert_container_Error").outerHeight() / 2)) + $.alerts.verticalOffset;
+            var left = (($(window).width() / 2) - ($("#alert_container_Error").outerWidth() / 2)) + $.alerts.horizontalOffset;
+            if (top < 0) top = 0;
+            if (left < 0) left = 0;
+
+            // IE6 fix
+            if (_ie && _ieVer <= 6) top = top + $(window).scrollTop();
+            $("#AlertLayer_Error").css({ top: top + 'px', left: left + 'px' });
+            $("#alert_overlay").height($(document).height() + $(window).scrollTop());
+
+            if ($(window).height() < $("#alert_container_Error").outerHeight()) {
+                $("#alert_container_Error").css("height", $(window).height() - 8);
+                $("#popup_message").css("height", $(window).height() - 50);
+                $(".alert_body").css("padding-right", 0);
+            }
+        },
+
+        _maintainPosition: function (status) {
+            if ($.alerts.repositionOnResize) {
+                switch (status) {
+                    case true:
+                        $(window).bind('resize', $.alerts._reposition);
+                        break;
+                    case false:
+                        $(window).unbind('resize', $.alerts._reposition);
+                        break;
+                }
+            }
+        },
+
+        // 인증 만료시 오류 처리를 위해
+        _getBtnDicionary: function (pBtnTitle) {
+            var strReturn = "";
+            try {
+                if (pBtnTitle == "btn_Ok") {
+                    strReturn = _btnAlertOK;
+                } else if (pBtnTitle == "btnAlertImmediately") {
+                    strReturn = _btnAlertImmediately;
+                } else if (pBtnTitle == "btnAlertDispatch") {
+                    strReturn = _btnAlertDispatch;
+                } else {
+                    strReturn = _btnAlertCancel;
+                }
+            } catch (e) {
+                if (pBtnTitle == "btn_Ok") {
+                    strReturn = "OK";
+                } else if (pBtnTitle == "btnAlertImmediately") {
+                    strReturn = "Immediately";
+                } else if (pBtnTitle == "btnAlertDispatch") {
+                    strReturn = "Dispatch";
+                } else {
+                    strReturn = "Cancel";
+                }
+            }
+            return strReturn;
+        }
+    }
+
+})(jQuery);
+
+// Shortcut functions
+Common.Inform = function (message, title, callback) {
+    setTimeout(function () { $.alerts.inform(message, title, callback); }, 350);
+}
+
+Common.Warning = function (message, title, callback) {
+    setTimeout(function () { $.alerts.warning(message, title, callback); }, 350);
+}
+
+var g_ErrorMessage = "";
+var g_ErrorSeq = 0;
+Common.Error = function (message, title, callback) {
+    if (g_ErrorMessage.indexOf(message) == -1) {
+        if (g_ErrorSeq > 0) {
+            g_ErrorMessage += "<strong>" + g_ErrorSeq + ") </strong> " + message + "<br />";
+        } else {
+            g_ErrorMessage += message + "<br />";
+        }
+    } else {
+        g_ErrorMessage += ".";
+    }
+
+    ++g_ErrorSeq;
+    setTimeout(function () { $.alerts.error(g_ErrorMessage, title, callback); }, 350);
+    setTimeout(function () { g_ErrorMessage = ""; g_ErrorSeq = 0; }, 1000);
+}
+
+Common.CustomConfirm = function (message, title, callback) {
+    setTimeout(function () { $.alerts.customconfirm(message, title, callback); }, 350);
+};
+
+Common.Confirm = function (message, title, callback) {
+    setTimeout(function () { $.alerts.confirm(message, title, callback); }, 350);
+};
+
+Common.Prompt = function (message, value, title, callback) {
+    setTimeout(function () { $.alerts.prompt(message, value, title, callback); }, 350);
+};
+
+Common.PromptArea = function (message, value, title, callback) {
+    setTimeout(function () { $.alerts.promptArea(message, value, title, callback); }, 350);
+};
+
+Common.Password = function (message, value, title, callback) {
+    setTimeout(function () { $.alerts.password(message, value, title, callback); }, 350);
+};
+
+Common.Progress = function (message, callback, setTime) {
+    $.alerts.progress(message, "progress", null);
+    if (callback != undefined && callback != null) {  // 콜백 메써드 처리
+        if (setTime != undefined && setTime != null) {
+            setTimeout(callback, setTime);
+        } else {
+            eval(callback);
+        }
+    }
+    $("#AlertLayer").hide().delay().show().hide().delay().show();
+};
+
+Common.Loading = function (message, callback, setTime) {
+    $.alerts.progress(message, "loading", null);
+    if (callback != undefined && callback != null) { // 콜백 메써드 처리
+        if (setTime != undefined && setTime != null) {
+            setTimeout(callback, setTime);
+        } else {
+            eval(callback);
+        }
+    }
+    $("#AlertLayer").hide().delay().show().hide().delay().show();
+};
+
+var g_IndicatorID = 0;
+Common.Indicator = function (message, callback, setTime, position) {
+    var l_IndicaterLayerID = "IndicaterLayer" + g_IndicatorID;
+    ++g_IndicatorID;
+    var l_BottomY = 5;
+    $(".IndicaterLayer").each(function () {
+        var l_y = parseInt($(this).css("bottom"), 10);
+        if (l_BottomY <= l_y) {
+            l_BottomY = l_y + 55;
+        }
+    });
+    if (position == undefined || position == null || position == "") {
+        if (_ieVer < 9) {
+            $("BODY").append(
+                '<div id="' + l_IndicaterLayerID + '" class="layer_alert IndicaterLayer" style="z-index:1001;position:fixed;right:10px;bottom:' + l_BottomY + 'px;">' +
+                    '<div id="Indicator_container' + g_IndicatorID + '" class="alert_content">' +
+                        '<div id="Indicator_hideDiv" style="position:absolute;top:0px;left:0px;filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe style="margin-left:-3px; margin-top:-3px;" frameborder="0" id="Indicator_hideIfram' + g_IndicatorID + '"></iframe></div>' +
+                        '<div id="Indicator_content" style="position:relative;">' +
+                        '<div class="alert_body">' +
+                            '<div id="Indicator_message" style="txt-align:center;overflow-y:auto;"><p><div style="min-width:100px;min-height:15px;"><img src="/Images/Images/Controls/Progress/' + _IndicatorImage + '" />&nbsp;&nbsp;&nbsp;<strong>' + message + '</strong></div></p></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>');
+        } else {
+            $("BODY").append(
+                '<div id="' + l_IndicaterLayerID + '" class="layer_alert IndicaterLayer" style="z-index:1001;position:fixed;right:10px;bottom:' + l_BottomY + 'px;">' +
+                    '<div id="Indicator_container' + g_IndicatorID + '" class="alert_content">' +
+                        '<div id="Indicator_hideDiv" style="position:absolute;top:-3px;left:-3px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="Indicator_hideIfram' + g_IndicatorID + '"></iframe></div>' +
+                        '<div id="Indicator_content" style="position:relative;">' +
+                        '<div class="alert_body">' +
+                            '<div id="Indicator_message" style="txt-align:center;overflow-y:auto;"><p><div style="min-width:100px;min-height:15px;"><img src="/Images/Images/Controls/Progress/' + _IndicatorImage + '" />&nbsp;&nbsp;&nbsp;<strong>' + message + '</strong></div></p></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>');
+        }
+    } else {
+        if (_ieVer < 9) {
+            $("BODY").append(
+                '<div id="' + l_IndicaterLayerID + '" class="layer_alert IndicaterLayer" style="z-index:1001;position:fixed;">' +
+                    '<div id="Indicator_container' + g_IndicatorID + '" class="alert_content">' +
+                        '<div id="Indicator_hideDiv" style="position:absolute;top:0px;left:0px;filter: progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe style="margin-left:-3px; margin-top:-3px;" frameborder="0" id="Indicator_hideIfram' + g_IndicatorID + '"></iframe></div>' +
+                        '<div id="Indicator_content" style="position:relative;">' +
+                        '<div class="alert_body">' +
+                            '<div id="Indicator_message" style="txt-align:center;overflow-y:auto;"><p><div style="min-width:100px;min-height:15px;"><img src="/Images/Images/Controls/Progress/' + _IndicatorImage + '" />&nbsp;&nbsp;&nbsp;<strong>' + message + '</strong></div></p></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>');
+        } else {
+            $("BODY").append(
+                '<div id="' + l_IndicaterLayerID + '" class="layer_alert IndicaterLayer" style="z-index:1001;position:fixed;">' +
+                    '<div id="Indicator_container' + g_IndicatorID + '" class="alert_content">' +
+                        '<div id="Indicator_hideDiv" style="position:absolute;top:-3px;left:-3px;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);"><iframe frameborder="0" id="Indicator_hideIfram' + g_IndicatorID + '"></iframe></div>' +
+                        '<div id="Indicator_content" style="position:relative;">' +
+                        '<div class="alert_body">' +
+                            '<div id="Indicator_message" style="txt-align:center;overflow-y:auto;"><p><div style="min-width:100px;min-height:15px;"><img src="/Images/Images/Controls/Progress/' + _IndicatorImage + '" />&nbsp;&nbsp;&nbsp;<strong>' + message + '</strong></div></p></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>');
+        }
+        var top = (($(window).height() / 2) - ($("#Indicator_container" + g_IndicatorID).height() / 2)) + $.alerts.verticalOffset;
+        var left = (($(window).width() / 2) - ($("#Indicator_container" + g_IndicatorID).width() / 2)) + $.alerts.horizontalOffset;
+        if (top < 0) top = 0;
+        if (left < 0) left = 0;
+
+        // IE6 fix
+        if (_ie && _ieVer <= 6) top = top + $(window).scrollTop();
+        $("#" + l_IndicaterLayerID).css({ top: top + 'px', left: left + 'px' });
+        //$("#alert_overlay").height($(document).height() + $(window).scrollTop());
+
+        if ($(window).height() < $("#Indicator_container" + g_IndicatorID).outerHeight()) {
+            $("#Indicator_container" + g_IndicatorID).css("height", $(window).height() - 8);
+            $("#Indicator_message").css("height", $(window).height() - 50);
+            $(".alert_body").css("padding-right", 0);
+        }
+    }
+
+    $("#Indicator_hideIfram" + g_IndicatorID).attr({ "width": $("#Indicator_container" + g_IndicatorID).outerWidth(), "height": parseInt($("#Indicator_container" + g_IndicatorID).outerHeight(), 10) + 3 })
+    if (typeof (setTime) == "undefined" || setTime == "" || setTime == null) {
+        setTime = 5000;
+    }
+    // 자동으로 창닫힘.
+    if (setTime != 0) {
+        setTimeout("Common.IndicatorClose('" + l_IndicaterLayerID + "')", setTime);
+    }
+
+    if (typeof (callback) != "undefined" && callback != "" && callback != null) {
+        if (typeof (callback) == "string") { //CallBackMethod명칭을 String으로 넘길 경우
+            setTimeout(eval(callback), setTime);
+        } else if (typeof (callback) == "function") { //CallBackMethod를 Funtion 형태로 넘길 경우
+            setTimeout(callback, setTime)
+        }
+    }
+};
+
+Common.IndicatorClose = function (pId) {
+    if (typeof (pId) == "undefined" || pId == "") {
+        $(".IndicaterLayer").slideUp(300, function () {
+            $(this).detach();
+        })
+    } else {
+        $("#" + pId).slideUp(300, function () {
+            $("#" + pId).detach();
+        })
+    }
+}
+
+Common.AlertClose = function () {
+    $.alerts._hide();
+}
+
+Common.LoadingClose = function () {
+    $.alerts._hideLoading();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Ajax 오류 처리
+$(document).ajaxError(function (pEvent, pJqxhr, pSettings, pThrownError) {
+    CFN_ErrorAjax(pSettings.url, pJqxhr, "error", pThrownError);
+});
+
+var _RiseAjaxErrorAuth = false;
+////////////////////////////////////////// ajax request form ///////////////////////////////////////////
+//호출한 페이지를 로드함.
+Common.AjaxLoad = function (pTargetid, pUrl, pData, pCallBack, pUserContext) {
+    if (_RiseAjaxError) {
+    } else {
+        // 인증오류에 대한 처리
+        _RiseAjaxErrorAuth = false;
+        /*if (pUrl.toLowerCase().indexOf("http://") == -1 && typeof Common.GetSessionReal("UR_Code") == "undefined") {
+            _RiseAjaxErrorAuth = true;
+            return;
+        }*/
+        $.get(pUrl, pData, function (response, status, error) {
+            if (status == "error") {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            } else {
+                try {
+                    if (response.indexOf("<!--AjaxLoadSTART-->") > -1) {
+                        response = response.substr(response.indexOf("<!--AjaxLoadSTART-->") + 20, response.indexOf("<!--AjaxLoadEND-->") - response.indexOf("<!--AjaxLoadSTART-->") - 20);
+                    }
+                    response = response.replace(/__EVENTVALIDATION/gi, "__EVENTVALIDATIONAjaxLoad");
+                    response = response.replace(/__VIEWSTATE/gi, "__VIEWSTATEAjaxLoad");
+                    // Ajax에 대한 오류처리 
+                    if (response.indexOf("divCFN_ErrorPageDefinedAuth") > -1) {
+                        CFN_ErrorAjax(pUrl, response, "401", "인증오류 발생");
+                        return;
+                    } else if (response.indexOf("divCFN_PreLoginInfo") > -1) {
+                        $("body").html(response);
+                        return;
+                    } else if (response.indexOf("divCFN_ErrorPageDefined") > -1) {
+                        CFN_ErrorAjax(pUrl, response, "500", "서비스 에러 발생!!");
+                        return;
+                    }
+                    // Ajax 처리도중 에러 발생 
+                    if (response.split("<script type='text/javascript'>Common.Error('").length > 1) {
+                        var l_Error = response.split("<script type='text/javascript'>Common.Error(")[1].split('</script>')[0];
+                        $("#divHiddenAjaxLoadScript").html("<script type='text/javascript'>Common.Error(" + l_Error + "</script>");
+                        return;
+                    }
+                    // Ajax 처리도중 경고 발생 
+                    if (response.split("<script type='text/javascript'>Common.Warning('").length > 1) {
+                        pCallBack = null;
+                    }
+                    // Ajax 처리도중 경고 발생 
+                    if (response.split("<script type='text/javascript'>Common.Inform('").length > 1) {
+                        pCallBack = null;
+                    }
+
+                    $("#" + pTargetid).html(response);
+                    if (pCallBack) {
+                        pCallBack(pTargetid, pUserContext);
+                    }
+                } finally {
+                    response = null;
+                    status = null;
+                    error = null;
+                }
+            }
+        });
+    }
+}
+
+//호출한 페이지를 로드함.(POST)
+Common.AjaxLoadPost = function (pTargetid, pUrl, pData, pCallBack, pUserContext) {
+    if (_RiseAjaxError) {
+    } else {
+        // 인증오류에 대한 처리
+        _RiseAjaxErrorAuth = false;
+        /*if (pUrl.toLowerCase().indexOf("http://") == -1 && typeof Common.GetSessionReal("UR_Code") == "undefined") {
+            _RiseAjaxErrorAuth = true;
+            return;
+        }*/
+        $.post(pUrl, pData, function (response, status, error) {
+            if (status == "error") {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            } else {
+                try {
+                    if (response.indexOf("<!--AjaxLoadSTART-->") > -1) {
+                        response = response.substr(response.indexOf("<!--AjaxLoadSTART-->") + 20, response.indexOf("<!--AjaxLoadEND-->") - response.indexOf("<!--AjaxLoadSTART-->") - 20);
+                    }
+                    response = response.replace(/__EVENTVALIDATION/gi, "__EVENTVALIDATIONAjaxLoad");
+                    response = response.replace(/__VIEWSTATE/gi, "__VIEWSTATEAjaxLoad");
+                    // Ajax에 대한 오류처리 
+                    if (response.indexOf("divCFN_ErrorPageDefinedAuth") > -1) {
+                        CFN_ErrorAjax(pUrl, response, "401", "인증오류 발생");
+                        return;
+                    } else if (response.indexOf("divCFN_PreLoginInfo") > -1) {
+                        $("body").html(response);
+                        return;
+                    } else if (response.indexOf("divCFN_ErrorPageDefined") > -1) {
+                        CFN_ErrorAjax(pUrl, response, "500", "서비스 에러 발생!!");
+                        return;
+                    }
+                    // Ajax 처리도중 에러 발생 
+                    if (response.split("<script type='text/javascript'>Common.Error('").length > 1) {
+                        var l_Error = response.split("<script type='text/javascript'>Common.Error(")[1].split('</script>')[0];
+                        $("#divHiddenAjaxLoadScript").html("<script type='text/javascript'>Common.Error(" + l_Error + "</script>");
+                        return;
+                    }
+                    // Ajax 처리도중 경고 발생 
+                    if (response.split("<script type='text/javascript'>Common.Warning('").length > 1) {
+                        pCallBack = null;
+                    }
+                    // Ajax 처리도중 경고 발생 
+                    if (response.split("<script type='text/javascript'>Common.Inform('").length > 1) {
+                        pCallBack = null;
+                    }
+
+                    var obj = $("#" + pTargetid);
+                    var Array = [response];
+
+                    //document.getElementById(pTargetid).innerHTML = Array.join('');
+                    obj.html(Array.join(''));
+
+                    if (pCallBack) {
+                        pCallBack(pTargetid, pUserContext);
+                    }
+                } finally {
+                    response = null;
+                    status = null;
+                    error = null;
+                }
+            }
+        });
+    }
+}
+
+function replaceHtml(el, html) {
+    var oldEl = (typeof el === "string" ? document.getElementById(el) : el);
+    var newEl = document.createElement(oldEl.nodeName);
+
+    newEl.id = oldEl.id;
+    newEl.className = oldEl.className;
+
+    newEl.innerHTML = html;
+
+    oldEl.parentNode.replaceChild(newEl, oldEl);
+}
+
+
+//호출한 페이지를 로드하여 하단에 삽입
+Common.AjaxAppend = function (pTargetid, pUrl, pData, pCallBack, pUserContext) {
+    if (_RiseAjaxError) {
+    } else {
+        // 인증오류에 대한 처리
+        _RiseAjaxErrorAuth = false;
+        if (pUrl.toLowerCase().indexOf("http://") == -1 && typeof Common.GetSessionReal("UR_Code") == "undefined") {
+            _RiseAjaxErrorAuth = true;
+            return;
+        }
+        $.get(pUrl, pData, function (response, status, error) {
+            if (status == "error") {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            } else {
+                try {
+                    // Ajax에 대한 오류처리 
+                    if (response.indexOf("divCFN_ErrorPageDefined") > -1) {
+                        CFN_ErrorAjax(pUrl, response, "500", "서비스 에러 발생!!");
+                        return;
+                    }
+                    if (response.indexOf("<!--AjaxLoadSTART-->") > -1) {
+                        response = response.substr(response.indexOf("<!--AjaxLoadSTART-->") + 20, response.indexOf("<!--AjaxLoadEND-->"));
+                    }
+                    response = response.replace(/__EVENTVALIDATION/gi, "__EVENTVALIDATIONAjaxLoad");
+                    response = response.replace(/__VIEWSTATE/gi, "__VIEWSTATEAjaxLoad");
+                    // Ajax 처리도중 에러 발생 
+                    if (response.split("<script type='text/javascript'>Common.Error('").length > 1) {
+                        var l_Error = response.split("<script type='text/javascript'>Common.Error(")[1].split('</script>')[0];
+                        $("#divHiddenAjaxLoadScript").html("<script type='text/javascript'>Common.Error(" + l_Error + "</script>");
+                        return;
+                    }
+
+                    $("#" + pTargetid).append(response);
+                    if (pCallBack) {
+                        pCallBack(pTargetid, pUserContext);
+                    }
+                } finally {
+                    response = null;
+                    status = null;
+                    error = null;
+                }
+            }
+        });
+    }
+}
+
+//호출한 페이지를 리턴 함
+Common.AjaxReturn = function (pUrl, pData, pCallBack, pUserContext) {
+    if (_RiseAjaxError) {
+    } else {
+        // 인증오류에 대한 처리
+        _RiseAjaxErrorAuth = false;
+        if (pUrl.toLowerCase().indexOf("http://") == -1 && typeof Common.GetSessionReal("UR_Code") == "undefined") {
+            _RiseAjaxErrorAuth = true;
+            return;
+        }
+        $.get(pUrl, pData, function (response, status, error) {
+            if (status == "error") {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            } else {
+                try {
+                    if (typeof (js_msg) == "string") {
+                        response = response.replace(/__EVENTVALIDATION/gi, "__EVENTVALIDATIONAjaxLoad");
+                        response = response.replace(/__VIEWSTATE/gi, "__VIEWSTATEAjaxLoad");
+                    }
+                    if (pCallBack) {
+                        pCallBack(response, pUserContext);
+                    } else {
+                        return response;
+                    }
+                } finally {
+                    response = null;
+                    status = null;
+                    error = null;
+                }
+            }
+        });
+    }
+}
+
+// Call Ajax Json DataType
+function CFN_CallAjaxJson(pUrl, pJsonData, pAsync, pCallBack) {
+    if (_RiseAjaxError) {
+        return;
+    } else {
+        var option = {
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: pUrl,
+            data: pJsonData,
+            dataType: "json",
+            async: pAsync,
+            error: function (response, status, error) {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            }
+        }
+
+        if (pAsync) {
+            $.extend(option, {
+                success: function (msg) {
+                    try {
+                        if (msg != null) {
+                            pCallBack(msg);
+                        }
+                    } finally {
+                        option = null;
+                    }
+                }
+            });
+            $.ajax(option);
+        } else {
+            try {
+                if (pCallBack != null && typeof pCallBack != "undefined" && pCallBack != "") {
+                    pCallBack($.ajax(option).responseText);
+                } else {
+                    return $.ajax(option).responseText;
+                }
+            } finally {
+                option = null;
+            }
+        }
+    }
+}
+
+// Call Ajax - Param, Type url, param, callbackFunc, bAsync, dataTP 
+function CFN_CallAjax(pUrl, pParam, pCallBack, pAsync, pDataType, pTimeOut) {
+    if (pDataType == null || pDataType == "") {
+        pDataType = "html";
+    }
+    if (_RiseAjaxError) {
+        return;
+    } else {
+        pTimeOut = (pTimeOut == undefined) ? 0 : pTimeOut;
+        $.ajax({
+            url: pUrl,
+            data: pParam,
+            dataType: pDataType,
+            type: "POST",
+            async: pAsync,
+            timeout:pTimeOut,
+            success: function (result) {
+                try {
+                    pCallBack(result);
+                } finally {
+                    result = null;
+                }
+            },
+            error: function (response, status, error) {
+                CFN_ErrorAjax(pUrl, response, status, error);
+            }
+        });
+    }
+}
+
+// PageMethods를 이용한 Ajax 호출 커스터마이징 구현
+function CFN_PageMethodJSON(pMethod, pParam, pAsync, pOnSuccess, pOnFailed, pUserContext) {
+    if (_RiseAjaxError) {
+        return;
+    } else {
+        $.ajax({
+            type: "POST",
+            async: pAsync,
+            url: _DocPath + "/" + pMethod,
+            data: pParam,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                try {
+                    pOnSuccess(result, pUserContext);
+                } finally {
+                    result = null;
+                }
+            },
+            error: function (response, status, error) {
+                if (pOnFailed != null) {
+                    pOnFailed(response, pUserContext);
+                } else {
+                    CFN_ErrorAjax(_DocPath + "/" + pMethod, response, status, error);
+                }
+            }
+        });
+    }
+}
+
+// 경로를 직접 전달하여(PageMethods를 이용한 Ajax 호출 커스터마이징 구현)
+function CFN_PageMethodJSON_Url(pUrl, pMethod, pParam, pAsync, pOnSuccess, pOnFailed, pUserContext) {
+    if (_RiseAjaxError) {
+        return;
+    } else {
+        $.ajax({
+            type: "POST",
+            async: pAsync,
+            url: pUrl + "/" + pMethod,
+            data: pParam,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                try {
+                    pOnSuccess(result, pUserContext);
+                } finally {
+                    result = null;
+                }
+            },
+            error: function (response, status, error) {
+                if (pOnFailed != null) {
+                    pOnFailed(response, pUserContext);
+                } else {
+                    CFN_ErrorAjax(pUrl + "/" + pMethod, response, status, error);
+                }
+            }
+        });
+    }
+}
+
+// 공용 컴포넌트 ERROR에 대한 처리(에러처리중 에러가 발생하면 인증 오류로 봄.)
+function CFN_ErrorAjax(pURL, pResponse, pStatus, pError) {
+    try {
+        var l_ResStatus = pResponse.status; // 에러코드
+        var l_AlertMsg = "";
+        var l_AlertTrace = "";
+        var l_RiseError = false;
+        pError = ""; //상단 Title 빈값처리 => 공통 문구 표시
+        if (typeof l_ResStatus == "undefined") {
+            l_ResStatus = pStatus;
+        }
+        if (pURL.indexOf("GetTodoList_IsView") > -1 || pURL.indexOf("logging") > -1) { // Dodo Polling 인 경우(에러를 화면에 노출하지 않음.)   
+        } else if (l_ResStatus == 0) {
+            //_RiseAjaxError = true;
+            //Common.Progress("Wait...", function () { _RiseAjaxError = false; Common.AlertClose(); }, 1000);
+        } else if (l_ResStatus == 401) { // 인증 만료
+            //if(_Language == "ko") {
+            //    l_AlertMsg = "<strong>서비스 이용에 불편을 드려 죄송합니다.</strong><br /><br />[" + l_ResStatus + "]현재 시스템에 대한 인증정보를 확인 할 수 없습니다. <br /><br />로그인 페이지로 이동하시겠습니까?";
+            //} else {
+            //    l_AlertMsg = "<strong>Sorry for the inconvenience in the use of the service.</strong><br /><br />[" + l_ResStatus + "]The current system cannot be verified for authentication. <br /><br />Are you sure you want to go to the login page?";
+            //}
+            //_RiseAjaxError = true;
+            //Common.Confirm(l_AlertMsg, pError, function (pResult) {
+            //    if (pResult) {
+            //        try {
+            //            if (parent.location.href != self.location.href) {
+            //                parent.location.href = "/Common/Auth/LogOut.aspx";
+            //            } else {
+            //                self.location.href = "/Common/Auth/LogOut.aspx";
+            //            }
+            //        } catch (e) {
+            //            self.location.href = "/Common/Auth/LogOut.aspx";
+            //        }
+            //    } else {
+            //        _RiseAjaxError = false;
+            //    }
+            //});
+            try {
+                if (parent.location.href != self.location.href) {
+                    parent.location.href = "/Common/Auth/LogOut.aspx?type=4";
+                } else {
+                    self.location.href = "/Common/Auth/LogOut.aspx?type=5";
+                }
+            } catch (e) {
+                self.location.href = "/Common/Auth/LogOut.aspx?type=6";
+            }
+            //} else if (l_ResStatus == 502 || l_ResStatus == 0) { // 네트워크 끊긴 경우
+        } else if (l_ResStatus == 502) { // 네트워크 끊긴 경우
+            if (_LanguageCode == "ko") {
+                l_AlertMsg = "<strong>서비스 이용에 불편을 드려 죄송합니다.</strong><br /><br />네트워크 상태가 원활하지 않습니다. 잠시후 다시 시도해 보십시요.";
+            } else {
+                l_AlertMsg = "<strong>Sorry for the inconvenience in the use of the service.</strong><br /><br />The network status is not as smooth. Try again after a while.";
+            }
+            _RiseAjaxError = true;
+            Common.Error(l_AlertMsg, pError, function () {
+                _RiseAjaxError = false;
+            });
+        } else if (l_ResStatus == 404 || l_ResStatus == 403) { // 페이지가 없거나 사이트에 접근이 거부
+            if (_LanguageCode == "ko") {
+                l_AlertMsg = "<strong>서비스 이용에 불편을 드려 죄송합니다.</strong><br />요청하신 페이지가 없거나 서비스에 대한 접근이 거부되었습니다.";
+            } else {
+                l_AlertMsg = "<strong>Sorry for the inconvenience in the use of the service.</strong><br /><br />The requested page does not exist or has been denied access to the service.";
+            }
+            if (_SystemMode != "Real") {
+                l_AlertMsg += "<br /><br />URL : " + pURL;
+            } else {
+                l_AlertMsg += "<br /><br /><font color='white'>URL : " + pURL + "</font>"
+            }
+            Common.Error(l_AlertMsg, pError);
+        } else if (l_ResStatus == 500 || l_ResStatus == 503) { // 서버 내부 오류
+            try {
+                l_AlertMsg = "<strong>" + $.parseJSON(pResponse.responseText).Message + "</strong>";
+                l_AlertTrace = $.parseJSON(pResponse.responseText).StackTrace.replace(/'/gi, "").replace(/"/gi, "").replace(/\r\n/gi, "<br />").replace(/\n/gi, "<br />");
+            } catch (e) {
+                l_RiseError = true;
+            }
+
+            if (l_RiseError) { // Response 객체를 파싱하다 에러가 발생한 경우
+                if (_LanguageCode == "ko") {
+                    l_AlertMsg = "<strong>서비스 이용에 불편을 드려 죄송합니다.</strong><br /><br />요청하신 서비스에 문제가 발생하였습니다.<br /><br />잠시후 다시 시도해 보십시요.<br />문제가 계속해서 발생시 관리자에게 문의하여 주십시요.";
+                } else {
+                    l_AlertMsg = "<strong>Sorry for the inconvenience in the use of the service.</storng><br /><br />If you have problems in the service request.<br /><br />Try again after a while.<br />Problem continues to occur, contact your administrator.";
+                }
+                Common.Error(l_AlertMsg, pError);
+            } else if (_SystemMode != "Real") {
+                l_AlertMsg += "<br /><br />URL : " + pURL + "<br /><br /><center><div style='width:400px;height:100px;overflow:auto;' align='left'>" + l_AlertTrace + "</div></center>";
+                Common.Error(l_AlertMsg, pError);
+            } else {
+                l_AlertMsg += "<br /><font color='white'>URL : " + pURL + "</font>";
+                Common.Error(l_AlertMsg, pError);
+            }
+        } else { // 알지 못하는 오류
+            try {
+                l_AlertMsg = "<strong>※ " + $.parseJSON(pResponse.responseText).Message + "</strong>";
+                l_AlertTrace = $.parseJSON(pResponse.responseText).StackTrace.replace(/'/gi, "").replace(/"/gi, "").replace(/\r\n/gi, "<br />").replace(/\n/gi, "<br />");
+            } catch (e) {
+                l_RiseError = true;
+            }
+
+            if (l_RiseError) { // Response 객체를 파싱하다 에러가 발생한 경우
+                if (_LanguageCode == "ko") {
+                    l_AlertMsg = "<strong>※ 서비스 이용에 불편을 드려 죄송합니다.</strong><br /><br />요청하신 서비스에 문제가 발생하였습니다.<br /><br />잠시후 다시 시도해 보십시요.<br />문제가 계속해서 발생시 관리자에게 문의하여 주십시요.";
+                } else {
+                    l_AlertMsg = "<strong>※ Sorry for the inconvenience in the use of the service.</storng><br /><br />If you have problems in the service request.<br /><br />Try again after a while.<br />Problem continues to occur, contact your administrator.";
+                }
+                Common.Error(l_AlertMsg, pError);
+            } else if (_SystemMode != "Real") {
+                l_AlertMsg += "<br /><br />URL : " + pURL + "<br /><br /><center><div style='width:400px;height:200px;overflow:auto;' align='left'>" + l_AlertTrace + "</div></center>";
+                Common.Error(l_AlertMsg, pError);
+            } else {
+                l_AlertMsg += "<br /><font color='white'>URL : " + pURL + "</font>";
+                Common.Error(l_AlertMsg, pError);
+            }
+        }
+    } catch (e) {
+        alert("Error: " + e.description + "\r\nError number: " + e.number);
+        return false;
+    } finally {
+        pResponse = null;
+        pStatus = null;
+        pError = null;
+    }
+}
+
+////////////////////////////////////////// ajax request form ///////////////////////////////////////////
+
+////////////////////////////////////////// MutiLanguage & Configuration ////////////////////////////////
+// 한개 다국어 배열로 리턴(이전)
+Common.GetDic_Old = function (dic_id) {
+    var l_AjaxResult;
+    if (dic_id == undefined || dic_id == null) return;
+    try {
+        if (_Dictionary[dic_id] == "undefined" || _Dictionary[dic_id] == null) {
+            l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiLanguageSingle", "{dic_id:'" + dic_id + "'}", false, null);
+            _Dictionary[dic_id] = $.parseJSON(l_AjaxResult).d;
+        }
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return _Dictionary[dic_id];
+}
+
+// 여러개 다국어 한번에 배열로 리턴(이전)
+Common.GetDicAll_Old = function (arrDicIDs) {
+    var ajax, data, result;
+    try {
+        result = function (json) {
+            data = $.parseJSON(json).d;
+            for (var i = 0; i < data.length; i++) {
+                // 다국어가 존재하지 않을 경우에만 사전에 추가
+                if (_Dictionary[data[i].Key] == "undefined" || _Dictionary[data[i].Key] == null) {
+                    _Dictionary[data[i].Key] = data[i].Value;
+                }
+            }
+            return _Dictionary;
+        }
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiLanguageAll", "{arrDicIDs:'" + arrDicIDs + "'}", false, null);
+        return result(ajax);
+    } catch (e) {
+    } finally {
+        ajax = null;
+        data = null;
+        result = null;
+    }
+}
+
+// 한개 다국어 배열로 리턴
+Common.GetDic = function (dic_id) {
+    var l_AjaxResult;
+    if (dic_id == undefined || dic_id == null) return;
+    try {
+        if (_Dictionary[dic_id] == "undefined" || _Dictionary[dic_id] == null) {
+            if (CFN_GetLocal5Storage("Dic", dic_id) == undefined) {
+                l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiLanguageSingle", "{dic_id:'" + dic_id + "'}", false, null);
+                _Dictionary[dic_id] = $.parseJSON(l_AjaxResult).d;
+                CFN_SetLocal5Storage("Dic", dic_id, _Dictionary[dic_id]);
+            } else {
+                _Dictionary[dic_id] = CFN_GetLocal5Storage("Dic", dic_id);
+            }
+        }
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return _Dictionary[dic_id];
+}
+
+// 한개 모든 다국어 배열로 리턴
+Common.GetDicAllLang = function (code_group, dic_id) {
+    var l_AjaxResult;
+    if (dic_id == undefined || dic_id == null || code_group == undefined || code_group == null) return;
+    try {
+        if (_Dictionary["BaseCode_" + code_group + "_" + dic_id] == "undefined" || _Dictionary["BaseCode_" + code_group + "_" + dic_id] == null) {
+            if (CFN_GetLocal5Storage("Dic", "BaseCode_" + code_group + "_" + dic_id) == undefined) {
+                l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetAllLanguageSingle", "{Dic_ID:'" + dic_id + "', Code_Group:'" + code_group + "'}", false, null);
+                _Dictionary["BaseCode_" + code_group + "_" + dic_id] = $.parseJSON(l_AjaxResult).d.replace(/\^/gi, ";");
+                CFN_SetLocal5Storage("Dic", "BaseCode_" + code_group + "_" + dic_id, _Dictionary["BaseCode_" + code_group + "_" + dic_id]);
+            } else {
+                _Dictionary["BaseCode_" + code_group + "_" + dic_id] = CFN_GetLocal5Storage("Dic", "BaseCode_" + code_group + "_" + dic_id);
+            }
+        }
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return _Dictionary["BaseCode_" + code_group + "_" + dic_id];
+}
+
+// 여러개 다국어 한번에 배열로 리턴
+Common.GetDicAll = function (arrDicIDs) {
+    var ajax, data, result;
+    var arrDicKeys = arrDicIDs.split(';');
+    var l_ReGet = true;
+
+    for (var i = 0; i < arrDicKeys.length; i++) {
+        // 다국어가 존재하지 않을 경우에만 사전에 추가
+        if (_Dictionary[arrDicKeys[i]] == "undefined" || _Dictionary[arrDicKeys[i]] == null) {
+            if (CFN_GetLocal5Storage("Dic", arrDicKeys[i]) == undefined) {
+                l_ReGet = false;
+                break;
+            } else {
+                _Dictionary[arrDicKeys[i]] = CFN_GetLocal5Storage("Dic", arrDicKeys[i]);
+            }
+        }
+    }
+
+    if (l_ReGet) {
+        return _Dictionary;
+    }
+
+    try {
+        result = function (json) {
+            data = $.parseJSON(json).d;
+            for (var i = 0; i < data.length; i++) {
+                // 다국어가 존재하지 않을 경우에만 사전에 추가
+                if (_Dictionary[data[i].Key] == "undefined" || _Dictionary[data[i].Key] == null) {
+                    _Dictionary[data[i].Key] = data[i].Value;
+                    CFN_SetLocal5Storage("Dic", data[i].Key, _Dictionary[data[i].Key]);
+                }
+            }
+            return _Dictionary;
+        }
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiLanguageAll", "{arrDicIDs:'" + arrDicIDs + "'}", false, null);
+        return result(ajax);
+    } catch (e) {
+    } finally {
+        ajax = null;
+        data = null;
+        result = null;
+    }
+}
+// json 다국어 데이터 스크립트에 로드
+Common.LoadDicAll = function (pDicJsonData) {
+    for (var i = 0; i < pDicJsonData.length; i++) {
+        // 다국어가 존재하지 않을 경우에만 사전에 추가
+        if (_Dictionary[pDicJsonData[i].Key] == "undefined" || _Dictionary[pDicJsonData[i].Key] == null) {
+            _Dictionary[pDicJsonData[i].Key] = pDicJsonData[i].Value;
+            CFN_SetLocal5Storage("Dic", pDicJsonData[i].Key, _Dictionary[pDicJsonData[i].Key]);
+        }
+    }
+    return _Dictionary;
+}
+
+// Web.config 값 가져오기
+Common.GetAppConfig = function (appkey) {
+    if (appkey == undefined || appkey == null) return;
+    if (_AppConfig[appkey] == "undefined" || _AppConfig[appkey] == null) {
+        _AppConfig[appkey] = Common.GetConfig(appkey);
+    }
+    return _AppConfig[appkey];
+}
+/*
+Common.GetAppConfig = function (appkey) {
+    if (appkey == undefined || appkey == null) return;
+    if (_AppConfig[appkey] == "undefined" || _AppConfig[appkey] == null) {
+        if (CFN_GetLocal5Storage("App", appkey) == undefined) {
+            _AppConfig[appkey] = Common.GetConfig(appkey);
+            CFN_SetLocal5Storage("App", appkey, _AppConfig[appkey]);
+        } else {
+            _AppConfig[appkey] = CFN_GetLocal5Storage("App", appkey);
+        }
+    }
+    return _AppConfig[appkey];
+}
+*/
+
+// 여러개의 App Setting(Web.config) 값을 배열로 리턴함.
+Common.GetAppConfigAll = function (pKeys) {
+    var ajax, data, result;
+    try {
+        result = function (json) {
+            data = $.parseJSON(json).d;
+            for (var i = 0; i < data.length; i++) {
+                // 다국어가 존재하지 않을 경우에만 사전에 추가
+                if (_AppConfig[data[i].Key] == "undefined" || _AppConfig[data[i].Key] == null) {
+                    _AppConfig[data[i].Key] = data[i].Value;
+                }
+            }
+            return _AppConfig;
+        }
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiAppConfig", "{pKeys:'" + pKeys + "'}", false, null);
+        return result(ajax);
+    } catch (e) {
+    } finally {
+        ajax = null;
+        data = null;
+        result = null;
+    }
+}
+
+// 기초 설정값 가져오기
+Common.GetBaseConfig = function (appkey) {
+    if (appkey == undefined || appkey == null) return;
+    if (_BaseConfig[appkey] == "undefined" || _BaseConfig[appkey] == null) {
+        if (CFN_GetLocal5Storage("Base", appkey) == undefined) {
+            _BaseConfig[appkey] = Common.GetConfig(appkey, true);
+            CFN_SetLocal5Storage("Base", appkey, _BaseConfig[appkey]);
+        } else {
+            _BaseConfig[appkey] = CFN_GetLocal5Storage("Base", appkey);
+        }
+    }
+    return _BaseConfig[appkey];
+}
+
+// 지정 회사의 기초 설정값 가져오기
+Common.GetDomainBaseConfig = function (pSettingKey, pDominCode) {
+	if (!pDominCode) pDominCode = _DN_Code;	// 20180123 hpark 기초설정/코드 무조건 사용자의 회사것만, 없으면 공통만, 없으면 빈값 가져오기
+    var ajax = null;
+    if (pSettingKey == undefined || pSettingKey == null) throw new Error("missing SettingKey");
+    try {
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetDomainBaseConfig", "{pSettingKey:'" + pSettingKey + "', pDN_Code:'" + pDominCode + "'}", false, null);
+        return $.parseJSON(ajax).d;
+    } catch (e) {
+    } finally {
+        ajax = null;
+    }
+}
+
+// 여러개의 Base Setting 값을 배열로 리턴함.
+Common.GetBaseConfigAll = function (pKeys) {
+    var ajax, data, result;
+    var arrKeys = pKeys.split(';');
+    var l_ReGet = true;
+
+    for (var i = 0; i < arrKeys.length; i++) {
+        // 다국어가 존재하지 않을 경우에만 사전에 추가
+        if (_BaseConfig[arrKeys[i]] == "undefined" || _BaseConfig[arrKeys[i]] == null) {
+            if (CFN_GetLocal5Storage("Base", arrKeys[i]) == undefined) {
+                l_ReGet = false;
+                break;
+            } else {
+                _BaseConfig[arrKeys[i]] = CFN_GetLocal5Storage("Base", arrKeys[i]);
+            }
+        }
+    }
+
+    if (l_ReGet) {
+        return _BaseConfig;
+    }
+    try {
+        result = function (json) {
+            data = $.parseJSON(json).d;
+            for (var i = 0; i < data.length; i++) {
+                // 다국어가 존재하지 않을 경우에만 사전에 추가
+                if (_BaseConfig[data[i].Key] == "undefined" || _BaseConfig[data[i].Key] == null) {
+                    _BaseConfig[data[i].Key] = data[i].Value;
+                    CFN_SetLocal5Storage("Dic", data[i].Key, _BaseConfig[data[i].Key]);
+                }
+            }
+            return _BaseConfig;
+        }
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMultiBaseConfig", "{pKeys:'" + pKeys + "'}", false, null);
+        return result(ajax);
+    } catch (e) {
+    } finally {
+        ajax = null;
+        data = null;
+        result = null;
+    }
+}
+
+// 설정값 가져오기 Base(사용자가 바로 호출하면 안됨.)
+Common.GetConfig = function (appkey, isBiz) {
+    var biz = isBiz || false;
+    var ajax = null;
+    if (appkey == undefined || appkey == null) throw new Error("missing appkey");
+    try {
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetConfig", "{appkey:'" + appkey + "', isBiz:" + biz + "}", false, null);
+        return $.parseJSON(ajax).d;
+    } catch (e) {
+    } finally {
+        ajax = null;
+    }
+}
+
+// 기초코드 (List)값 가져오기
+Common.GetBaseCodeSync = function (pStrGroupCode, pFilter,pCallBack) {
+    return Common.GetDomainBaseCodeSync(pStrGroupCode, _DN_Code, pFilter, pCallBack);
+}
+
+// 회사별(공통 + 회사) 기초코드 (List)값 가져오기
+Common.GetDomainBaseCodeSync = function (pStrGroupCode, pDomain, pFilter, pCallBack) {
+    if (!pDomain) pDomain = _DN_Code;	// 20180123 hpark 기초설정/코드 무조건 사용자의 회사것만, 없으면 공통만, 없으면 빈값 가져오기
+    if (pStrGroupCode == undefined || pStrGroupCode == null) return;
+    if (pDomain == undefined || pDomain == "" || pDomain == null) return;
+    if (pFilter == undefined || pFilter == null) { pFilter = ""; } else { pFilter = pFilter.replace("'", "^").replace("'", "^").replace("'", "^").replace("'", "^") };
+    if (_BaseCode[pStrGroupCode + pDomain + pFilter] == "undefined" || _BaseCode[pStrGroupCode + pDomain + pFilter] == null) {
+        try {
+            CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetDomainBaseCode", "{pStrGroupCode:'" + pStrGroupCode + "', pDN_Code:'" + pDomain + "', pFilter:'" + pFilter + "'}", true, function (result) {
+                var bSucces = eval($.parseJSON(result).d[0].Value);
+                if (bSucces) {
+                    _BaseCode[pStrGroupCode + pDomain + pFilter] = eval('(' + $.parseJSON(result).d[1].Value + ')');
+                    if (typeof (pCallBack) == "string" && pCallBack != "") {
+                        eval(pCallBack + "('" + _BaseCode[pStrGroupCode + pDomain + pFilter] + "')");
+                    } else if (typeof (pCallBack) == "function") {
+                        pCallBack(_BaseCode[pStrGroupCode + pDomain + pFilter]);
+                    }
+                } else {
+                    Common.Error($.parseJSON(result).d[1].Value);
+                }
+            });
+        } catch (e) {
+        } finally {
+        }
+    } else {
+        if (typeof (pCallBack) == "string" && pCallBack != "") {
+            eval(pCallBack + "('" + _BaseCode[pStrGroupCode + pDomain + pFilter] + "')");
+        } else if (typeof (pCallBack) == "function") {
+            pCallBack(_BaseCode[pStrGroupCode + pDomain + pFilter]);
+        }
+    }
+}
+
+// 기초코드 (List)값 가져오기
+Common.GetBaseCode = function (pStrGroupCode, pFilter) {
+	// 20180123 hpark 기초설정/코드 무조건 사용자의 회사것만, 없으면 공통만, 없으면 빈값 가져오기
+	/*
+    var ajax;
+    if (pStrGroupCode == undefined || pStrGroupCode == null) return;
+    if (pFilter == undefined || pFilter == null) { pFilter = ""; } else { pFilter = pFilter.replace("'", "^").replace("'", "^").replace("'", "^").replace("'", "^") };
+    if (_BaseCode[pStrGroupCode + pFilter] == "undefined" || _BaseCode[pStrGroupCode + pFilter] == null) {
+        try {
+            ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetBaseCode", "{pStrGroupCode:'" + pStrGroupCode + "', pFilter:'" + pFilter + "'}", false, null);
+            var bSucces = eval($.parseJSON(ajax).d[0].Value);
+            if (bSucces) {
+                _BaseCode[pStrGroupCode + pFilter] = eval('(' + $.parseJSON(ajax).d[1].Value + ')');
+                //return eval('(' + $.parseJSON(ajax).d[1].Value + ')');
+            } else {
+                Common.Error($.parseJSON(ajax).d[1].Value);
+                return;
+            }
+        } catch (e) {
+        } finally {
+            ajax = null;
+        }
+    }
+    return _BaseCode[pStrGroupCode + pFilter];
+	*/
+	return Common.GetDomainBaseCode(pStrGroupCode, _DN_Code, pFilter);
+}
+
+// 회사별(공통 + 회사) 기초코드 (List)값 가져오기
+Common.GetDomainBaseCode = function (pStrGroupCode, pDomain, pFilter) {
+	if (!pDomain) pDomain = _DN_Code;	// 20180123 hpark 기초설정/코드 무조건 사용자의 회사것만, 없으면 공통만, 없으면 빈값 가져오기
+    var ajax;
+    if (pStrGroupCode == undefined || pStrGroupCode == null) return;
+    if (pDomain == undefined || pDomain == "" || pDomain == null) return;
+    if (pFilter == undefined || pFilter == null) { pFilter = ""; } else { pFilter = pFilter.replace("'", "^").replace("'", "^").replace("'", "^").replace("'", "^") };
+    if (_BaseCode[pStrGroupCode + pDomain + pFilter] == "undefined" || _BaseCode[pStrGroupCode + pDomain + pFilter] == null) {
+        try {
+            ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetDomainBaseCode", "{pStrGroupCode:'" + pStrGroupCode + "', pDN_Code:'" + pDomain + "', pFilter:'" + pFilter + "'}", false, null);
+            var bSucces = eval($.parseJSON(ajax).d[0].Value);
+            if (bSucces) {
+                _BaseCode[pStrGroupCode + pDomain + pFilter] = eval('(' + $.parseJSON(ajax).d[1].Value + ')');
+                //return eval('(' + $.parseJSON(ajax).d[1].Value + ')');
+            } else {
+                Common.Error($.parseJSON(ajax).d[1].Value);
+                return;
+            }
+        } catch (e) {
+        } finally {
+            ajax = null;
+        }
+    }
+    return _BaseCode[pStrGroupCode + pDomain + pFilter];
+}
+
+// 사용자 세션 값 가져오기(스크립트에 저장하지 않고 실시간으로 매번 가져옴.)
+Common.GetSession = function (pKey) {
+    if (pKey == undefined || pKey == null) return;
+    if (_Session[pKey] == "undefined" || _Session[pKey] == null) {
+        var ajax = null;
+        try {
+            ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetSessionInfo", "{pKey:'" + pKey + "'}", false, null);
+            _Session[pKey] = $.parseJSON(ajax).d;
+            return _Session[pKey]
+        } catch (e) {
+        } finally {
+            ajax = null;
+        }
+    } else {
+        return _Session[pKey]
+    }
+}
+
+Common.GetSessionReal = function (pKey) {
+    if (pKey == undefined || pKey == null) return;
+    var ajax = null;
+    try {
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetSessionInfo", "{pKey:'" + pKey + "'}", false, null);
+        return $.parseJSON(ajax).d;
+    } catch (e) {
+    } finally {
+        ajax = null;
+    }
+}
+
+// 프로그램 모듈 값 가져오기
+Common.GetPgModule = function (pAlias) {
+    var strReturn = document.location.href;
+    if (pAlias == undefined || pAlias == null) return;
+    if (_PgModule[pAlias] == "undefined" || _PgModule[pAlias] == null) {
+        if (CFN_GetLocal5Storage("Pg", pAlias) == undefined) {
+            var ajax = null;
+            try {
+                ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetPgModule", "{pAlias:'" + pAlias + "'}", false, null);
+                _PgModule[pAlias] = $.parseJSON(ajax).d;
+                CFN_SetLocal5Storage("Pg", pAlias, _PgModule[pAlias]);
+                if (_PgModule[pAlias] != undefined) {
+                    strReturn = _PgModule[pAlias]
+                }
+            } catch (e) {
+                //return pAlias;
+            } finally {
+                ajax = null;
+            }
+        } else {
+            _PgModule[pAlias] = CFN_GetLocal5Storage("Pg", pAlias);
+            strReturn = _PgModule[pAlias];
+        }
+    } else {
+        if (_PgModule[pAlias] != undefined) {
+            strReturn = _PgModule[pAlias]
+        }
+    }
+    return strReturn;
+}
+
+// 메뉴경로 및 아이디 가져오기 (pType : URL | ID, pTarget : Menu | Folder)
+Common.GetMenuURL = function (pAlias, pSystem, pType, pTarget) {
+    if (pAlias == undefined || pAlias == null) return;
+    if (pSystem == undefined || pSystem == null) return;
+    if (pType == undefined || pType == null) { pType = "URL"; }
+    if (pTarget == undefined || pTarget == null) { pTarget = "Menu"; }
+    var pKey = pAlias + pSystem + pType + pTarget;
+    var ajax = null;
+    if (_MenuInfo[pKey] == "undefined" || _MenuInfo[pKey] == null) {
+        try {
+            ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetMenuURL", "{pAlias:'" + pAlias + "', pSystem:'" + pSystem + "', pType:'" + pType + "', pTarget:'" + pTarget + "'}", false, null);
+            _MenuInfo[pKey] = $.parseJSON(ajax).d;
+            return _MenuInfo[pKey];
+        } catch (e) {
+            return pAlias;
+        } finally {
+            ajax = null;
+        }
+    } else {
+        return _MenuInfo[pKey];
+    }
+}
+
+// 해당 게시판으로 이동 경로 반환 및 시스템 별칭 반환 (pFolderID:게시폴더 아이디, pType : URL | Alias)
+Common.GetFolderGotoURL = function (pFdId, pType) {
+    if (pFdId == undefined || pFdId == null) return;
+    if (pType == undefined || pType == null) { pType = "URL"; }
+    var pKey = pFdId + pType;
+    var ajax = null;
+    if (_MenuInfo[pKey] == "undefined" || _MenuInfo[pKey] == null) {
+        try {
+            ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetFolderGotoURL", "{pFdId:" + pFdId + ", pType:'" + pType + "'}", false, null);
+            _MenuInfo[pKey] = $.parseJSON(ajax).d;
+            return _MenuInfo[pKey];
+        } catch (e) {
+            return pAlias;
+        } finally {
+            ajax = null;
+        }
+    } else {
+        return _MenuInfo[pKey];
+    }
+}
+
+// 파라메터를 암호화한 URL을 반환함.
+Common.GetEncryptURL = function (pURL) {
+    if (pURL == undefined || pURL == null) return;
+    var ajax = null;
+    try {
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetEncryptURL", "{pUrl:'" + pURL + "'}", false, null);
+        return $.parseJSON(ajax).d;
+    } catch (e) {
+    } finally {
+        ajax = null;
+    }
+}
+
+// 경로의 파일을 삭제하여 줌.
+// pPath(WebUrl | UNCPath)
+// pMode(One : 해당 파일만 삭제 | Thumbnail : "_s"가 붙은 썸네일 파일만 삭제 | Image : 이미지 및 썸네일도 삭제)
+Common.DeleteFile = function (pFilePath, pMode) {
+    if (pFilePath == undefined || pFilePath == null) return;
+    if (pMode == undefined || pMode == null) { pMode = "File"; }
+    var ajax = null;
+    try {
+        ajax = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/DeleteFile", "{pFilePath:\"" + pFilePath + "\", pMode:\"" + pMode + "\"}", false, null);
+        return $.parseJSON(ajax).d;
+    } catch (e) {
+    } finally {
+        ajax = null;
+    }
+}
+
+// HTML5의 스토리지 사용(기본은 LocalStorage를 사용하고, 불가할 경우 SessionStorage를 사용한다.)
+function CFN_SetLocal5Storage(pType, pKey, pValue) {
+    var l_Key = "cache_" + pType;
+    try {
+        // 다국어
+        if (pType == "Dic") {
+            if (typeof _LanguageCode == "undefined") {
+                l_Key += "_" + Common.GetSession("LanguageCode") + "_" + pKey;
+            } else {
+                l_Key += "_" + _LanguageCode + "_" + pKey;
+            }
+        } else if (pType == "Base") {
+            if (typeof _DN_ID == "undefined") {
+                l_Key += "_" + Common.GetSession("DN_ID") + "_" + pKey;
+            } else {
+                l_Key += "_" + _DN_ID + "_" + pKey;
+            }
+        } else if (pType == "Pg") {
+            l_Key += "_" + pKey;
+        } else {
+            l_Key += "_" + pKey;
+        }
+
+        if (pValue != undefined && pValue != '' && pValue != "undefined" && pValue != null) {
+            window.sessionStorage.setItem(l_Key, pValue);
+        }
+
+    } catch (e) {
+        if (e == QUOTA_EXCEEDED_ERR) {
+            alert('할당량 초과!'); // 할당량 초과로 인하여 데이터를 저장할 수 없음
+            return false;
+        }
+    }
+}
+
+// HTML5의 스토리지 사용
+function CFN_GetLocal5Storage(pType, pKey) {
+    var l_Key = "cache_" + pType;
+    try {
+        // 다국어
+        if (pType == "Dic") {
+            if (typeof _LanguageCode == "undefined") {
+                l_Key += "_" + Common.GetSession("LanguageCode") + "_" + pKey;
+            } else {
+                l_Key += "_" + _LanguageCode + "_" + pKey;
+            }
+        } else if (pType == "Base") {
+            if (typeof _DN_ID == "undefined") {
+                l_Key += "_" + Common.GetSession("DN_ID") + "_" + pKey;
+            } else {
+                l_Key += "_" + _DN_ID + "_" + pKey;
+            }
+        } else if (pType == "Pg") {
+            l_Key += "_" + pKey;
+        } else {
+            l_Key += "_" + pKey;
+        }
+
+        //if (('localStorage' in window) && window.localStorage !== null) {
+        //    return window.localStorage.getItem(l_Key);
+        //} else {
+        return window.sessionStorage.getItem(l_Key);
+        //}
+    } catch (e) {
+        alert('LocalStorage 접근 불가!!' + e.message); // 할당량 초과로 인하여 데이터를 저장할 수 없음
+    }
+}
+
+// 로컬스토리지 캐시그룹별 초기화 기능
+function CFN_ClareLocal5Storage(pType) {
+    var l_Key = "cache_";
+    if (pType != undefined && pType != "All" && pType != "") {
+        l_Key += pType;
+    }
+
+    for (i = 0; i < window.sessionStorage.length ; i++) {
+        if (window.sessionStorage.key(i).indexOf(l_Key) == 0) {
+            window.sessionStorage.removeItem(window.sessionStorage.key(i));
+        }
+    }
+}
+
+// 특정 언어로 입력된 정보를 보여주기(';'로 구분된 다국어 정보)
+function CFN_GetDicInfo(pStringInfo, pLanguageCode) {
+    var l_Return = "";
+    if (pStringInfo == undefined) {
+        pStringInfo = "undefined";
+    }
+    var l_ArrInfo = pStringInfo.split(';');
+
+    if (pLanguageCode == undefined) {
+        if (typeof _LanguageCode == "undefined") {
+            pLanguageCode = Common.GetSession("LanguageCode");
+        } else {
+            pLanguageCode = _LanguageCode;
+        }
+    }
+
+    //배열에 없는 값인지 체크 
+    if (_LanguageIndex[pLanguageCode] <= l_ArrInfo.length) {
+        l_Return = l_ArrInfo[_LanguageIndex[pLanguageCode]];
+    }
+
+    // 값을 못가져 오던지 들어있는 값이 없다면
+    if (l_Return == null || l_Return == "") {
+        try { // 혹시 에러 발생시(Web.Config에 설정된 기본언어 값으로 대입)
+            l_Return = l_ArrInfo[parseInt(Common.GetAppConfig("BaseLanguage"), 10)];
+        } catch (e) { }
+        // 기본언어에도 값이 없다면 정보를 그대로 반환
+        if (l_Return == "") {
+            l_Return = pStringInfo;
+        }
+    }
+
+    try {
+        return l_Return;
+    } finally {
+        l_Return = null;
+    }
+}
+
+// 데이터 다국어 처리 함수(데이터 언어코드, 로컬 데이터, 영어 데이터)
+function CFN_GetDicData(pDataLangCode, pLocalData, pEnglishData) {
+    var strReturn = "";
+    var strMyLangCode = "ko-KR";
+    if (typeof _Language == "undefined") {
+        strMyLangCode = Common.GetSession("Language");
+    } else {
+        strMyLangCode = _Language;
+    }
+
+    if (pDataLangCode.toLowerCase() == strMyLangCode.toLowerCase()) {
+        strReturn = pLocalData;
+    } else {
+        strReturn = pEnglishData;
+    }
+
+    return strReturn;
+}
+
+// 다국어 방식 변경 - 언어코드;자국어;영문 2017.04.17 임동현
+function CFN_GetDicDatas(pLangData) {
+    var result = "";
+    if (pLangData != undefined) {
+        var splitData = pLangData.split(';');
+
+        if (splitData.length > 2) {
+            result = CFN_GetDicData(splitData[0], splitData[1], splitData[2]);
+        }
+        else {
+            result = pLangData;
+        }
+    }
+
+    return result;
+}
+
+////////////////////////////////////////// MutiLanguage & Configuration ////////////////////////////////
+
+
+////////////////////////////////////////// BaseObjectInfo Start ////////////////////////////////
+// 객체 정보 가져오기 Table 형태로 반환
+/// <param name="pMode">정보 조회 대상 - (UR-User, GR-Group, DN-Domain)</param>
+/// <param name="pObjectIDs">객체 아이디(코드) - k96mi005;a;b</param>
+/// <param name="pSearchFields">조회 필드(UR_Code,DisplayName)</param>
+/// <param name="pFilter">필터 조건</param>
+/// <param name="pOrder">Sort 조건</param>
+/// <returns>Json 형식의 DataTable</returns>
+Common.GetObjectInfo = function (pMode, pObjectIDs, pSearchFields, pFilter, pOrder) {
+    var oResult, bSucces;
+    if (pMode == undefined || pObjectIDs == null || pObjectIDs == undefined || pObjectIDs == null) return;
+    if (pSearchFields == undefined || pSearchFields == null) { pSearchFields = ''; }
+    if (pFilter == undefined || pFilter == null) { pFilter = ''; }
+    if (pOrder == undefined || pOrder == null) { pOrder = ''; }
+
+    //필터정보에 싱글쿼테이션 -> 특정 문자로 치환
+    pFilter = XFN_ReplaceAllChars(pFilter, "'", "|*|");
+    try {
+        oResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/GetBaseObjectInfo", "{pMode:'" + pMode + "', pObjectIDs:'" + pObjectIDs + "', pSearchFields:'" + pSearchFields + "', pFilter:'" + pFilter + "', pOrder:'" + pOrder + "'}", false, null);
+        bSucces = eval($.parseJSON(oResult).d[0].Value);
+
+        if (bSucces) {
+            return eval('(' + $.parseJSON(oResult).d[1].Value + ')');
+        } else {
+            Common.Error($.parseJSON(oResult).d[1].Value);
+        }
+    } finally {
+        oResult = null;
+        bSucces = null;
+    }
+}
+////////////////////////////////////////// BaseObjectInfo End ////////////////////////////////
+
+
+////////////////////////////////////////// TimeZone Start ////////////////////////////////
+
+// 시스템 기준시와 UTC 타임과의 차이 및 입력한 특정 타임존 코드의 타임죤과 시스템 표준 타임죤과 차이
+Common.GetTimeZoneTimeDiff = function (pTimeZoneCode) {
+    var l_AjaxResult;
+    if (pTimeZoneCode == undefined || pTimeZoneCode == null) { pTimeZoneCode = "StandardTimeZone"; }
+    if (_TimeZoneTimeDiff[pTimeZoneCode] == "undefined" || _TimeZoneTimeDiff[pTimeZoneCode] == null) {
+        l_AjaxResult = CFN_CallAjaxJson("/WebSite/Base/Controls/WebService.asmx/GetTimeZoneTimeDiff", "{pTimeZoneCode:'" + pTimeZoneCode + "'}", false, null);
+        _TimeZoneTimeDiff[pTimeZoneCode] = $.parseJSON(l_AjaxResult).d;
+    }
+
+    l_AjaxResult = null;
+    return _TimeZoneTimeDiff[pTimeZoneCode];
+}
+
+// 서버시간을 자신의 타임존 시간으로 변환하여 반환함.
+// pLocalFormat - 임력하지 않으면 로컬 포멧으로 변환하여 반환함.
+function CFN_TransLocalTime(pServerTime, pLocalFormat) {
+    var l_InputYear, l_InputMonth, l_InputDay, l_InputHH, l_InputMM, l_InputSS;  // 입력 년월일시분초
+    var l_TimeZone, l_ZoneHH, l_ZoneMM, l_ZoneSS, l_Minus, l_UR_TimeZone;  // 타임존 시분초 +- 여부
+    var l_StringDate, l_StringTime, l_DateFormatCount;  // 입력 날짜, 입력 시간, 입력날짜 형식, 입력한 값 길이
+
+    // 찌꺼기 제거
+    pServerTime = pServerTime.trim();
+    // 변환할 문자열 수
+    l_DateFormatCount = pServerTime.length;
+
+    // 1. 날짜(2011-01-04)와 시간(09:12, 08:12:12)이 같이 들어와야 한다. 
+    if (pServerTime.indexOf(" ") == -1 || l_DateFormatCount.length < 11) {
+        return CFN_TransDateLocalFormat(pServerTime, pLocalFormat);
+    }
+
+    l_StringDate = pServerTime.split(' ')[0]
+    l_StringTime = pServerTime.split(' ')[1]
+
+    l_StringDate = l_StringDate.replace(/-/g, "")
+    l_StringDate = l_StringDate.replace(/\./g, "")
+    l_StringDate = l_StringDate.replace(/\//g, "")
+    l_StringTime = l_StringTime.replace(/:/g, "")
+
+    // 3. 시간은 시분까지는 들어와야 한다.(초는 없어도 됨.)
+    if (l_StringDate.length != 8 || l_StringTime.length < 4) {
+        return pServerTime;
+    }
+
+    // 형식에 맞게 숫자를 체워줌
+    l_StringTime = CFN_PadRight(l_StringTime, 6, "0");
+
+    // 입력받은 일시 분해
+    l_InputYear = l_StringDate.substring(0, 4);
+    l_InputMonth = l_StringDate.substring(4, 6) - 1; // 월은 1을 빼줘야 함.
+    l_InputDay = l_StringDate.substring(6, 8);
+    l_InputHH = l_StringTime.substring(0, 2);
+    l_InputMM = l_StringTime.substring(2, 4);
+    l_InputSS = l_StringTime.substring(4, 6);
+
+    // 시간 형식 체크
+    var l_InputDate = new Date(l_InputYear, l_InputMonth, l_InputDay, l_InputHH, l_InputMM, l_InputSS);
+    if (l_InputDate.getFullYear() != l_InputYear || l_InputDate.getMonth() != l_InputMonth || l_InputDate.getDate() != l_InputDay ||
+        l_InputDate.getHours() != l_InputHH || l_InputDate.getMinutes() != l_InputMM || l_InputDate.getSeconds() != l_InputSS) {
+        return pServerTime;
+    }
+
+    // 자신의 타임존 시간 가져오기(세션에 정의된 타임존 값을 가져옴.)
+    if (typeof _UR_TimeZone == "undefined") {
+        l_UR_TimeZone = Common.GetSession("UR_TimeZone");
+    } else {
+        l_UR_TimeZone = _UR_TimeZone;
+    }
+    l_Minus = l_UR_TimeZone.substring(0, 1);
+    l_TimeZone = l_UR_TimeZone.replace("-", "").replace(":", "").replace(":", "");
+    l_ZoneHH = l_TimeZone.substring(0, 2);
+    l_ZoneMM = l_TimeZone.substring(2, 4);
+    l_ZoneSS = l_TimeZone.substring(4, 6);
+
+    var l_TimeZoneTime = (parseInt(l_ZoneHH, 10) * 3600000) + (parseInt(l_ZoneMM, 10) * 60000) + (parseInt(l_ZoneSS, 10) * 1000)
+
+    if (l_Minus == "-") {
+        l_InputDate.setTime(l_InputDate.getTime() - l_TimeZoneTime);
+    } else {
+        l_InputDate.setTime(l_InputDate.getTime() + l_TimeZoneTime);
+    }
+
+    var l_ReturnString = "";
+
+    if (pLocalFormat == undefined || pLocalFormat == "") {
+        // 포멧을 지정하지 않을 경우 원래 요청한 (로컬 표준포멧의)형식으로 반환
+        if (typeof _UR_DateTimeFormat == "undefined") {
+            pLocalFormat = Common.GetSession("UR_DateTimeFormat");
+        } else {
+            pLocalFormat = _UR_DateTimeFormat;
+        }
+        l_ReturnString = pLocalFormat
+        .replace("yyyy", CFN_PadLeft(l_InputDate.getFullYear(), 4, "0"))
+        .replace("MM", CFN_PadLeft(l_InputDate.getMonth() + 1, 2, "0"))
+        .replace("dd", CFN_PadLeft(l_InputDate.getDate(), 2, "0"))
+        .replace("HH", CFN_PadLeft(l_InputDate.getHours(), 2, "0"))
+        .replace("mm", CFN_PadLeft(l_InputDate.getMinutes(), 2, "0"))
+        .replace("ss", CFN_PadLeft(l_InputDate.getSeconds(), 2, "0"));
+        l_ReturnString = l_ReturnString.substr(0, l_DateFormatCount);
+    }
+    else // 사용자가 포멧을 지정하여 요청하면 요청한 데로 반환
+    {
+        l_ReturnString = pLocalFormat
+        .replace("yyyy", CFN_PadLeft(l_InputDate.getFullYear(), 4, "0"))
+        .replace("MM", CFN_PadLeft(l_InputDate.getMonth() + 1, 2, "0"))
+        .replace("dd", CFN_PadLeft(l_InputDate.getDate(), 2, "0"))
+        .replace("HH", CFN_PadLeft(l_InputDate.getHours(), 2, "0"))
+        .replace("mm", CFN_PadLeft(l_InputDate.getMinutes(), 2, "0"))
+        .replace("ss", CFN_PadLeft(l_InputDate.getSeconds(), 2, "0"));
+    }
+
+    return l_ReturnString;
+}
+
+// 로컬시간을 자신의 타임존을 역산하여 표준시로 변환(포멧까지 변환)하여 반환
+function CFN_TransServerTime(pLocalTime) {
+    var l_InputYear, l_InputMonth, l_InputDay, l_InputHH, l_InputMM, l_InputSS;  // 입력 년월일시분초
+    var l_TimeZone, l_ZoneHH, l_ZoneMM, l_ZoneSS, l_Minus, l_UR_TimeZone;  // 타임존 시분초 +- 여부
+    var l_StringDate, l_StringTime, l_DateFormatCount;  // 입력 날짜, 입력 시간, 입력날짜 형식, 입력한 값 길이
+
+    // 찌꺼기 제거
+    pLocalTime = pLocalTime.trim();
+
+    // 변환할 문자열 수
+    l_DateFormatCount = pLocalTime.length;
+
+    // 날짜(2011-01-04)와 시간(09:12, 08:12:12) 형식 체크
+    if (pLocalTime.indexOf(" ") == -1 || l_DateFormatCount.length < 11) {
+        return CFN_TransDateServerFormat(pLocalTime);
+    } else {
+        pLocalTime = CFN_TransDateServerFormat(pLocalTime);
+    }
+
+    l_StringDate = pLocalTime.split(' ')[0]
+    l_StringTime = pLocalTime.split(' ')[1]
+
+    l_StringDate = l_StringDate.replace(/-/g, "")
+    l_StringDate = l_StringDate.replace(/\./g, "")
+    l_StringDate = l_StringDate.replace(/\//g, "")
+    l_StringTime = l_StringTime.replace(/:/g, "")
+
+    // 3. 시간은 시분까지는 들어와야 한다.(초는 없어도 됨.)
+    if (l_StringDate.length != 8 || l_StringTime.length < 4) {
+        return pLocalTime;
+    }
+
+    // 형식에 맞게 숫자를 체워줌
+    l_StringTime = CFN_PadRight(l_StringTime, 6, "0");
+
+    // 입력받은 일시 분해
+    l_InputYear = l_StringDate.substring(0, 4);
+    l_InputMonth = l_StringDate.substring(4, 6) - 1; // 월은 1을 빼줘야 함.
+    l_InputDay = l_StringDate.substring(6, 8);
+    l_InputHH = l_StringTime.substring(0, 2);
+    l_InputMM = l_StringTime.substring(2, 4);
+    l_InputSS = l_StringTime.substring(4, 6);
+
+    // 시간 형식 체크
+    var l_InputDate = new Date(l_InputYear, l_InputMonth, l_InputDay, l_InputHH, l_InputMM, l_InputSS);
+    if (l_InputDate.getFullYear() != l_InputYear || l_InputDate.getMonth() != l_InputMonth || l_InputDate.getDate() != l_InputDay ||
+        l_InputDate.getHours() != l_InputHH || l_InputDate.getMinutes() != l_InputMM || l_InputDate.getSeconds() != l_InputSS) {
+        return pLocalTime;
+    }
+
+    // 자신의 타임존 시간 가져오기(세션에 정의된 타임존 값을 가져옴.)
+    if (typeof _UR_TimeZone == "undefined") {
+        l_UR_TimeZone = Common.GetSession("UR_TimeZone");
+    } else {
+        l_UR_TimeZone = _UR_TimeZone;
+    }
+    l_Minus = l_UR_TimeZone.substring(0, 1);
+    l_TimeZone = l_UR_TimeZone.replace("-", "").replace(":", "").replace(":", "");
+    l_ZoneHH = l_TimeZone.substring(0, 2);
+    l_ZoneMM = l_TimeZone.substring(2, 4);
+    l_ZoneSS = l_TimeZone.substring(4, 6);
+
+    var l_TimeZoneTime = (parseInt(l_ZoneHH, 10) * 3600000) + (parseInt(l_ZoneMM, 10) * 60000) + (parseInt(l_ZoneSS, 10) * 1000)
+
+    if (l_Minus == "-") {
+        l_InputDate.setTime(l_InputDate.getTime() + l_TimeZoneTime);
+    } else {
+        l_InputDate.setTime(l_InputDate.getTime() - l_TimeZoneTime);
+    }
+
+    var l_ReturnString = "";
+    var l_strServerDateFormat = "";
+    if (typeof _StandardDateTimeFormat == "undefined") {
+        l_strServerDateFormat = Common.GetBaseConfig("StandardDateTimeFormat");
+    } else {
+        l_strServerDateFormat = _StandardDateTimeFormat;
+    }
+    l_ReturnString = l_strServerDateFormat
+    .replace("yyyy", CFN_PadLeft(l_InputDate.getFullYear(), 4, "0"))
+    .replace("MM", CFN_PadLeft(l_InputDate.getMonth() + 1, 2, "0"))
+    .replace("dd", CFN_PadLeft(l_InputDate.getDate(), 2, "0"))
+    .replace("HH", CFN_PadLeft(l_InputDate.getHours(), 2, "0"))
+    .replace("mm", CFN_PadLeft(l_InputDate.getMinutes(), 2, "0"))
+    .replace("ss", CFN_PadLeft(l_InputDate.getSeconds(), 2, "0"));
+    l_ReturnString = l_ReturnString.substr(0, l_DateFormatCount);
+
+    return l_ReturnString;
+}
+
+// 문자열 Server Format을 Local Date Format으로 단순변환
+function CFN_TransDateLocalFormat(pServerDate, pLocalFormat) {
+    var l_strResult = "";
+    var l_strServerDateFormat = "";
+    var l_strCheckDate = "";
+    pServerDate = pServerDate.trim();
+    if (typeof _StandardDateFormat == "undefined") {
+        l_strServerDateFormat = Common.GetBaseConfig("StandardDateFormat");
+    } else {
+        l_strServerDateFormat = _StandardDateFormat;
+    }
+    if (pLocalFormat == undefined || pLocalFormat == "") {
+        if (typeof _UR_DateFormat == "undefined") {
+            pLocalFormat = Common.GetSession("UR_DateFormat");
+        } else {
+            pLocalFormat = _UR_DateFormat;
+        }
+    }
+
+    if (pServerDate != "") {
+        if (pServerDate.length == 10) {
+            l_strCheckDate = pLocalFormat.replace("yyyy", pServerDate.substr(pLocalFormat.indexOf("yyyy"), 4)).replace("MM", pServerDate.substr(pLocalFormat.indexOf("MM"), 2)).replace("dd", pServerDate.substr(pLocalFormat.indexOf("dd"), 2));
+            if (l_strCheckDate != pServerDate) {
+                l_strResult = pLocalFormat.replace("yyyy", pServerDate.substr(l_strServerDateFormat.indexOf("yyyy"), 4)).replace("MM", pServerDate.substr(l_strServerDateFormat.indexOf("MM"), 2)).replace("dd", pServerDate.substr(l_strServerDateFormat.indexOf("dd"), 2));
+            } else {
+                l_strResult = l_strCheckDate;
+            }
+            l_strResult = l_strResult.substr(0, 10);
+        } else if (pServerDate.length > 10) {
+            l_strResult = pLocalFormat.replace("yyyy", pServerDate.substr(l_strServerDateFormat.indexOf("yyyy"), 4)).replace("MM", pServerDate.substr(l_strServerDateFormat.indexOf("MM"), 2)).replace("dd", pServerDate.substr(l_strServerDateFormat.indexOf("dd"), 2));
+            l_strResult += pServerDate.substr(10, pServerDate.length - 10);
+        } else {
+            l_strResult = pServerDate;
+        }
+    }
+
+    return l_strResult;
+}
+
+// 문자열 Local Date Format을 서버 포멧으로 단순변환
+function CFN_TransDateServerFormat(pLocalDate) {
+    var l_strResult = "";
+    var l_strServerDateFormat = "";
+    var l_strLocalFormat = "";
+    var l_strCheckDate = "";
+
+    // 찌거기 제거
+    pLocalDate = pLocalDate.trim();
+
+    if (typeof _StandardDateFormat == "undefined") {
+        l_strServerDateFormat = Common.GetBaseConfig("StandardDateFormat");
+    } else {
+        l_strServerDateFormat = _StandardDateFormat;
+    }
+
+    if (typeof _UR_DateFormat == "undefined") {
+        l_strLocalFormat = Common.GetSession("UR_DateFormat");
+    } else {
+        l_strLocalFormat = _UR_DateFormat;
+    }
+    if (pLocalDate != "") {
+        if (pLocalDate.length == 10) {
+            l_strCheckDate = l_strServerDateFormat.replace("yyyy", pLocalDate.substr(l_strServerDateFormat.indexOf("yyyy"), 4)).replace("MM", pLocalDate.substr(l_strServerDateFormat.indexOf("MM"), 2)).replace("dd", pLocalDate.substr(l_strServerDateFormat.indexOf("dd"), 2));
+            if (l_strCheckDate != pLocalDate) {
+                l_strResult = l_strServerDateFormat.replace("yyyy", pLocalDate.substr(l_strLocalFormat.indexOf("yyyy"), 4)).replace("MM", pLocalDate.substr(l_strLocalFormat.indexOf("MM"), 2)).replace("dd", pLocalDate.substr(l_strLocalFormat.indexOf("dd"), 2));
+            } else {
+                l_strResult = l_strCheckDate;
+            }
+            l_strResult = l_strResult.substr(0, 10);
+        } else if (pLocalDate.length > 10) {
+            l_strResult = l_strServerDateFormat.replace("yyyy", pLocalDate.substr(l_strLocalFormat.indexOf("yyyy"), 4)).replace("MM", pLocalDate.substr(l_strLocalFormat.indexOf("MM"), 2)).replace("dd", pLocalDate.substr(l_strLocalFormat.indexOf("dd"), 2));
+            l_strResult += pLocalDate.substr(10, pLocalDate.length - 10);
+        } else {
+            l_strResult = pLocalDate;
+        }
+    }
+
+    return l_strResult;
+}
+
+// 지정한 컨테이너 안의 특정 class를 준 하위 텍스트의 타임죤 처리
+function CFN_TransLocalTimeContainer(pContainerID, pTargetClass) {
+    $("#" + pContainerID).each(function () {
+        $(this).find("." + pTargetClass).each(function () {
+            $(this).text(CFN_TransLocalTime($(this).text()))
+            $(this).removeClass(pTargetClass);
+        });
+    });
+}
+
+// 타임존 UTC 시간차값 가져오기
+function CFN_UtcTimeZone() {
+    var value = "";
+
+    value = Common.GetSession("UR_TimeZone");
+
+    if (value.substring(0, 1) != "-") {
+        value = parseInt(value.substring(0, 2));
+    }
+    else {
+        value = parseInt(value.substring(0, 3));
+    }
+
+    return value;
+}
+////////////////////////////////////////// TimeZone  End ////////////////////////////////
+
+if (document.getElementById) {
+    window.alert = function (pMessage) {
+        Common.Inform(pMessage);
+    }
+}
+
+////////////////////////////////////////// Portal Message Start ////////////////////////////////
+function CFN_ReceiveMessage(event) {
+    var data = event.data;
+    var params = data.split("|");
+    // 포탈에서 호출한 경우
+    if (params[0] == "PT") {
+        if (params[1] == "RELOAD") {
+            //document.location.href = document.location.href;
+            document.location.href = document.location.protocol + "//" + document.location.host;
+        }
+    }
+}
+window.addEventListener("message", CFN_ReceiveMessage, false);
+////////////////////////////////////////// Portal Message End ////////////////////////////////
+
+//BackSpace 기능 막기
+$(document).keydown(function (e) {
+    var keyCode = e.which ? e.which : e.keyCode;
+
+    var bIsContentEditable = false;
+    try{
+        if (e.target.getAttribute("contentEditable") != null && e.target.getAttribute("contentEditable").toLowerCase() == "true") {
+            bIsContentEditable = true;
+        }
+    } catch (e) { }
+
+    if (e.target.nodeName != "INPUT" && e.target.nodeName != "TEXTAREA" && !bIsContentEditable) {
+        if (keyCode === 8) {
+            return false;
+        }
+    }
+});
+
+// Portal Encrypt
+function CFN_EncryptParam(pSourceText) {
+    var l_AjaxResult;
+    var sResult = "";
+    if (pSourceText == undefined || pSourceText == null || pSourceText == "") return;
+    try {
+        l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/EncryptParam", "{pSourceText:'" + pSourceText + "'}", false, null);
+        sResult = $.parseJSON(l_AjaxResult).d;
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return sResult;
+}
+
+// Portal Decrypt
+function CFN_DecryptParam(pSourceText, pIsCheckTime) {
+    var l_AjaxResult;
+    var sResult = "";
+    if (pSourceText == undefined || pSourceText == null || pSourceText=="") return;
+    if (pIsCheckTime == undefined || pIsCheckTime == "" || pIsCheckTime == "undefined") pIsCheckTime = "N";
+    try {
+        l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/DecryptParam", "{pSourceText:'" + pSourceText + "',pIsCheckTime:'" + pIsCheckTime + "'}", false, null);
+        sResult = $.parseJSON(l_AjaxResult).d;
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return sResult;
+}
+
+// Portal Encrypt
+function CFN_EncryptParamAll(pSourceTexts) {
+    var l_AjaxResult;
+    var sResult = "";
+    if (pSourceTexts == undefined || pSourceTexts == null || pSourceTexts == "") return;
+    try {
+        l_AjaxResult = CFN_CallAjaxJson("/Common/Base/Controls/WebService.asmx/EncryptParamAll", "{pSourceTexts:'" + pSourceTexts + "'}", false, null);
+        sResult = $.parseJSON(l_AjaxResult).d;
+    } catch (e) {
+    } finally {
+        l_AjaxResult = null;
+    }
+    return sResult;
+}

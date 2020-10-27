@@ -1,0 +1,2931 @@
+﻿var wStrSearchDicInfo = null;
+// 다국어 로드
+if (this._CurrentPageUrl.indexOf("Form.aspx") == -1) {
+    wStrSearchDicInfo = Common.GetDicAll("lbl_all;lbl_Subject;lbl_Subject_Body;lbl_Body_Attachment;lbl_apv_drafter;lbl_apv_DraftDept;lbl_apv_DocNo;lbl_ShowApprovalStatus;lbl_AttachFile;lbl_Area;btn_Booking_Approval;btn_Apporval_opnion_Exist;lbl_apv_Receiving_Dept_Reply;msg_Processing;lbl_apv_Approved;lbl_apv_username;lbl_dept;lbl_sign;lbl_apv_date;lbl_ApprovalState;msg_apv_chkcooperatedata;lbl_apv_pending;DocSecurityGrade_00;DocSecurityGrade_01;SaveDuration_00001;SaveDuration_00003;SaveDuration_00006;SaveDuration_00012;SaveDuration_99999;lbl_apv_request_wait;lbl_apv_Cooperation_Reject;lbl_apv_error;lbl_apv_filelist_has;msg_selected;lbl_units;lbl_added;lbl_max;lbl_limits;msg_apv_dayDelay;lbl_apv_etc;lbl_apv_Cooperation_Complete;lbl_apv_Cooperation_Process;btn_apv_have_comment_exa_2;btn_open;btn_Close;lbl_apv_charge;lbl_Regist;lbl_Receptionist;lbl_apv_investigation;lbl_apv_Deputy;lbl_apv_jobtitle;lbl_JobPosition;lbl_Complete_Date;lbl_apv_receive;lbl_apv_send;btn_apv_CompleteConsult;btn_apv_RejectConsult;lbl_apv_returnForm;btn_apv_Deny;lbl_apv_reject;lbl_ApprovalComplete;btn_apv_cancel;lbl_apv_Cooperation_Wait;lbl_apv_charge_person;TodoMsgType_ApprovalComment;btn_apv_Order_comment;COMMENT_TYPE_EXAMINATION;btn_apv_have_comment_exa;lbl_apv_Special_Report;lbl_InformTitle;lbl_apv_Confirm;lbl_apv_RecvDate;btn_apv_close;msg_apv_063;lbl_Reason;msg_apv_form_002;btn_apv_confirm;btn_public_object_type;lbl_public_object_check;");
+} 
+var wBolMasterIsSearching = false;
+var wIntSearchSelectIndex = 0; // 좌측 검색 자동완성 선택용 Index
+
+//접수 담당자 여부 확인
+function IsReceiptManagement() {
+    var _return = false;
+    var Param = "";
+    var szURL = Common.GetPgModule("Approval.WebService");
+
+    CFN_CallAjaxJson(szURL + "/IsReceiptManagement", Param, false, function (data) {
+        var sResult = $.parseJSON(data).d;
+
+        if (sResult == "Y") _return = true;
+        else _return = false;
+    });
+
+    return _return;
+}
+
+//가로양식 여부 조회
+function IsWideOpenFormCheckReal(FORM_PREFIX, ENT_CODE) {
+    var _return = false;
+    var szURL = Common.GetPgModule("Approval.WebService");
+    var Param = String.format("{ FORM_PREFIX:\"{0}\",ENT_CODE:\"{1}\" }", FORM_PREFIX, ENT_CODE);
+
+    CFN_CallAjaxJson(szURL + "/GetFormsInfo", Param, false, function (data) {
+        var oResult = eval($.parseJSON(data).d);
+        var oExtInfo = oResult[0].EXT_INFO;
+
+        if (typeof oExtInfo != "undefined") {
+            if ($(oExtInfo).find('chkHorizontalFormYN').text() == "Y") {
+                _return = true;
+            }
+        }
+    });
+
+    return _return;
+}
+
+//가로양식은 여기서 정의 하세요.
+function IsWideOpenFormCheck(fmpf) {
+    var _return = false;
+    try {
+        switch (fmpf) {
+            case "WF_FORM_CASH_EXPENSE":           // Cash Expense
+            case "WF_FORM_CORP_CARD_EXPENSE":       // Corp. Card Expense
+            case "WF_FORM_ML_OUT_USERID":
+            case "WF_FORM_ML_QC_USERID":
+            case "WF_FORM_VM" :
+//            case "WF_FORM_ML_BIZDOMESTIC":
+                _return = true;
+                break;
+            default:
+                _return = false;
+                break;
+        }
+    } catch (e) { _return = false; }
+    return _return;
+}
+
+//출력양식은 여기서 정의 하세요.
+function IsPrintFormCheck(fmpf) {
+    var _return = false;
+    try {
+        switch (fmpf) {
+            case "WF_FORM_DRAFT_EE0_043": // 식품위생관리책임자 지정 확인서
+            case "WF_FORM_DRAFT_EF0_044": // KTX할인신청서
+            case "WF_FORM_DRAFT_EE0_048": // 업무용 계좌 개설 협조 요청서
+            // case "WF_FORM_DRAFT_EF0_003": // 공문
+                _return = true;
+                break;
+            default:
+                _return = false;
+                break;
+        }
+    } catch (e) { _return = false; }
+    return _return;
+}
+
+//(대외공문) 출력양식은 여기서 정의 하세요.
+function IsOfficePrintFormCheck(fmpf) {
+    var _return = false;
+    try {
+        switch (fmpf) {
+            case "WF_FORM_DRAFT_EF0_003":
+            case "WF_FORM_DRAFT_EE0_072":
+            case "WF_FORM_DRAFT_AD0D_008":
+            case "WF_FORM_DRAFT_DF0_008":
+            case "HWGP_ROTEM_OFFICIAL_W01":
+            case "HWFP_AUTRON_OFFICIAL_W01":
+            case "HWFP_GLOVIS_OFFICIAL_W01":
+            case "WF_HSTEEL_EXT_LETTER_SENT":// 현대제철
+            case "WF_HDEC_EXT_LETTER":       // 현대건설
+            case "WF_HEC_EXT_LETTER":        // 현대엔지니어링
+            case "WF_HESI_EXTERNAL_OFFICIAL":   //현대스틸산업
+                _return = true;
+                break;
+            default:
+                _return = false;
+                break;
+        }
+    } catch (e) { _return = false; }
+    return _return;
+}
+
+// 첨부파일 Download
+function attFileDownLoad(pDocLevel, pFileID, pFileName) {
+    //var url = "../../Common/Control/FileDownload.aspx"
+    var url = "../../Common/Control/FileDownload.ashx"
+            + "?DocLevel=" + pDocLevel
+            + "&FileID=" + pFileID
+            + "&FileName=" + escape(pFileName)
+            + "&EmpNo=" + getInfo("usid")
+            + "&DeptName=" + escape(XFN_GetDicInfo(getInfo("dpdn")))
+            + "&IsMobile=N"
+    document.getElementById("frmFileDownload").src = url;
+}
+
+// 숫자를 한글로 변환
+function NumToHangul(chknum) {
+    var isMinus = false;
+
+    if (chknum.indexOf('-') > -1) {
+        chknum = chknum.substring(1, chknum.length);
+        isMinus = true;
+    }
+
+    val = chknum;
+    var won = new Array();
+    re = /^[1-9][0-9]*$/;
+    num = val.toString().split(',').join('');
+
+    if (!re.test(num)) {
+        return '0';
+    }
+    else {
+        var price_unit0 = new Array('', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구');
+        var price_unit1 = new Array('', '십', '백', '천');
+        var price_unit2 = new Array('', '만', '억', '조', '경', '해', '시', '양', '구', '간', '정');
+        for (i = num.length - 1; i >= 0; i--) {
+            won[i] = price_unit0[num.substr(num.length - 1 - i, 1)];
+            if (i > 0 && won[i] != '') {
+                won[i] += price_unit1[i % 4];
+            }
+            if (i % 4 == 0) {
+                won[i] += price_unit2[(i / 4)];
+            }
+        }
+        for (i = num.length - 1; i >= 0; i--) {
+            if (won[i].length == 2) won[i - i % 4] += '-';
+            if (won[i].length == 1 && i > 0) won[i] = '';
+            if (i % 4 != 0) won[i] = won[i].replace('일', '');
+        }
+
+        won = won.reverse().join('').replace(/-+/g, '');
+
+        if (won.toString().substr(0, 1) == '십') {
+            won = '일' + won;
+        }
+
+        if (isMinus)
+            return '-' + won;
+        else
+            return won;
+    }
+}
+
+
+function Select_Register() { // 담당자 지정
+
+    var strURL = "/Approval/WorkView/HallApp/HallAppChrgWrite.aspx";
+    var vwidth = (window.screen.width - 1200);
+    var vheight = (window.screen.height - 700);
+    var commentPopupTitle = Common.GetDic("MN_1750"); // 담당자 지정
+    //Common.Show("divGalTableList", '', '관심문서함 등록/수정', strURL, vwidth, vheight, "iframe", '');
+    // 2012.11.12 myungwan.jin@samyang.com 크기조정 기능 제외
+    //CFN_OpenWindow(strURL, "", vwidth, vheight, "resize");
+    Common.Show(commentPopupTitle, "charge", commentPopupTitle, strURL, vwidth, vheight, "iframe-ifNoScroll");
+    // CFN_OpenWindow(strURL, "", vwidth, vheight, "resize"); //lka 파폭 스크롤 생기지 않는 오류로 인하여 수정 20121228 CFN_OpenWindow(strURL, "", vwidth, vheight, "");
+}
+
+
+
+//Common.GetDicAll('lbl_SecurityLevel;lbl_PreservedDate;lbl_apv_DocNo;lbl_apv_createdate;lbl_WriterDept;lbl_apv_initiator;lbl_DESTINATION;lbl_apv_Rccinfo;lbl_apv_Lccinfo;lbl_Title;btn_apv_add;btn_apv_delete;DOC_LEVEL_10;DOC_LEVEL_20;DOC_LEVEL_30;DOC_LEVEL_40');
+
+
+
+
+//관심문서함 + 버튼 _ 최우석 _기존
+function folderAdd() {
+
+    var strURL = "/Approval/ListFolder_PopUP.aspx";
+    var vwidth = (window.screen.width - 1200);
+    var vheight = (window.screen.height - 700);
+
+    //Common.Show("divGalTableList", '', '관심문서함 등록/수정', strURL, vwidth, vheight, "iframe", '');
+    // 2012.11.12 myungwan.jin@samyang.com 크기조정 기능 제외
+    //CFN_OpenWindow(strURL, "", vwidth, vheight, "resize");
+    CFN_OpenWindow(strURL, "", vwidth, vheight, "resize"); //lka 파폭 스크롤 생기지 않는 오류로 인하여 수정 20121228 CFN_OpenWindow(strURL, "", vwidth, vheight, "");
+}
+
+//관심문서함 저장
+function fnFolder(strState, pObj) {
+    ApvMaster_SaveTreeExtendInfo();
+    var folderName = $('#txtFolderAdd38').val();//폴더명
+    var folderid = hidSelFolderid;// 폴더 아이디 
+    var muid = Common.GetSession("UR_Code");
+    var addlistFolderName = hidSelFolderName;// 추가되는 폴더 명 
+    var parentsid = hidSelFolderName;//parentsid
+    var folderSort = "1";//foldersort
+    var folderLevel = ""; //선택된 폴더 LEVEL
+    var sItems = "";
+
+
+    var tmp_foldername = "";
+    if (strState == 'new') {
+    	tmp_foldername = folderName;
+    }
+    else if (strState == 'save' || strState == 'update') {
+    	tmp_foldername = hidSChangeName;
+    } else if (strState == 'delete') {
+    	tmp_foldername = CFN_GetCtrlById("selectFolderName").value;
+    }
+    if (tmp_foldername.indexOf("&") > -1
+			|| tmp_foldername.indexOf("<") > -1
+			|| tmp_foldername.indexOf(">") > -1
+			|| tmp_foldername.indexOf("\"") > -1
+			|| tmp_foldername.indexOf("'") > -1
+			|| tmp_foldername.indexOf("\\") > -1) {
+    	var sb_msg = new StringBuilder();
+    	sb_msg.AppendFormat(Common.GetDic("msg_DictionaryInfo_01"), "&amp;, &lt;, &gt;, &quot;, &apos;, &#x2F;"); // 특수문자 [{0}]는 사용할 수 없습니다.
+    	alert(sb_msg.ToString());
+    	$(pObj).val("");
+    	//$(pObj).parent().hide();
+    	ApvUserfolderList();
+    	return false;
+    }
+
+
+    if (strState == 'save' || strState == 'new') {
+        var m_mode = "foldersave";
+        var m_parentid = (CFN_GetCtrlById("selectFolderID").value == "") ? "0|0" : CFN_GetCtrlById("selectFolderID").value;
+        var folderownerid = muid;
+        if (strState == 'new') {
+            m_parentid = "0|0";//빈칸으로 들어가야 1차 폴더를 생성
+            folderid = '';
+            folderLevel = 1;
+        } else {
+            //if (parentsid != '0') { Common.Warning("<=GetDic("lbl_apv_donotaddfolder")>"); return; }//하위 2차 폴더 추가 못하게 
+        	//folderLevel = "2";
+        	folderLevel = $(pObj).attr("fdepth");
+        	folderLevel = (folderLevel * 1) + 1;
+            folderName = hidSChangeName;
+            folderownerid = hidSFolderownerid;
+            //m_parentid = hidSelFolderid;
+        	//m_parentid = hidParentid != "0" ? hidParentid : hidSelFolderid;
+            m_parentid = hidSelFolderid;
+
+        }
+
+        //if (folderSort == "") { Common.Warning("<=GetDic("lbl_apv_folder_sort_check")>"); return; }//sort 반드시 추가  
+
+        /*
+        1차폴더를 추가할 경우 forlderName이 필요하고, 
+        하위 폴더를 추가 할 경우 addlistfolderName이 필요함 
+        addlistFolderName의 값의 여부에 따라 변경 함 _최우석
+        값이 없으면 1차폴더 값이 있으면 하위폴더 
+        */
+        /*
+         hidSelFoldermuId = "";
+        hidSelFolderid = "";
+        hidSelFolderName = "";
+        hidSFolderownerid = "";
+        hidSChangeName = "";
+        */
+
+		// 20171212 hpark 보안취약사항
+    	//var sXML = "<Items><mode>INSERT</mode><folderid></folderid><foldername><![CDATA[" + folderName + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + folderownerid + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[" + "1" + "]]></sort><level><![CDATA[" + folderLevel + "]]></level></Items>";
+        var sXML = "<Items><mode>INSERT</mode><folderid></folderid><foldername><![CDATA[" + folderName + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + "" + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[" + "1" + "]]></sort><level><![CDATA[" + folderLevel + "]]></level></Items>";
+
+        var szURL = "UserFolder.aspx";
+
+        CFN_CallAjax(szURL, sXML, function (data) {
+            receiveapvHTTP(data);
+        }, false, "xml");   // listitems.js
+    } else if (strState == 'update') {
+        var m_folderid = hidSelFolderid;
+        var m_mode = "foldersave";
+        var m_parentid = hidSelFolderid;
+        var folderownerid = hidSFolderownerid;
+        //hidSChangeName 전역변수로 넣어 두고있음 
+
+    	// 20171212 hpark 보안취약사항
+    	//var sXML = "<Items><mode>MODIFY</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + hidSChangeName + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + folderownerid + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[" + "1" + "]]></sort><level><![CDATA[" + "1" + "]]></level></Items>";
+        var sXML = "<Items><mode>MODIFY</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + hidSChangeName + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + "" + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[" + "1" + "]]></sort><level><![CDATA[" + "1" + "]]></level></Items>";
+
+        var szURL = "UserFolder.aspx";
+
+        CFN_CallAjax(szURL, sXML, function (data) {
+            receiveapvHTTP(data);
+        }, false, "xml");   // listitems.js
+
+    } else if (strState == 'delete') {
+        var m_folderid = folderid;
+        var m_mode = "foldersave";
+        var m_parentid = folderid;
+        var folderownerid = muid;
+    	//if (ownerid != "") folderownerid = ownerid;
+
+    	// 20171212 hpark 보안취약사항
+    	//var sXML = "<Items><mode>DELETE</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + CFN_GetCtrlById("selectFolderName").value + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + folderownerid + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[0]]></sort><level><![CDATA[0]]></level></Items>";
+        var sXML = "<Items><mode>DELETE</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + CFN_GetCtrlById("selectFolderName").value + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + "" + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[0]]></sort><level><![CDATA[0]]></level></Items>";
+
+        var szURL = "UserFolder.aspx";
+        CFN_CallAjax(szURL, sXML, function (data) {
+            receiveapvHTTP(data);
+        }, false, "xml");   // listitems.js
+    }
+
+}
+
+function receiveapvHTTP(dataresponseXML) {
+    var xmlReturn = dataresponseXML;
+    var errorNode = $(xmlReturn).find("response > error");
+    if (errorNode.length > 0) {
+        Common.Error("Desc: " + $(errorNode).text());
+    	//	            alert("Desc: " + $(errorNode).text());
+        ApvUserfolderList();
+        return;
+    }
+    ApvUserfolderList();
+
+}
+
+// 새 폴더 만들기(hover 아이콘) 관심문서함  아래쪽 div
+function folderMaster_btnNewCategory_OnClick(pStrMenuID) {
+    $('#appDownStep').show();
+    var oLeft = $("#left_" + pStrMenuID);
+    var oLeftSub = $("#" + oLeft.attr("id").replace("left_", "leftSub_"));
+    var sFolderAddID = oLeft.attr("id").replace("left_", "txtFolderAdd");
+    var nDepth = parseInt(oLeftSub.attr("depth"), 10);
+    var sbNewFolderHTML = new StringBuilder();
+
+    sbNewFolderHTML.AppendFormat("<div class=\"l-lnb-tree__item-inside l-lnb-tree__item-inside--write\" style='width:80%'");
+    sbNewFolderHTML.AppendFormat("<input class=\"l-lnb-tree__input-text\" type=\"text\" id=\"{0}\" pfid=\"{1}\"   onkeypress=\"ApvMaster_txtFolderAdd_OnKeyPress(event, this);\" onblur=\"ApvMaster_txtFolderAdd_OnBlur(this);\"   >", sFolderAddID, oLeft.attr("fid"));
+    sbNewFolderHTML.Append("<button class=\"l-lnb-tree__function-btn\"><i class=\"i-edit\"></i></button>");
+    sbNewFolderHTML.Append("</div>");
+    $('#appDownStep').html(sbNewFolderHTML.ToString());
+    $('#txtFolderAdd38').focus();
+}
+
+//이벤트
+function ApvMaster_SetEvent() {
+    try {
+        // 트리 클릭 이벤트
+        $("[id^='menu_2']").on('click', function (e) {
+            //ApvMaster_OnClick($(this).attr("id"), 1);
+        });
+        $("[id^='menu_2'][foldername='']").on('dblclick', function (e) {
+            //ApvMaster_OnClick($(this).attr("id"), 2);
+        });
+
+        // lnb section content 열기/닫기
+        $('#divLeftFolerTree .l-lnb-tree__section-folding-button').on('click', function (e) {
+            e.preventDefault();
+            $(this).toggleClass('l-lnb-tree__section-folding-button--fold');
+            $(this).parents('.l-lnb-tree__section').toggleClass('l-lnb-tree__section--fold');
+            MailMaster_SaveTreeExtendInfo();
+
+            return false;
+        });
+        // lnb list 열기/닫기
+        $('#divLeftFolerTree .l-lnb-tree__folding-button').on('click', function (e) {
+            e.preventDefault();
+            $(this).toggleClass('l-lnb-tree__folding-button--fold');
+            $(this).parent().parent().toggleClass('l-lnb-tree__item--fold');
+            MailMaster_SaveTreeExtendInfo();
+
+            return false;
+        });
+
+        // Context 메뉴
+        $(document).on("contextmenu", function (e) {
+            //return false;
+        });
+
+        $("[id^='menu_2']").on('contextmenu', function (e) {
+            e.preventDefault();
+            var sFoldermuId = "";
+            var sFolderid = "";
+            var sFolderName = "";
+            var sBaseName = "";
+            var sContextMenuType = "DEFAULT";
+            var oEventElement = (e.target) ? e.target : e.srcElement;
+
+            if (!oEventElement)
+                return false;
+
+            oEventElement = $(oEventElement);
+            //if (oEventElement.attr('depth') == '2') { alert(Common.GetDic("lbl_apv_userfolderdept2")); return;}
+            sFoldermuId = oEventElement.attr("id");
+            sFolderid = oEventElement.attr("folderid");
+            sFolderName = decodeURIComponent(oEventElement.attr("foldername"));
+            hidSFolderownerid = oEventElement.attr("ownerid");
+            hidParentid = oEventElement.attr("parentid");
+            hidPath = oEventElement.attr("depth");
+            hidCount = oEventElement.attr("chcount") == undefined ? 0 : oEventElement.attr("chcount");
+            sBaseName = "DEFAULT";
+
+
+            if (sBaseName == "") {
+                sContextMenuType = "DEFAULT";
+            } else if (sBaseName == "root") {
+                sContextMenuType = "ROOT";
+            } else if (sBaseName == "deleteditems") {
+                sContextMenuType = "DELETEDITEMS";
+            } else {
+                sContextMenuType = "BASE";
+            }
+            //ApvUserfolderList();
+            ApvMaster_ContextMenu(e, sFoldermuId, sFolderid, sFolderName, sContextMenuType);
+        });
+
+
+    } catch (ex) {
+    }
+
+}
+
+function ApvMaster_SetEventList() {
+    $('.l-lnb__head-button').on('click', function (e) {
+        $("div[class*='l-lnb-tree__item']").each(function () {
+            $(this).removeClass('l-lnb-tree__item--select')
+        })
+    });
+
+    // lnb 열기 닫기
+    $('.l-lnb__btn-fold').on('click', function (e) {
+        $('.l-aside').toggleClass('l-aside--folding');
+        return false;
+    });
+
+    // lnb section content 열기/닫기
+    $('.l-lnb-tree__section-heading').on('click', function (e) {
+        $(this).prev().toggleClass('l-lnb-tree__section-folding-button--fold');
+        $(this).parents('.l-lnb-tree__section').toggleClass('l-lnb-tree__section--fold');
+
+        return false;
+    });
+    // lnb section content 열기/닫기
+    $('.l-lnb-tree__section-folding-button').on('click', function (e) {
+        $(this).toggleClass('l-lnb-tree__section-folding-button--fold');
+        $(this).parents('.l-lnb-tree__section').toggleClass('l-lnb-tree__section--fold');
+
+        return false;
+    });
+    // lnb list 열기/닫기
+    $('.l-lnb-tree__folding-button').on('click', function (e) {
+        $(this).toggleClass('l-lnb-tree__folding-button--fold');
+        $(this).parent().toggleClass('l-lnb-tree__item--fold');
+
+        return false;
+    });
+}
+
+//오른쪽 클릭했을때 context
+function ApvMaster_ContextMenu(pEvent, pStrFolderMUID, pStrFolderid, pStrFolderName, pStrContextMenuType) {
+    try {
+        wBolMasterIsFolderAdding = false;
+        wBolMasterIsFolderRenaming = false;
+        hidSelFoldermuId = pStrFolderMUID;
+        hidSelFolderid = pStrFolderid;
+        hidSelFolderName = pStrFolderName;
+
+        var nItemCount = 0;
+        var aStrDicInfo = Common.GetDicAll("lbl_Mail_CreateNewFolder;lbl_Mail_Rename;lbl_Move;lbl_Mail_Zeroing;lbl_delete");
+        var sbHtml = new StringBuilder();
+        sbHtml.Append("<div class=\"l-lnb-context l-lnb-context--view\" style=\"top:0px; left:0px;\">");
+        switch ("DEFAULT") {
+            case "ROOT":
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:MailMaster_aNewFolder_OnClick();\">{0}</a>", aStrDicInfo["lbl_Mail_CreateNewFolder"]);  // 새 폴더 만들기
+                nItemCount = 1;
+                break;
+            case "BASE":
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:MailMaster_aNewFolder_OnClick();\">{0}</a>", aStrDicInfo["lbl_Mail_CreateNewFolder"]);  // 새 폴더 만들기
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:MailMaster_aEmptyFolder_OnClick();\">{0}</a>", aStrDicInfo["lbl_Mail_Zeroing"]);  // 비우기
+                nItemCount = 2;
+                break;
+            case "DELETEDITEMS":
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:fnFolder('',this);\">{0}</a>", aStrDicInfo["lbl_Mail_CreateNewFolder"]);  // 새 폴더 만들기
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:fnFolder('',this);\">{0}</a>", aStrDicInfo["lbl_Mail_Zeroing"]);  // 비우기
+                nItemCount = 2;
+                break;
+            default:
+            case "DEFAULT":
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:fnFolderNew();\">{0}</a>", aStrDicInfo["lbl_Mail_CreateNewFolder"]);  // 새 폴더 만들기
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:fnFolderUp();\">{0}</a>", aStrDicInfo["lbl_Mail_Rename"]);  // 이름바꾸기
+                sbHtml.AppendFormat("<a class=\"l-lnb-context__item\" href=\"javascript:fnFolderDel();\">{0}</a>", aStrDicInfo["lbl_delete"]);  // 삭제
+                //sbHtml.AppendFormat("<a class=\"l-lnb-context__item;\">{0}</a>", aStrDicInfo["lbl_Move"]);  // 이동
+                //sbHtml.AppendFormat("<a class=\"l-lnb-context__item);\">{0}</a>", aStrDicInfo["lbl_Mail_Zeroing"]);  // 비우기
+                nItemCount = 3;
+                break;
+        }
+        sbHtml.Append("</div>");
+
+        var nHeight = 10 + (nItemCount * 32);
+
+        wStrContextHTML = sbHtml.ToString();
+        var sAction = "Common.ShowContext(\"\", \"BalloonFolderContextMenu\", \"\", wStrContextHTML, \"120\", \"" + nHeight + "\", \"" + pEvent.clientX + "px\", \"" + pEvent.clientY + "px\", null, \"left\", null);";
+        //var sAction = "Common.ShowBalloon(...) //말풍선
+        setTimeout(sAction, 200);
+    } catch (ex) {
+
+    }
+}
+
+//오른쪽 클릭 -> 하위폴더 추가
+function fnFolderNew() {
+    Common.closeBalloon('BalloonFolderContextMenu');
+
+    var oLeft = $("#" + hidSelFoldermuId);
+    var oLeftSub = $("#_sub" + hidSelFoldermuId);
+    var oLeftSub_apv = oLeft.attr("id").replace("menu_2", "txtFolderAdd")
+    var sFolderAddID = oLeft.attr("id").replace("menu_2_", "txtFolderAdd");
+    var nDepth = oLeft.attr("depth");
+    var sbNewFolderHTML = new StringBuilder();
+
+    sbNewFolderHTML.AppendFormat("<div class=\"l-lnb-tree__item-inside l-lnb-tree__item-inside--write\" style='width:80%; margin-left: 20px'");
+    sbNewFolderHTML.AppendFormat("<input class=\"l-lnb-tree__input-text\" type=\"text\" id=\"{0}\" pfid=\"{1}\" fDepth=\"{2}\" onkeypress=\"if(event.keyCode==13) {hidSChangeName=$('#{0}').val(); fnFolder('save',this);}else if(event.keyCode==27){$(this).hide()}\"  >", sFolderAddID, oLeft.attr("fid"), nDepth);// onblur=\"ApvMaster_txtFolderAdd_OnBlur(this);\"
+    sbNewFolderHTML.Append("<button class=\"l-lnb-tree__function-btn\"><i class=\"i-edit\"></i></button>");
+    sbNewFolderHTML.Append("</div>");
+    $("#" + oLeftSub_apv).html(sbNewFolderHTML.ToString());
+    //oLeftSub.focus();
+    $("#" + sFolderAddID).focus();
+
+
+}
+
+//오른쪽 클릭 -> 이름변경
+function fnFolderUp() {
+    Common.closeBalloon('BalloonFolderContextMenu');
+    var oLeft = $("#" + hidSelFoldermuId);
+    var oLeftSub = $("#" + hidSelFoldermuId);
+    var sFolderAddID = oLeft.attr("id").replace("menu_2", "txtFolderAdd");
+    var baseFolderName = oLeft.attr("foldername");
+    var nDepth = parseInt(oLeftSub.attr("depth"), 10);
+    var sbNewFolderHTML = new StringBuilder();
+    sbNewFolderHTML.AppendFormat("<div class=\"l-lnb-tree__item-inside l-lnb-tree__item-inside--write\" style='width:80%'");
+    sbNewFolderHTML.AppendFormat("<input class=\"l-lnb-tree__input-text\" type=\"text\" id=\"{0}\" pfid=\"{1}\" onkeypress=\"if(event.keyCode==13) {hidSChangeName=$('#{0}').val(); fnFolder('update',this);}else if(event.keyCode==27){$(this).hide()}\" onblur=\"ApvMaster_txtFolderChange_OnBlur(this);\" >", sFolderAddID, oLeft.attr("fid")); //
+    sbNewFolderHTML.Append("<button class=\"l-lnb-tree__function-btn\"><i class=\"i-edit\"></i></button>");
+    sbNewFolderHTML.Append("</div>");
+    oLeftSub.prepend(sbNewFolderHTML.ToString());
+    //oLeftSub.focus();
+
+    $('#' + sFolderAddID).val(decodeURIComponent(baseFolderName));
+
+    $("#" + sFolderAddID).focus();
+
+
+}
+
+//오른쪽 클릭 -> 삭제
+function fnFolderDel() {
+    Common.closeBalloon('BalloonFolderContextMenu');
+    //if (trim(document.getElementById("foldername02").value) == "") { document.getElementById("foldername02").value = ""; Common.Warning("<=GetDic("msg_apv_existFolder")%>"); return; }
+    var m_folderid = hidSelFolderid;
+    var m_mode = "foldersave";
+    var m_parentid = hidSelFolderid;
+    var folderownerid = hidSFolderownerid;
+    if (hidPath >= 1 && hidCount > 0) { Common.Warning(Common.GetDic("msg_apv_existFolder")); return; } //root이면서 하위폴더가 존재하면 삭제 X
+
+    
+	//if (ownerid != "") folderownerid = ownerid;
+
+	// 20171212 hpark 보안취약사항
+	//var sXML = "<Items><mode>DELETE</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + CFN_GetCtrlById("selectFolderName").value + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + folderownerid + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[0]]></sort><level><![CDATA[0]]></level></Items>";
+    var sXML = "<Items><mode>DELETE</mode><folderid>" + m_folderid + "</folderid><foldername><![CDATA[" + CFN_GetCtrlById("selectFolderName").value + "]]></foldername><foldermode>N</foldermode><uid><![CDATA[" + "" + "]]></uid><pid><![CDATA[" + m_parentid + "]]></pid><sort><![CDATA[0]]></sort><level><![CDATA[0]]></level></Items>";
+
+    var szURL = "UserFolder.aspx";
+    CFN_CallAjax(szURL, sXML, function (data) {
+
+        if ($(data) != null) {
+            var errorNode = $(data).find("response > error");
+            if ($(errorNode).length > 0) {
+                alert("Desc: " + errorNode.text());
+            } else {
+                Common.Inform($(data).find("response").text(), 'Information Dialog', function (result) {
+                    ApvUserfolderList();
+                });
+            }
+        }
+        //receiveapvHTTP(data);
+    }, false, "xml");   // listitems.js
+
+}
+
+
+//동적으로 그리는 함수
+function ApvUserfolderList() {
+    var szURL = "/Approval/Controls/ApprovalExecuteWebService.asmx/getUserFolderList";
+    //var Param = String.format("{ messageID:'{0}'}", CountAttach);
+	//var Param = String.format("{ messageID:'{0}'}", CountAttach);
+	try {
+		var oResult = CFN_CallAjaxJson(szURL, "{pUR_Code : '" + _UR_Code + "'}", false, null);
+		oResult = $.parseJSON(oResult);
+		var htmlReturn = oResult.d;
+		$('#Per_Folder').html(''); // 다시 그리기 위한 지우기
+		$('#Per_Folder').html(htmlReturn);
+	
+	/*
+    var errorNode = $(xmlReturn).find("response > error");
+    if (errorNode.length > 0) {
+        Common.Error("Desc: " + errorNode.text());
+        return false;
+    }
+    else {
+        var elmlist = $(xmlReturn).find("NewDataSet > Table");
+        var elmlistCount = $(xmlReturn).find("NewDataSet > Table2");// count check
+
+        var per_folderList = '';
+        $(elmlist).each(function (i, elm) {
+            var folder_id = $(elm).find("FOLDER_ID").text(); //폴더id
+            var folder_name = $(elm).find("FOLDER_NAME").text(); //폴더명
+            var folder_mode = $(elm).find("FOLDER_MODE").text(); //폴더모드
+            var owner_id = $(elm).find("OWNER_ID").text(); //폴더사용자id
+            var parents_id = $(elm).find("PARENTS_ID").text(); //폴더 parent id 
+            var sort = $(elm).find("SORT").text(); //폴더 sort
+            var level = $(elm).find("LEVEL").text(); //폴더 level
+            var parent_id = $(elm).find("PARENTS_ID").text(); //parent_id
+            var ChCount = $(elm).find("ChCount").text(); //하위폴더갯수
+
+            //var checkChild = false;
+            //$(elmlistCount).each(function (e,clem) {
+            //    if (folder_id = $(clem).find("FOLDER_ID").text()) {
+            //        checkChild = true;
+            //    }
+            //});
+            if (level == '1') {
+                //level1
+                per_folderList += "<div class='l-lnb-tree__item'>";
+                if (ChCount > 0) {
+                    per_folderList += "<button class='l-lnb-tree__folding-button' style='left: 30px;'><i class='i-arrow--page_right'>&nbsp;</i></button>";
+                }
+                per_folderList += "<div class='l-lnb-tree__item-inside' style='padding-left: 50px;'>";
+                per_folderList += "<a class='l-lnb-tree__item-link' depth='1' id='menu_2_" + folder_id + "' href='javascript:XFN_SetHashUrl(\"menu_2_" + folder_id + ", false\")' menuurl='/Approval/ListFolder.aspx?system=Approval&uid=" + folder_id + "&location=UFOLDER&FOLDERMODE=" + folder_mode + "&ownerid=" + owner_id + "&location_name=" + encodeURIComponent(folder_name) + "' foldermode='" + folder_mode + "' ownerid='" + owner_id + "' foldername='" + encodeURIComponent(folder_name) + "' folderid='" + folder_id + "' parentid='" + parent_id + "' ChCount='" + ChCount + "'   >" + folder_name + "</a>";
+                per_folderList += "<button class='l-lnb-tree__function-btn' onclick='javascript:ApvMaster_btnTreeEdit_OnClick(\"menu_2_" + folder_id + "\");'><i class='i-edit'></i></button>";
+                per_folderList += "</div>";
+                per_folderList += "<div id=txtFolderAdd_" + folder_id + "  style ='margin-left:20px;width:80%'></div>";
+                per_folderList += "<button class='l-lnb-tree__function-btn' onclick='javascript:ApvMaster_btnTreeEdit_OnClick(\"menu_2_" + folder_id + "\");'><i class='i-edit'></i></button>";
+                $(elmlist).each(function (a, elm_sub) {
+                    var folder_id_sub = $(elm_sub).find("FOLDER_ID").text(); //폴더id_sub
+                    var folder_name_sub = $(elm_sub).find("FOLDER_NAME").text(); //폴더명_sub
+                    var folder_mode_sub = $(elm_sub).find("FOLDER_MODE").text(); //폴더모드_sub 
+                    var owner_id_sub = $(elm_sub).find("OWNER_ID").text(); //폴더사용자id_sub
+                    var parents_id_sub = $(elm_sub).find("PARENTS_ID").text(); //폴더 parent id_sub 
+                    var sort_sub = $(elm_sub).find("SORT").text(); //폴더 sort_sub
+                    var level_sub = $(elm_sub).find("LEVEL").text(); //폴더 level_sub
+                    var parent_id_sub = $(elm_sub).find("PARENTS_ID").text(); //parent_id
+
+                    //level2
+                    if (folder_id == parents_id_sub) {
+                        per_folderList += "<div class='l-lnb-tree__list'>";
+                        per_folderList += "<div class='l-lnb-tree__item'>";
+                        per_folderList += "<div class='l-lnb-tree__item-inside' style='padding-left: 60px;'>";
+                        per_folderList += "<a class='l-lnb-tree__item-link'depth='2' id='menu_2_" + folder_id_sub + "' href='javascript:XFN_SetHashUrl(\"menu_2_" + folder_id_sub + ", false\")' menuurl='/Approval/ListFolder.aspx?system=Approval&uid=" + folder_id_sub + "&location=UFOLDER&FOLDERMODE=" + folder_mode_sub + "&ownerid=" + owner_id_sub + "&location_name=" + encodeURIComponent(folder_name_sub) + "' foldermode='" + folder_mode_sub + "' ownerid='" + owner_id_sub + "' foldername='" + encodeURIComponent(folder_name_sub) + "' folderid='" + folder_id_sub + "' parentid='" + parent_id_sub + "'>" + folder_name_sub + "</a>";
+                        per_folderList += "<button class='l-lnb-tree__function-btn' onclick='javascript:ApvMaster_btnTreeEdit_OnClick(\"menu_2_" + folder_id_sub + "\");'><i class='i-edit'></i></button>";
+                        per_folderList += "</div></div></div>";
+                        per_folderList += "<div id=txtFolderAdd_" + folder_id_sub + "  style ='margin-left:20pxwidth:80%'></div>";
+                    }
+                });//level2
+
+                per_folderList += "</div>";
+            }
+
+        });
+        $('#Per_Folder').html(per_folderList);
+    }
+	*/
+		// 결재이벤트 설정
+		ApvMaster_SetEvent();
+		// 리스트 이벤트 설정
+		ApvMaster_SetEventList();
+
+
+		// 이전에 펼쳐진 폴더 확장
+		var sExtendInfo = window.sessionStorage.getItem("ApvLeftTreeExtendInfo");
+		if (sExtendInfo != undefined && sExtendInfo != "") {
+			var aStrExtendInfo = sExtendInfo.split('|');
+			for (var nIndex = 0; nIndex < aStrExtendInfo.length; nIndex++) {
+				if (aStrExtendInfo[nIndex] != "") {
+					var oLeft = $("#" + aStrExtendInfo[nIndex]);
+					var nDepth = parseInt(oLeft.attr("depth"));
+					if (nDepth == 0) {
+						if (oLeft.closest(".l-lnb-tree__section").length > 0 && oLeft.closest(".l-lnb-tree__section").attr("class").indexOf("l-lnb-tree__section--fold") == -1) {
+							oLeft.closest(".l-lnb-tree__section").addClass("l-lnb-tree__section--fold");
+							oLeft.closest(".l-lnb-tree__section").find(".l-lnb-tree__section-folding-button").eq(0).addClass("l-lnb-tree__section-folding-button--fold");
+						}
+					} else {
+						if (oLeft.closest(".l-lnb-tree__item").length > 0 && oLeft.closest(".l-lnb-tree__item").attr("class").indexOf("l-lnb-tree__item--fold") == -1) {
+							oLeft.closest(".l-lnb-tree__item").addClass("l-lnb-tree__item--fold");
+							oLeft.closest(".l-lnb-tree__item").find(".l-lnb-tree__folding-button").eq(0).addClass("l-lnb-tree__folding-button--fold");
+						}
+					}
+				}
+			}
+		}
+
+
+	} catch (e) {
+		alert(e.message)
+		return false;
+	}
+}
+
+// 트리 확장 정보 저장
+function ApvMaster_SaveTreeExtendInfo() {
+    var sExtendInfo = "";
+    $("[id^='menu_2_']").each(function () {
+        var nDepth = parseInt($(this).attr("depth"));
+        if ($(this).closest(".l-lnb-tree__item").attr("class").indexOf("l-lnb-tree__item--fold") > -1) {
+            sExtendInfo += $(this).attr("id") + "|";
+        }
+    });
+
+    window.sessionStorage.setItem("ApvLeftTreeExtendInfo", sExtendInfo);
+}
+
+
+// 이름바꾸기(hover 아이콘)
+function ApvMaster_btnTreeEdit_OnClick(pStrMenuID) {
+    //ApvUserfolderList();
+    var oLeft = $("#" + pStrMenuID);
+    var oLeftSub = $("#" + pStrMenuID);
+    var sFolderAddID = oLeft.attr("id").replace("menu_2", "txtFolderAdd");
+    var baseFolderName = oLeft.attr("foldername");
+    var nDepth = parseInt(oLeftSub.attr("depth"), 10);
+    var sbNewFolderHTML = new StringBuilder();
+    hidSelFolderid = oLeft.attr("folderid");
+    sbNewFolderHTML.AppendFormat("<div class=\"l-lnb-tree__item-inside l-lnb-tree__item-inside--write\" style='width:80%'");
+    sbNewFolderHTML.AppendFormat("<input class=\"l-lnb-tree__input-text\" type=\"text\" id=\"{0}\" pfid=\"{1}\" onkeypress=\"if(event.keyCode==13) {hidSChangeName=$('#{0}').val(); fnFolder('update',this);}else if(event.keyCode==27){$(this).hide()}\" onblur=\"ApvMaster_txtFolderChange_OnBlur(this);\" >", sFolderAddID, oLeft.attr("fid"));
+    sbNewFolderHTML.Append("<button class=\"l-lnb-tree__function-btn\"><i class=\"i-edit\"></i></button>");
+    sbNewFolderHTML.Append("</div>");
+    oLeftSub.prepend(sbNewFolderHTML.ToString());
+    //oLeftSub.focus();
+
+    $('#' + sFolderAddID).val(decodeURIComponent(baseFolderName));
+
+    $("#" + sFolderAddID).focus();
+
+}
+function ApvMaster_txtFolderChange_OnBlur(pObjThis) {
+    if ($(pObjThis).val().replace(/ /gi, "").trim() != "") {
+        //SetFolderAdd($(pObjThis).attr("pfid"), $(pObjThis).val().trim());
+        hidSelFolderid = $(pObjThis).parent().attr("folderid");
+        hidSChangeName = $(pObjThis).parent().attr("foldername");
+        hidSFolderownerid = $(pObjThis).parent().attr("ownerid");
+        hidSChangeName = $('#txtFolderAdd_' + hidSelFolderid).val();
+        fnFolder('update', pObjThis);
+        $(pObjThis).parent().hide();
+
+    } else {
+        $(pObjThis).hide();
+    }
+}
+
+
+//onblur이벤트 
+function ApvMaster_txtFolderAdd_OnBlur(pObjThis) {
+    if ($(pObjThis).val().replace(/ /gi, "").trim() != "") {
+        //SetFolderAdd($(pObjThis).attr("pfid"), $(pObjThis).val().trim());
+        if ($(pObjThis).attr('id') == 'txtFolderAdd38') {
+        	fnFolder('new', pObjThis);
+            $(pObjThis).parent().hide();
+        } else {
+
+            hidSelFoldermuId = $(pObjThis).attr("id");
+            hidSelFolderid = $(pObjThis).attr("folderid");
+            hidSelFolderName = $(pObjThis).attr("foldername");
+            hidSFolderownerid = $(pObjThis).attr("ownerid");
+            fnFolder('save', pObjThis);
+
+        }
+    } else {
+        $(pObjThis).hide();
+    }
+
+    //if ($(pObjThis).attr('id') == 'txtFolderAdd38') {
+    //    $(pObjThis).parent().hide();
+    //} else {
+    //    $(pObjThis).hide();
+    //}
+}
+
+
+// 새 폴더 만들기 TextBox의 KeyPress 이벤트
+function ApvMaster_txtFolderAdd_OnKeyPress(pEvent, pObjThis) {
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    switch (String(sKeyCode)) {
+        case "13":	// Enter
+            fnFolder('new',this);
+            $(pObjThis).parent().hide();
+            break;
+        case "27":  // ESC
+            $(pObjThis).parent().hide();
+            break;
+    }
+}
+
+// 클릭 이벤트 처리 미정
+function ApvMaster_OnClick(pStrMenuID, pIntClickCount) {
+    if (wIntLeftMenuClickCount != 2) {
+        wIntLeftMenuClickCount = pIntClickCount;
+    }
+    //setTimeout("MailMaster_LeftTree_OnClick_After('" + pStrMenuID + "');", 200);
+}
+// 검색 Textbox KeyDown 이벤트
+function ApprovalFolder_SearchText_OnKeyDown(event) {
+    if (!event) return;
+
+    var sSearchText = $("#inputSearch").val().replace(/\s/gi, "");
+    var sKeyCode = (window.event) ? event.keyCode : event.which;
+    sKeyCode = String(sKeyCode);
+
+    if ($("#divSearchArea").find("li").length > 0) {
+        switch (sKeyCode) {
+            case "38": // UP
+                if ($("#divSearchArea").find("> ul > li.auto_sel").length > 0) {
+                    if ($("#divSearchArea").find("> ul > li.auto_sel").prev().length > 0) {
+                        $("#divSearchArea").find("> ul > li.auto_sel").removeClass("auto_sel").prev().addClass("auto_sel");
+                    } else {
+                        $("#divSearchArea").find("> ul > li.auto_sel").removeClass("auto_sel");
+                        $("#divSearchArea").find("> ul > li").last().addClass("auto_sel");
+                    }
+                } else {
+                    $("#divSearchArea").find("> ul > li").first().addClass("auto_sel");
+                }
+
+                var oAutoSelPosition = $("#divSearchArea").find("> ul > li.auto_sel").position();
+                var nSearchListShowSection = $("#divSearchArea").scrollTop() + $("#divSearchArea").height();
+                if (oAutoSelPosition.top < $("#divSearchArea").scrollTop() || oAutoSelPosition.top > nSearchListShowSection) {
+                    $("#divSearchArea").scrollTop(oAutoSelPosition.top);
+                }
+                break;
+            case "40": // DOWN
+                if ($("#divSearchArea").find("> ul > li.auto_sel").length > 0) {
+                    if ($("#divSearchArea").find("> ul > li.auto_sel").next().length > 0) {
+                        $("#divSearchArea").find("> ul > li.auto_sel").removeClass("auto_sel").next().addClass("auto_sel");
+                    } else {
+                        $("#divSearchArea").find("> ul > li.auto_sel").removeClass("auto_sel");
+                        $("#divSearchArea").find("> ul > li").first().addClass("auto_sel");
+                    }
+                } else {
+                    $("#divSearchArea").find("> ul > li").first().addClass("auto_sel");
+                }
+
+                var oAutoSelPosition = $("#divSearchArea").find("> ul > li.auto_sel").position();
+                var nSearchListShowSection = $("#divSearchArea").scrollTop() + $("#divSearchArea").height();
+                if (oAutoSelPosition.top < $("#divSearchArea").scrollTop() || oAutoSelPosition.top > nSearchListShowSection) {
+                    $("#divSearchArea").scrollTop(oAutoSelPosition.top);
+                }
+                break;
+        }
+    }
+}
+
+
+
+// 검색 Textbox KeyUp 이벤트
+function ApprovalFolder_SearchText_OnKeyUp(event) {
+    if (!event) return;
+    else {
+        XFN_CheckXSSCharacter(document.getElementById("inputSearch"));
+
+        var sSearchText = $("#inputSearch").val().replace(/\s/gi, "");
+        var sKeyCode = (window.event) ? event.keyCode : event.which;
+        sKeyCode = String(sKeyCode);
+
+        if (sSearchText.length > 1) {
+            if (sKeyCode == "13") {
+                var oSelected = $("#divSearchArea > ul > li.auto_sel");
+                if (oSelected.length > 0) {
+                    ApprovalFormList_aSearchTypeFolder_OnClick(oSelected.attr("searchtype"));
+                }
+            } else {
+                if ($("#spanSearchAll").length > 0) $("#spanSearchAll").html(sSearchText);
+                if ($("#spanSearchTitle").length > 0) $("#spanSearchTitle").html(sSearchText);
+                if ($("#spanSearchDrafter").length > 0) $("#spanSearchDrafter").html(sSearchText);
+                if ($("#spanSearchDrafterOU").length > 0) $("#spanSearchDrafterOU").html(sSearchText);
+
+                // Bpm 검색추가:20171018
+                if ($("#spanSearchDocType").length > 0) $("#spanSearchDocType").html(sSearchText);
+                if ($("#spanSearchDocNo").length > 0) $("#spanSearchDocNo").html(sSearchText);
+
+                //$("#spanSearchContent").html(sSearchText);
+
+                // 대외공문 추가
+                if ($("#spanSearchAllOfficial").length > 0) $("#spanSearchAllOfficial").html(sSearchText);
+                if ($("#spanSearchUserIDOfficial").length > 0) $("#spanSearchUserIDOfficial").html(sSearchText);
+                if ($("#spanSearchUserNameOfficial").length > 0) $("#spanSearchUserNameOfficial").html(sSearchText);
+                if ($("#spanSearchUserDeptOfficial").length > 0) $("#spanSearchUserDeptOfficial").html(sSearchText);
+
+                // HMI업무뷰 추가(2019-08-30, 강영일)
+                if ($("#spanSearchAll").length > 0) $("#spanSearchDocTitl").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchEmpNo").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchDeptNm").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchPsntApvName").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchProjectCode").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchBAn").html(sSearchText);
+
+                if ($("#spanSearchAll").length > 0) $("#spanSearchClassId").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchCode").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchDeptNameRefValue").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchDescription").html(sSearchText);
+
+                if ($("#spanSearchAll").length > 0) $("#spanSearchType").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchEmplNo").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchEmplName").html(sSearchText);
+                if ($("#spanSearchAll").length > 0) $("#spanSearchEmplRank").html(sSearchText);
+
+                $("#divSearchArea").show();
+            }
+        } else {
+            //$("#divSearchArea").find("> ul > li").first().addClass("auto_sel");
+            $("#divSearchArea").hide();
+        }
+    }
+}
+
+/********************************************************* Tab UI *****************************************************************/
+
+// 탭 클릭
+function Master_Tab_OnClick(pStrTabID, reFresh) {
+    try {
+        $("div[name='divTabContent'][id!='divTabContent_" + pStrTabID + "']").hide();
+        $("#divTabContent_" + pStrTabID).show();
+
+        $("div[name='divTabItem']").removeClass("l-contents-tabs__item--active");
+        $("#divTabItem_" + pStrTabID).addClass("l-contents-tabs__item--active");
+
+        $("#hidMasterCurrentTab").val(pStrTabID);
+
+        var sTitle = "";
+        if (pStrTabID == "Main") {
+            if ($("#hidMasterCurrentMenuID").val() == "PORTAL") {
+                $("#pathtitle").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                //$("#titlemsg").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                if (g_strApprovalTabUI_YN != "Y") {
+                    $("#titlemsg").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                }
+                else {
+                    $("#titleMsgTab").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                    $("#titleMsgTab").attr("title", Common.GetDic("lbl_ShowApprovalStatus"));
+                }
+                var struid = "PORTAL";
+                g_strUid = "PORTAL";
+                $("#hidMasterCurrentMenuID").val(struid);
+                //XFN_SetHashUrl("left_6", false);
+                //Common.Loading(Common.GetDic("lbl_apv_loading"));
+                //$("#AjaxPageURL").attr("title", );
+                //Common.AjaxLoad("divContentes", Common.GetPgModule("Mybox.Approval"), {}, function () { XFN_LoadingClose(); });
+            }
+            else if ($("#hidMasterCurrentMenuID").val().indexOf("menu_2_") > -1) {
+                var userFolderID = $("#hidMasterCurrentMenuID").val();
+                var userFolderTitle = $("#" + userFolderID).text();
+                $("#pathtitle").html(userFolderTitle);
+                $("#titlemsg").html(userFolderTitle);
+            }
+            else {
+                //XFN_SetHashUrl("left_" + $("#hidMasterCurrentMenuID").val(), false);
+                //$("#hidMasterCurrentMenuID").val()
+                $("#pathtitle").html(Common.GetDic("MN_" + $("#hidMasterCurrentMenuID").val()));
+                $("#titlemsg").html(Common.GetDic("MN_" + $("#hidMasterCurrentMenuID").val()));
+                $("div[name='divTabContent']").hide();
+                $("#divTabContent_Main").show();
+                $("#divTabItem_Main").addClass("l-contents-tabs__item--active");
+            }
+            //}
+        } else {
+            var sMenuID = $("#hidTabMenuID_" + pStrTabID).val();
+            //관심 문서함 구분
+            if (sMenuID.indexOf("menu_2_") > -1) {
+                var userFolderID = $("#hidTabMenuID_" + pStrTabID).val();
+                var userFolderTitle = $("#" + userFolderID).text();
+                $("#pathtitle").html(userFolderTitle);
+                //$("#titlemsg").html(userFolderTitle);
+                if (g_strApprovalTabUI_YN != "Y") {
+                    $("#titlemsg").html(userFolderTitle);
+                }
+                else {
+                    $("#titleMsgTab").html(userFolderTitle);
+                    $("#titleMsgTab").attr("title", userFolderTitle);
+                }
+            }
+            else if (sMenuID == "PORTAL") {
+                $("#pathtitle").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                //$("#titlemsg").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                if (g_strApprovalTabUI_YN != "Y") {
+                    $("#titlemsg").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                }
+                else {
+                    $("#titleMsgTab").html(Common.GetDic("lbl_ShowApprovalStatus"));
+                    $("#titleMsgTab").attr("title", Common.GetDic("lbl_ShowApprovalStatus"));
+                }
+
+                if (reFresh != null && reFresh != undefined && reFresh == "reload") {
+                    $("#ifrTabContent_" + pStrTabID).attr("src", $("#ifrTabContent_" + pStrTabID).attr("src"));
+                }
+            }
+            else {
+                //hidMasterCurrentMenuID
+                var sMenuID = $("#hidTabMenuID_" + pStrTabID).val();
+                $("#pathtitle").html(Common.GetDic("MN_" + sMenuID));
+                if (g_strApprovalTabUI_YN != "Y") {
+                    $("#titlemsg").html(Common.GetDic("MN_" + sMenuID));
+                }
+                else {
+                    //$("#titleMsgTab").html(Common.GetDic("MN_" + sMenuID));
+                    //$("#titleMsgTab").attr("title", Common.GetDic("MN_" + sMenuID));
+                }
+                if (reFresh != null && reFresh != undefined && reFresh == "reload") {
+                    $("#ifrTabContent_" + pStrTabID).attr("src", $("#ifrTabContent_" + pStrTabID).attr("src"));
+                }
+            }
+        }
+    }
+    catch (ex) { }
+    //$("#divContentTitle").text(sTitle);
+
+    XFN_ReSizeSubSystem();
+}
+
+// 탭 닫기
+function Master_TabClose_OnClick(pStrTabID) {
+    if (!e) var e = window.event;
+    if (e) {
+    	e.cancelBubble = true;
+    	if (e.stopPropagation) e.stopPropagation();
+    }
+    var isShowConfirm = false;
+    var current_form = $("#divTabContent_" + pStrTabID).find("iframe[name='ifrTabContent']")[0].contentWindow;
+    if (typeof current_form.isShowCloseMessage != "undefined") {
+        if (typeof current_form.formJson.BODY_CONTEXT.LGY_SYSTEM_ID != "undefined" && current_form.formJson.BODY_CONTEXT.LGY_SYSTEM_ID == "IWF") {
+            if (current_form.formJson.oFormData.mode == "DRAFT" || current_form.formJson.oFormData.mode == "TEMPSAVE") {
+                isShowConfirm = true;
+            }
+        }
+        
+        if (isShowConfirm) {
+            Common.Confirm(Common.GetDic("msg_apv_form_reset"), "Confirmation Dialog", function (result) {
+                if (result) {
+                    setTimeout(function () {
+                        $("#divTabContent_" + pStrTabID).remove();
+                        $("#divTabItem_" + pStrTabID).remove();
+                        if (pStrTabID == $("#hidMasterCurrentTab").val()) {
+                            Master_Tab_OnClick("Main");
+                        }
+                        XFN_ReSizeSubSystem();
+                    }, 200)
+                }
+            });
+        }
+        else {
+            setTimeout(function () {
+                $("#divTabContent_" + pStrTabID).remove();
+                $("#divTabItem_" + pStrTabID).remove();
+
+                if (pStrTabID == $("#hidMasterCurrentTab").val()) {
+                    Master_Tab_OnClick("Main");
+                }
+
+                XFN_ReSizeSubSystem();
+            }, 200)
+        }
+            
+    }
+    else {
+        setTimeout(function () {
+            $("#divTabContent_" + pStrTabID).remove();
+            $("#divTabItem_" + pStrTabID).remove();
+
+            if (pStrTabID == $("#hidMasterCurrentTab").val()) {
+                Master_Tab_OnClick("Main");
+            }
+
+            XFN_ReSizeSubSystem();
+        }, 200)
+    }
+}
+
+function Master_TabClose_OnClick_ByFunction(pStrTabID) {
+    if (!e) var e = window.event;
+    if (e) {
+        e.cancelBubble = true;
+        if (e.stopPropagation) e.stopPropagation();
+    }
+
+    setTimeout(function () {
+        $("#divTabContent_" + pStrTabID).remove();
+        $("#divTabItem_" + pStrTabID).remove();
+
+        if (pStrTabID == $("#hidMasterCurrentTab").val()) {
+            Master_Tab_OnClick("Main");
+        }
+
+        XFN_ReSizeSubSystem();
+    }, 200)
+}
+
+// 탭 더보기
+function Master_aMore_OnClick() {
+    if ($("#divTabMoreList").attr("class").indexOf("l-contents-tabs__more-pop--view") > -1) {
+        //$("#divTabMore").removeClass("l-contents-tabs__more-pop--view");
+        $("#divTabMoreList").removeClass("l-contents-tabs__more-pop--view");
+    } else {
+        //$("#divTabMore").addClass("l-contents-tabs__more-pop--view");
+        $("#divTabMoreList").addClass("l-contents-tabs__more-pop--view");
+    }
+}
+
+// Resize 이벤트
+function XFN_ReSizeSubSystem() {
+    try {
+        // Contents
+        var nContentHeight = parseInt($(window).height(), 10);
+        var nContentWidth = ($(window).width() - $(".l-aside").width());
+        if ($(".l-header").length > 0) {
+            nContentHeight -= $(".l-header").outerHeight(true);
+        }
+        if ($(".l-footer").length > 0) {
+            nContentHeight -= $(".l-footer").outerHeight(true);
+        }
+
+        // Contents 영역 크기 조절
+        $(".l-contents").css("width", nContentWidth + "px");
+        $(".l-contents").css("height", nContentHeight + "px");
+
+        nContentHeight -= $("#divTabMain").outerHeight(true);
+        nContentHeight -= $("#divMasterDashboardArea").height();
+
+        $("div[name='divTabContent']").css("height", nContentHeight + "px");
+        $("iframe[name='ifrTabContent']").css("height", nContentHeight + "px");
+        $("iframe[name='ifrTabContent']").css("width", nContentWidth + "px");
+        // 탭 더보기 처리
+        var nTabWidth = $("#divTabItemList").width();
+        var oDivTabs = $("div[id!='divTabItem_Main'][name='divTabItem']");
+        var nTabCount = oDivTabs.length;
+        if (nTabCount > 0) {
+            var oCurrentDivTab = $("#divTabItem_" + $("#hidMasterCurrentTab").val());
+            var nCurrentIdx = oCurrentDivTab.index();
+            var nTabMaxCount = Math.floor((nTabWidth - $("#divTabMore").width() - 20) / oDivTabs.eq(0).outerWidth(true));
+
+            if (nCurrentIdx >= nTabMaxCount) {
+                oDivTabs.eq(nTabMaxCount - 1).before(oCurrentDivTab);
+
+                oDivTabs = $("div[id!='divTabItem_Main'][name='divTabItem']");
+            }
+
+            var sTabMoreHTML = "";
+            $("#divTabMoreList").html("");
+            for (var i = 0; i < nTabCount; i++) {
+                if (i < nTabMaxCount) {
+                    oDivTabs.eq(i).show();
+                } else {
+                    oDivTabs.eq(i).hide();
+                    sTabMoreHTML = "<a style=\"width: 270px; height: 32px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;\" href=\"javascript:Master_Tab_OnClick('" + oDivTabs.eq(i).attr("id").replace("divTabItem_", "") + "');\" class=\"l-contents-tabs__pop-item\" title=\"" + oDivTabs.eq(i).find(".l-contents-tabs__title").eq(0).html() + "\">" + oDivTabs.eq(i).find(".l-contents-tabs__title").eq(0).html() + "</a>";
+
+                    $("#divTabMoreList").append(sTabMoreHTML);
+                }
+            }
+            if ($("#divTabMoreList").html() == "") {
+                $("#divTabMore").hide();
+            } else {
+                $("#divTabMore").show();
+            }
+        } else {
+            $("#divTabMore").hide();
+        }
+
+        // 탭 더보기 메뉴 수정
+    } catch (ex) {
+    }
+}
+
+//===================== 메인 검색 ==============================//
+// BPM검색용
+function Master_SetSearchSelect() {
+    var sbHTML = new StringBuilder();
+
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"ALL\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('ALL');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_all"]);                                                   // 전체
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DOCUMENT_SUBJECT\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('DOCUMENT_SUBJECT');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Subject"]);                     // 제목
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DRAFTER_USER_ID\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('DRAFTER_USER_ID');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_drafter"]);                   // 기안자
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DRAFTER_DEPARTMENT_CODE\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('DRAFTER_DEPARTMENT_CODE');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_DraftDept"]); // 기안부서
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DOCUMENT_NO\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('DOCUMENT_NO');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_DocNo"]);                             // 문서번호
+   // sbHTML.AppendFormat("<a style=\"display:none\" name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"SUBJECT_BODY\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('SUBJECT_BODY');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Subject_Body"]);                        // 제목 +  본문
+   // sbHTML.AppendFormat("<a style=\"display:none\" name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"BODY_ATTACHMENT\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnSearch_OnClick('BODY_ATTACHMENT');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Body_Attachment"]);               // 본문+첨부파일
+    $("#divMasterSearchSelect").html(sbHTML.ToString());    
+}
+// 통합검색용
+function Master_SetUnifiedSearchSelect() {
+    var sbHTML = new StringBuilder();
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"ALL\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('ALL');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_all"]);                                                   // 전체
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DOCUMENT_SUBJECT\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('DOCUMENT_SUBJECT');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Subject"]);                     // 제목
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DRAFTER_USER_ID\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('DRAFTER_USER_ID');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_drafter"]);                   // 기안자
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DRAFTER_DEPARTMENT_CODE\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('DRAFTER_DEPARTMENT_CODE');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_DraftDept"]); // 기안부서
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"DOCUMENT_NO\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('DOCUMENT_NO');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_apv_DocNo"]);                             // 문서번호
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"SUBJECT_BODY\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('SUBJECT_BODY');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Subject_Body"]);                        // 제목 +  본문
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"BODY_ATTACHMENT\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('BODY_ATTACHMENT');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_Body_Attachment"]);               // 본문+첨부파일
+    sbHTML.AppendFormat("<a name=\"aMasterSearchCondition\" keyword=\"{0}\" searchtype=\"ATTACHMENT\" onmouseover=\"Master_btnSearch_OnMouseOver('{0}');\" onmouseout=\"Master_btnSearch_OnMouseOut('{0}');\" href=\"javascript:Master_btnUnifiedSearch_OnClick('ATTACHMENT');\" class=\"l-search-text__item\">{0} : <span class=\"l-search-text__point\" name=\"spanMasterSearchType\"></span></a>", wStrSearchDicInfo["lbl_AttachFile"]);                         // 첨부파일
+    $("#divMasterSearchSelect").html(sbHTML.ToString());
+}
+
+
+// LNB 검색 Textbox KeyPress 이벤트
+// BPM검색용
+function Master_txtMasterSearch_OnKeyPress(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+    if (sKeyCode == "13") {
+        pEvent.preventDefault();
+
+        if ($("#txtMasterSearch").val().length > 1) {
+            var sSearchType = "";
+            if ($("#divMasterSearchSelect").is(":visible")) {
+                sSearchType = $("#divMasterSearchSelect > a").eq(wIntSearchSelectIndex).attr("searchtype");
+            }
+            Master_btnSearch_OnClick(sSearchType);
+        }
+    }
+}
+// 통합검색용
+function Master_txtMasterUnifiedSearch_OnKeyPress(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+    if (sKeyCode == "13") {
+        pEvent.preventDefault();
+
+        if ($("#txtMasterUnifiedSearch").val().length > 1) {
+            var sSearchType = "";
+            if ($("#divMasterSearchSelect").is(":visible")) {
+                sSearchType = $("#divMasterSearchSelect > a").eq(wIntSearchSelectIndex).attr("searchtype");
+            }
+            Master_btnUnifiedSearch_OnClick(sSearchType);
+        }
+    }
+}
+
+// LNB 검색 Textbox KeyUp 이벤트
+// BPM검색용
+function Master_txtMasterSearch_OnKeyUp(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+
+    if (sKeyCode == "13") {
+        return;
+    }
+
+    // 2글자 이상입력시 검색 자동완성
+    if ($("#txtMasterSearch").val().trim().length >= 2) {
+        // 키워드별 검색어
+        var sKeywordSearch_All = "";
+        var sKeywordSearch_Subject = "";
+        var sKeywordSearch_Subject_Body = "";
+        var sKeywordSearch_Body_Attachment = "";
+        var sKeywordSearch_Drafter = "";
+        var sKeywordSearch_DraftDept = "";
+        var sKeywordSearch_DocNo = "";
+        var sBeforeKeywordType = "";
+
+        // 띄어쓰기로 구분(AND 검색)
+        var aStrSearchText = $("#txtMasterSearch").val().trim().split(" ");
+        for (var i = 0; i < aStrSearchText.length; i++) {
+
+            if (aStrSearchText[i].length <= 0) continue;
+
+        	if (aStrSearchText[i].split(":").length > 1) {
+            	sB_Keyword = false;
+            	switch (aStrSearchText[i].split(":")[0]) {
+            		case wStrSearchDicInfo["lbl_all"]:
+            			sKeywordSearch_All += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_All = sKeywordSearch_All.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_all"];
+            			break;
+            		case wStrSearchDicInfo["lbl_Subject"]:
+            			sKeywordSearch_Subject += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject"];
+            			break;
+            		case wStrSearchDicInfo["lbl_Subject_Body"]:
+            			sKeywordSearch_Subject_Body += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject_Body"];
+            			break;
+            		case wStrSearchDicInfo["lbl_Body_Attachment"]:
+            			sKeywordSearch_Body_Attachment += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_Body_Attachment"];
+            			break;
+            		case wStrSearchDicInfo["lbl_apv_drafter"]:
+            			sKeywordSearch_Drafter += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_drafter"];
+            			break;
+            		case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+            			sKeywordSearch_DraftDept += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DraftDept"];
+            			break;
+            		case wStrSearchDicInfo["lbl_apv_DocNo"]:
+            			sKeywordSearch_DocNo += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+            			sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+            			sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DocNo"];
+            			break;
+            		default:
+            			// 이전 키워드의 And 검색.
+            			switch (sBeforeKeywordType) {
+            				case wStrSearchDicInfo["lbl_Subject"]:
+            					sKeywordSearch_Subject += " " + aStrSearchText[i];
+            					sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+            					break;
+            				case wStrSearchDicInfo["lbl_Subject_Body"]:
+            					sKeywordSearch_Subject_Body += " " + aStrSearchText[i];
+            					sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+            					break;
+            				case wStrSearchDicInfo["lbl_Body_Attachment"]:
+            					sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+            					sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+            					break;
+            				case wStrSearchDicInfo["lbl_apv_drafter"]:
+            					sKeywordSearch_Drafter += " " + aStrSearchText[i];
+            					sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+            					break;
+            				case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+            					sKeywordSearch_DraftDept += " " + aStrSearchText[i];
+            					sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+            					break;
+            				case wStrSearchDicInfo["lbl_apv_DocNo"]:
+            					sKeywordSearch_DocNo += " " + aStrSearchText[i];
+            					sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+            					break;
+            				default:
+            					sKeywordSearch_All += " " + aStrSearchText[i];
+            					sKeywordSearch_All = sKeywordSearch_All.trim();
+            					break;
+            			}
+            			break;
+            	}
+            	
+            }
+            else {
+                // 이전 키워드의 And 검색.
+                switch (sBeforeKeywordType) {
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subject_Body += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DraftDept += " " + aStrSearchText[i];
+                        sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                        sKeywordSearch_DocNo = sKeywordSearch_Receiver.trim();
+                        break;
+                    default:
+                        sKeywordSearch_All += " " + aStrSearchText[i];
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        break;
+                }
+            }
+        }
+
+        // 키워드 검색여부(유형개수) 확인
+        var nKeywordSearchTypeCount = 0;
+        if (sKeywordSearch_All.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Subject.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Subject_Body.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Drafter.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_DraftDept.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_DocNo.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }        
+        // 키워드 유형 개수가 1개 이상이면 자동완성 숨김
+        if (nKeywordSearchTypeCount > 1) {
+            $("#divMasterSearchSelect").hide();
+        }
+        else {
+            if ($("#txtMasterSearch").val().indexOf(":") >= 0) {
+                var sConditionText = $("#txtMasterSearch").val().split(":")[0];
+                var oMatchCondition = $("a[name='aMasterSearchCondition'][keyword='" + sConditionText + "']");
+                if (oMatchCondition.length > 0) {
+                    $("#divMasterSearchSelect").hide();
+                }
+                else {
+                    $("span[name='spanMasterSearchType']").text($("#txtMasterSearch").val());
+                    if (!$("#divMasterSearchSelect").is(":visible")) {
+                        $("#divMasterSearchSelect").show();
+                    }
+                }
+            }
+            else {
+                $("span[name='spanMasterSearchType']").text($("#txtMasterSearch").val());
+                if (!$("#divMasterSearchSelect").is(":visible")) {
+                    $("#divMasterSearchSelect").show();
+                }
+            }
+        }
+    } else {
+        $("#divMasterSearchSelect").hide();
+    }
+}
+// 통합검색용
+function Master_txtMasterUnifiedSearch_OnKeyUp(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+
+    if (sKeyCode == "13") {
+        return;
+    }
+    
+    // 2글자 이상입력시 검색 자동완성
+    if ($("#txtMasterUnifiedSearch").val().trim().length >= 2) {
+        // 키워드별 검색어
+        var sKeywordSearch_All = "";
+        var sKeywordSearch_Subject = "";
+        var sKeywordSearch_Subject_Body = "";
+        var sKeywordSearch_Body_Attachment = "";
+        var sKeywordSearch_Drafter = "";
+        var sKeywordSearch_DraftDept = "";
+        var sKeywordSearch_DocNo = "";
+        var sKeywordSearch_Attachment = "";
+
+        var sBeforeKeywordType = "";
+
+        // 띄어쓰기로 구분(AND 검색)
+        var aStrSearchText = $("#txtMasterUnifiedSearch").val().trim().split(" ");
+        for (var i = 0; i < aStrSearchText.length; i++) {
+
+            if (aStrSearchText[i].length <= 0) continue;
+
+            if (aStrSearchText[i].split(":").length > 1) {
+                switch (aStrSearchText[i].split(":")[0]) {
+                    case wStrSearchDicInfo["lbl_all"]:
+                        sKeywordSearch_All += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_all"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subject_Body += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject_Body"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Body_Attachment"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_drafter"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DraftDept += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DraftDept"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DocNo"];
+                        break;
+                    case wStrSearchDicInfo["lbl_AttachFile"]:
+                        sKeywordSearch_Attachment += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_AttachFile"];
+                        break;
+                    default:
+                        // 이전 키워드의 And 검색.
+                        switch (sBeforeKeywordType) {
+                            case wStrSearchDicInfo["lbl_Subject"]:
+                                sKeywordSearch_Subject += " " + aStrSearchText[i];
+                                sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_Subject_Body"]:
+                                sKeywordSearch_Subject_Body += " " + aStrSearchText[i];
+                                sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                                sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                                sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_drafter"]:
+                                sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                                sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                                sKeywordSearch_DraftDept += " " + aStrSearchText[i];
+                                sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                                sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                                sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_AttachFile"]:
+                                sKeywordSearch_Attachment += " " + aStrSearchText[i];
+                                sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+                                break;
+                            default:
+                                sKeywordSearch_All += " " + aStrSearchText[i];
+                                sKeywordSearch_All = sKeywordSearch_All.trim();
+                                break;
+                        }
+                        break;
+                }
+            }
+            else {
+                // 이전 키워드의 And 검색.
+                switch (sBeforeKeywordType) {
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subject_Body += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject_Body = sKeywordSearch_Subject_Body.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DraftDept += " " + aStrSearchText[i];
+                        sKeywordSearch_DraftDept = sKeywordSearch_DraftDept.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                        sKeywordSearch_DocNo = sKeywordSearch_Receiver.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_AttachFile"]:
+                        sKeywordSearch_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+                        break;
+                    default:
+                        sKeywordSearch_All += " " + aStrSearchText[i];
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        break;
+                }
+            }
+        }
+
+        // 키워드 검색여부(유형개수) 확인
+        var nKeywordSearchTypeCount = 0;
+        if (sKeywordSearch_All.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Subject.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Subject_Body.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Drafter.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_DraftDept.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_DocNo.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+        if (sKeywordSearch_Attachment.trim().length > 0) {
+            nKeywordSearchTypeCount++;
+        }
+
+        // 키워드 유형 개수가 1개 이상이면 자동완성 숨김
+        if (nKeywordSearchTypeCount > 1) {
+            $("#divMasterSearchSelect").hide();
+        }
+        else {
+            if ($("#txtMasterUnifiedSearch").val().indexOf(":") >= 0) {
+                var sConditionText = $("#txtMasterUnifiedSearch").val().split(":")[0];
+                var oMatchCondition = $("a[name='aMasterSearchCondition'][keyword='" + sConditionText + "']");
+                if (oMatchCondition.length > 0) {
+                    $("#divMasterSearchSelect").hide();
+                }
+                else {
+                    $("span[name='spanMasterSearchType']").text($("#txtMasterUnifiedSearch").val());
+                    if (!$("#divMasterSearchSelect").is(":visible")) {
+                        $("#divMasterSearchSelect").show();
+                    }
+                }
+            }
+            else {
+                $("span[name='spanMasterSearchType']").text($("#txtMasterUnifiedSearch").val());
+                if (!$("#divMasterSearchSelect").is(":visible")) {
+                    $("#divMasterSearchSelect").show();
+                }
+            }
+        }
+    } else {
+        $("#divMasterSearchSelect").hide();
+    }
+}
+
+// LNB 검색 Textbox KeyDown 이벤트
+// BPM검색용
+function Master_txtMasterSearch_OnKeyDown(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+
+    if (sKeyCode == "13") {
+        return;
+    }
+
+    if ($("#divMasterSearchSelect").is(":visible")) {
+        if (sKeyCode == "38") {
+            wIntSearchSelectIndex--;
+            if (wIntSearchSelectIndex < 0) {
+                wIntSearchSelectIndex = $("#divMasterSearchSelect > a").length - 1;
+            }
+        }
+        else if (sKeyCode == "40") {
+            wIntSearchSelectIndex++;
+            if (wIntSearchSelectIndex > $("#divMasterSearchSelect > a").length - 1) {
+                wIntSearchSelectIndex = 0;
+            }
+        }
+        else {
+            wIntSearchSelectIndex = 0;
+        }
+        $("#divMasterSearchSelect > a").removeAttr("style");
+        $("#divMasterSearchSelect > a").eq(wIntSearchSelectIndex).css("background-color", "#f7fafc;");
+    }
+}
+// 통합검색용
+function Master_txtMasterUnifiedSearch_OnKeyDown(pEvent) {
+    if (!pEvent) return;
+
+    var sKeyCode = (window.event) ? pEvent.keyCode : pEvent.which;
+    sKeyCode = String(sKeyCode);
+
+    if (sKeyCode == "13") {
+        return;
+    }
+
+    if ($("#divMasterSearchSelect").is(":visible")) {
+        if (sKeyCode == "38") {
+            wIntSearchSelectIndex--;
+            if (wIntSearchSelectIndex < 0) {
+                wIntSearchSelectIndex = $("#divMasterSearchSelect > a").length - 1;
+            }
+        }
+        else if (sKeyCode == "40") {
+            wIntSearchSelectIndex++;
+            if (wIntSearchSelectIndex > $("#divMasterSearchSelect > a").length - 1) {
+                wIntSearchSelectIndex = 0;
+            }
+        }
+        else {
+            wIntSearchSelectIndex = 0;
+        }
+        $("#divMasterSearchSelect > a").removeAttr("style");
+        $("#divMasterSearchSelect > a").eq(wIntSearchSelectIndex).css("background-color", "#f7fafc;");
+    }
+}
+function escapeRegExp(string) {
+    return string.replace(/[:,|]/g, ""); // $&는 일치한 전체 문자열을 의미합니다.
+}
+// BPM검색용
+function Master_btnSearch_OnClick(pStrSearchType) {
+    var bCheck = true;
+    var sStrSearchType = "";
+    var sStrSearchValue = "";
+
+    // 최초 검색시 대상 폴더 설정
+    //if ($("#hidMasterSearchFolderID").val() == "") {
+    //    if ($("#hidMasterCurrentPageType").val() == "MAILLIST" && CFN_GetCtrlById("hidMailListFolderId").value != "") {
+    //        $("#hidMasterSearchFolderID").val(CFN_GetCtrlById("hidMailListFolderId").value);
+    //    } else {
+    //        $("#hidMasterSearchFolderID").val($("button[id^='leftMail_'][basename='inbox']").attr("fid"));
+    //    }
+    //}
+
+    var sSearchText = "";
+    if ($("#txtMasterSearch").val().length < 2) {
+        $("#txtMasterSearch").focus();
+        bCheck = false;
+    } else {
+        // 키워드별 검색어
+        var sKeywordSearch_All = "";
+        var sKeywordSearch_Subject = "";
+        var sKeywordSearch_Subjcet_Body = "";
+        var sKeywordSearch_Body_Attachment = "";
+        var sKeywordSearch_Drafter = "";
+        var sKeywordSearch_DrafDept = "";
+        var sKeywordSearch_DocNo = "";
+        var sBeforeKeywordType = "";
+
+        switch (pStrSearchType) {
+            case "DOCUMENT_SUBJECT":
+                sSearchText = wStrSearchDicInfo["lbl_Subject"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            case "SUBJECT_BODY":
+                sSearchText = wStrSearchDicInfo["lbl_Subject_Body"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            case "BODY_ATTACHMENT":
+                sSearchText = wStrSearchDicInfo["lbl_Body_Attachment"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            case "DRAFTER_USER_ID":
+                sSearchText = wStrSearchDicInfo["lbl_apv_drafter"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            case "DRAFTER_DEPARTMENT_CODE":
+                sSearchText = wStrSearchDicInfo["lbl_apv_DraftDept"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            case "DOCUMENT_NO":
+                sSearchText = wStrSearchDicInfo["lbl_apv_DocNo"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+            default:
+                sSearchText = wStrSearchDicInfo["lbl_all"] + ": " + $("#txtMasterSearch").val().trim();
+                break;
+        }
+
+        // 띄어쓰기로 구분(AND 검색)
+        var aStrSearchText = sSearchText.split(" ");
+        for (var i = 0; i < aStrSearchText.length; i++) {
+
+            if (aStrSearchText[i].length <= 0) continue;
+
+            if (aStrSearchText[i].split(":").length > 1) {
+                switch (aStrSearchText[i].split(":")[0]) {
+                    case wStrSearchDicInfo["lbl_all"]:
+                        sKeywordSearch_All += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_all"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject_Body"];
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_Body_Attachment"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_drafter"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DrafDept += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DraftDept"];
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i].substring(aStrSearchText[i].split(":")[0].length + 1).trim();
+                        sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                        sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DocNo"];
+                        break;
+                    default:
+                        // 이전 키워드의 And 검색.
+                        switch (sBeforeKeywordType) {
+                            case wStrSearchDicInfo["lbl_Subject"]:
+                                sKeywordSearch_Subject += " " + aStrSearchText[i];
+                                sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_Subject_Body"]:
+                                sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i];
+                                sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                                sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                                sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_drafter"]:
+                                sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                                sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                                sKeywordSearch_DrafDept += " " + aStrSearchText[i];
+                                sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+                                break;
+                            case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                                sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                                sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                                break;
+                            default:
+                                sKeywordSearch_All += " " + aStrSearchText[i];
+                                sKeywordSearch_All = sKeywordSearch_All.trim();
+                                break;
+                        }
+                        break;
+                }
+            }
+            else {
+                // 이전 키워드의 And 검색.
+                switch (sBeforeKeywordType) {
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i];
+                        sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DrafDept += " " + aStrSearchText[i];
+                        sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                        sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                        break;
+                    default:
+                        sKeywordSearch_All += " " + aStrSearchText[i];
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        break;
+                }
+            }
+        }
+        
+        sSearchText = "";
+        if (sKeywordSearch_All.trim().length > 0) {
+            sSearchText += wStrSearchDicInfo["lbl_all"] + ":" + sKeywordSearch_All;
+            sStrSearchType += "|ALL";
+            sStrSearchValue += "|" + sKeywordSearch_All;
+        }
+        if (sKeywordSearch_Subject.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Subject"] + ":" + sKeywordSearch_Subject;
+            sStrSearchType += "|DOCUMENT_SUBJECT";
+            sStrSearchValue += "|" + sKeywordSearch_Subject;
+        }
+        if (sKeywordSearch_Subjcet_Body.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Subject_Body"] + ":" + sKeywordSearch_Subjcet_Body;
+            sStrSearchType += "|SUBJECT_BODY";
+            sStrSearchValue += "|" + sKeywordSearch_Subjcet_Body;
+        }
+        if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Body_Attachment"] + ":" + sKeywordSearch_Body_Attachment;
+            sStrSearchType += "|BODY_ATTACHMENT";
+            sStrSearchValue += "|" + sKeywordSearch_Body_Attachment;
+        }
+        if (sKeywordSearch_Drafter.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_drafter"] + ":" + sKeywordSearch_Drafter;
+            sStrSearchType += "|DRAFTER_USER_ID";
+            sStrSearchValue += "|" + sKeywordSearch_Drafter;
+        }
+        if (sKeywordSearch_DrafDept.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_DraftDept"] + ":" + sKeywordSearch_DrafDept;
+            sStrSearchType += "|DRAFTER_DEPARTMENT_CODE";
+            sStrSearchValue += "|" + sKeywordSearch_DrafDept;
+        }
+        if (sKeywordSearch_DocNo.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_DocNo"] + ":" + sKeywordSearch_DocNo;
+            sStrSearchType += "|DOCUMENT_NO";
+            sStrSearchValue += "|" + sKeywordSearch_DocNo;
+        }
+        sSearchText = sSearchText.trim();
+
+        if ($("#hidMasterSearchText").val() != "" && $("#chkMasterIncludeResult").is(":checked")) {
+            // 결과 내 재검색
+            sSearchText = $("#hidMasterSearchText").val() + " " + sSearchText;
+            sStrSearchType = $("#hidMasterSearchType").val() + " " + sStrSearchType;
+            sStrSearchValue = $("#hidMasterSearchValue").val() + " " + sStrSearchValue;
+        }
+        sSearchText = sSearchText.trim();
+    }
+
+    if (bCheck) {
+        $("#hidMasterSearchText").val(sSearchText);
+        $("#txtMasterSearch").val("");
+        $("#txtMasterSearch").attr("placeholder", sSearchText);
+        $("#txtMasterSearch").blur();
+        $("#chkMasterIncludeResult").prop("checked", false);
+        $("#hidMasterSearchType").val(sStrSearchType);
+        $("#hidMasterSearchValue").val(sStrSearchValue);
+
+        Master_SetSearch();
+    }
+}
+// 통합검색용
+function Master_btnUnifiedSearch_OnClick(pStrSearchType) {
+    var bCheck = true;
+    var sStrSearchType = "";
+    var sStrSearchValue = "";
+    var sStrReSearchValue = "";
+
+    var sSearchText = "";
+
+    if ($("#txtMasterUnifiedSearch").val().length < 2) {
+        $("#txtMasterUnifiedSearch").focus();
+        bCheck = false;
+    } else {
+        // 키워드별 검색어
+        var sKeywordSearch_All = "";
+        var sKeywordSearch_Subject = "";
+        var sKeywordSearch_Subjcet_Body = "";
+        var sKeywordSearch_Body_Attachment = "";
+        var sKeywordSearch_Drafter = "";
+        var sKeywordSearch_DrafDept = "";
+        var sKeywordSearch_DocNo = "";
+        var sKeywordSearch_Attachment = "";
+        var sBeforeKeywordType = "";
+
+        var sTmpBeforeKeywordType = "";
+        var sB_Keyword = true;
+
+        //검색시 ':','|',','  특수문자 제거
+        var replaceChar = $("#txtMasterUnifiedSearch").val().trim();
+        replaceChar = escapeRegExp($("#txtMasterUnifiedSearch").val().trim());
+        $("#txtMasterUnifiedSearch").val(replaceChar);
+        
+        switch (pStrSearchType) {
+            case "DOCUMENT_SUBJECT":
+                sSearchText = wStrSearchDicInfo["lbl_Subject"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "SUBJECT_BODY":
+                sSearchText = wStrSearchDicInfo["lbl_Subject_Body"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "BODY_ATTACHMENT":
+                sSearchText = wStrSearchDicInfo["lbl_Body_Attachment"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "DRAFTER_USER_ID":
+                sSearchText = wStrSearchDicInfo["lbl_apv_drafter"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "DRAFTER_DEPARTMENT_CODE":
+                sSearchText = wStrSearchDicInfo["lbl_apv_DraftDept"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "DOCUMENT_NO":
+                sSearchText = wStrSearchDicInfo["lbl_apv_DocNo"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            case "ATTACHMENT":
+                sSearchText = wStrSearchDicInfo["lbl_AttachFile"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+            default:
+                sSearchText = wStrSearchDicInfo["lbl_all"] + ": " + $("#txtMasterUnifiedSearch").val().trim();
+                break;
+        }
+
+        // 띄어쓰기로 구분(AND 검색)
+        var aStrSearchText = sSearchText.split(" ");
+        for (var i = 0; i < aStrSearchText.length; i++) {
+
+            if (aStrSearchText[i].length <= 0) continue;
+
+        	//if (aStrSearchText[i].split(":").length > 1) {
+            if (sB_Keyword) {
+            	sTmpBeforeKeywordType += (i == 0) ? aStrSearchText[i].split(":")[0].trim() : " " + aStrSearchText[i].split(":")[0].trim();
+            	if (aStrSearchText[i].split(":").length > 1) {
+            		sB_Keyword = false;
+            		switch (sTmpBeforeKeywordType) {
+            			case wStrSearchDicInfo["lbl_all"]:
+            				sKeywordSearch_All += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_All = sKeywordSearch_All.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_all"];
+            				break;
+            			case wStrSearchDicInfo["lbl_Subject"]:
+            				sKeywordSearch_Subject += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject"];
+            				break;
+            			case wStrSearchDicInfo["lbl_Subject_Body"]:
+            				sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_Subject_Body"];
+            				break;
+            			case wStrSearchDicInfo["lbl_Body_Attachment"]:
+            				sKeywordSearch_Body_Attachment += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_Body_Attachment"];
+            				break;
+            			case wStrSearchDicInfo["lbl_apv_drafter"]:
+            				sKeywordSearch_Drafter += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_drafter"];
+            				break;
+            			case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+            				sKeywordSearch_DrafDept += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DraftDept"];
+            				break;
+            			case wStrSearchDicInfo["lbl_apv_DocNo"]:
+            				sKeywordSearch_DocNo += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_apv_DocNo"];
+            				break;
+            			case wStrSearchDicInfo["lbl_AttachFile"]:
+            				sKeywordSearch_Attachment += " " + aStrSearchText[i].substring(sTmpBeforeKeywordType.length + 1).trim();
+            				sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+            				sBeforeKeywordType = wStrSearchDicInfo["lbl_AttachFile"];
+            				break;
+            			default:
+            				// 이전 키워드의 And 검색.
+            				switch (sBeforeKeywordType) {
+            					case wStrSearchDicInfo["lbl_Subject"]:
+            						sKeywordSearch_Subject += " " + aStrSearchText[i];
+            						sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_Subject_Body"]:
+            						sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i];
+            						sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_Body_Attachment"]:
+            						sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+            						sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_apv_drafter"]:
+            						sKeywordSearch_Drafter += " " + aStrSearchText[i];
+            						sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+            						sKeywordSearch_DrafDept += " " + aStrSearchText[i];
+            						sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_apv_DocNo"]:
+            						sKeywordSearch_DocNo += " " + aStrSearchText[i];
+            						sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+            						break;
+            					case wStrSearchDicInfo["lbl_AttachFile"]:
+            						sKeywordSearch_Attachment += " " + aStrSearchText[i];
+            						sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+            						break;
+            					default:
+            						sKeywordSearch_All += " " + aStrSearchText[i];
+            						sKeywordSearch_All = sKeywordSearch_All.trim();
+            						break;
+            				}
+            				break;
+            		}
+            	}
+            }
+            else {
+                // 이전 키워드의 And 검색.
+                switch (sBeforeKeywordType) {
+                    case wStrSearchDicInfo["lbl_Subject"]:
+                        sKeywordSearch_Subject += " " + aStrSearchText[i];
+                        sKeywordSearch_Subject = sKeywordSearch_Subject.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Subject_Body"]:
+                        sKeywordSearch_Subjcet_Body += " " + aStrSearchText[i];
+                        sKeywordSearch_Subjcet_Body = sKeywordSearch_Subjcet_Body.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_Body_Attachment"]:
+                        sKeywordSearch_Body_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Body_Attachment = sKeywordSearch_Body_Attachment.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_drafter"]:
+                        sKeywordSearch_Drafter += " " + aStrSearchText[i];
+                        sKeywordSearch_Drafter = sKeywordSearch_Drafter.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+                        sKeywordSearch_DrafDept += " " + aStrSearchText[i];
+                        sKeywordSearch_DrafDept = sKeywordSearch_DrafDept.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_apv_DocNo"]:
+                        sKeywordSearch_DocNo += " " + aStrSearchText[i];
+                        sKeywordSearch_DocNo = sKeywordSearch_DocNo.trim();
+                        break;
+                    case wStrSearchDicInfo["lbl_AttachFile"]:
+                        sKeywordSearch_Attachment += " " + aStrSearchText[i];
+                        sKeywordSearch_Attachment = sKeywordSearch_Attachment.trim();
+                        break;
+                    default:
+                        sKeywordSearch_All += " " + aStrSearchText[i];
+                        sKeywordSearch_All = sKeywordSearch_All.trim();
+                        break;
+                }
+            }
+        }
+
+        sSearchText = "";
+
+        if (!$("#chkUnifiedMasterIncludeResult").is(":checked")) {
+            if (sKeywordSearch_All.trim().length > 0) {
+                sStrSearchType = "ALL"
+                sStrSearchValue = sKeywordSearch_All;
+            } else if (sKeywordSearch_Subject.trim().length > 0) {
+                sStrSearchType = "Title"
+                sStrSearchValue = sKeywordSearch_Subject;
+            } else if (sKeywordSearch_Drafter.trim().length > 0) {
+                sStrSearchType = "Author"
+                sStrSearchValue = sKeywordSearch_Drafter;
+            } else if (sKeywordSearch_DrafDept.trim().length > 0) {
+                sStrSearchType = "DRAFTER_DEPARTMENT_NAME"
+                sStrSearchValue = sKeywordSearch_DrafDept;
+            } else if (sKeywordSearch_Subjcet_Body.trim().length > 0) {
+                sStrSearchType = "Content"
+                sStrSearchValue = sKeywordSearch_Subjcet_Body;
+            } else if (sKeywordSearch_DocNo.trim().length > 0) {
+                sStrSearchType = "DOCUMENT_NO"
+                sStrSearchValue = sKeywordSearch_DocNo;
+            } else if (sKeywordSearch_Attachment.trim().length > 0) {
+                sStrSearchType = "FILE_CONTENT"
+                sStrSearchValue = sKeywordSearch_Attachment;
+            } else if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+                sStrSearchType = "Content,FILE_CONTENT"
+                sStrSearchValue = sKeywordSearch_Body_Attachment;
+            }
+        } else {
+            if (sKeywordSearch_All.trim().length > 0) {
+                sStrReSearchValue = "|ALL:" + sKeywordSearch_All;
+            } else if (sKeywordSearch_Subject.trim().length > 0) {
+                sStrReSearchValue = "|Title:" + sKeywordSearch_Subject;
+            } else if (sKeywordSearch_Drafter.trim().length > 0) {
+                sStrReSearchValue = "|Author:" + sKeywordSearch_Drafter;
+            } else if (sKeywordSearch_DrafDept.trim().length > 0) {
+                sStrReSearchValue = "|DRAFTER_DEPARTMENT_NAME:" + sKeywordSearch_DrafDept;
+            } else if (sKeywordSearch_Subjcet_Body.trim().length > 0) {
+                sStrReSearchValue = "|Content:" + sKeywordSearch_Subjcet_Body;
+            } else if (sKeywordSearch_DocNo.trim().length > 0) {
+                sStrReSearchValue = "|DOCUMENT_NO:" + sKeywordSearch_DocNo;
+            } else if (sKeywordSearch_Attachment.trim().length > 0) {
+                sStrReSearchValue = "|FILE_CONTENT:" + sKeywordSearch_Attachment;
+            } else if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+                sStrReSearchValue = "|Content,FILE_CONTENT:" + sKeywordSearch_Body_Attachment;
+            }
+        }
+        if (sKeywordSearch_All.trim().length > 0) {
+            sSearchText += wStrSearchDicInfo["lbl_all"] + ":" + sKeywordSearch_All;
+        }
+        if (sKeywordSearch_Subject.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Subject"] + ":" + sKeywordSearch_Subject;
+        }
+        if (sKeywordSearch_Drafter.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_drafter"] + ":" + sKeywordSearch_Drafter;
+        }
+        if (sKeywordSearch_DrafDept.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_DraftDept"] + ":" + sKeywordSearch_DrafDept;
+        }
+        if (sKeywordSearch_Subjcet_Body.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Subject_Body"] + ":" + sKeywordSearch_Subjcet_Body;
+        }
+        if (sKeywordSearch_DocNo.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_apv_DocNo"] + ":" + sKeywordSearch_DocNo;
+        }
+        if (sKeywordSearch_Attachment.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_AttachFile"] + ":" + sKeywordSearch_Attachment;
+        }
+        if (sKeywordSearch_Body_Attachment.trim().length > 0) {
+            sSearchText += " " + wStrSearchDicInfo["lbl_Body_Attachment"] + ":" + sKeywordSearch_Body_Attachment;
+        }
+        sSearchText = sSearchText.trim();
+
+        if ($("#hidMasterSearchText").val() != "" && $("#chkUnifiedMasterIncludeResult").is(":checked")) {
+            // 결과 내 재검색
+            sSearchText = $("#hidMasterSearchText").val() + " " + sSearchText;
+        }
+        sSearchText = sSearchText.trim();
+    }
+
+    if (bCheck) {
+        $("#hidMasterSearchText").val(sSearchText);
+        $("#txtMasterUnifiedSearch").val("");
+        $("#txtMasterUnifiedSearch").attr("placeholder", sSearchText);
+        $("#txtMasterUnifiedSearch").blur();
+        if (!$("#chkUnifiedMasterIncludeResult").is(":checked")) {
+            $("#hidMasterSearchType").val(sStrSearchType);
+            $("#hidMasterSearchValue").val(sStrSearchValue);
+            $("#hidMasterReSearchValue").val("");
+            InitialUnifiedboxtypeList();
+        } else {
+            $("#hidMasterReSearchValue").val($("#hidMasterReSearchValue").val() + sStrReSearchValue);
+        }
+        
+        Master_SetUnifiedSearch();
+    }
+}
+
+function InitialUnifiedboxtypeList() {
+    $("#UnifiedboxtypeList").html('');
+    var sbBoxType = new StringBuilder();
+    sbBoxType.Append("<div class=\"l-lnb-search__section-item\">");
+    sbBoxType.Append("<div class=\"c-checkbox\">");
+    sbBoxType.Append("<input type=\"checkbox\" name=\"chkMasterDocType_ALL\" id=\"chkMasterDocType_ALL\" checked=\"checked\" value=\"ALL\" class=\"c-checkbox__input\" onclick=\"Master_chkMasterDocType_OnClick('ALL');\" />");
+    sbBoxType.AppendFormat("<label for=\"chkMasterDocType_ALL\" class=\"c-checkbox__label\">{0}</label>", Common.GetDic("lbl_apv_AllDoc"));
+    sbBoxType.Append("</div>");
+    sbBoxType.Append("</div>");
+    $("#UnifiedboxtypeList").html($(sbBoxType.ToString()));
+}
+
+// LNB 검색 MouseOver 처리
+function Master_btnSearch_OnMouseOver(pStrSearchType) {
+    switch (pStrSearchType) {
+        //제목
+        case wStrSearchDicInfo["lbl_Subject"]:
+            wIntSearchSelectIndex = 1;
+            break;
+        //제목 + 본문
+        case wStrSearchDicInfo["lbl_Subject_Body"]:
+            wIntSearchSelectIndex = 2;
+            break;
+        //본문+첨부파일
+        case wStrSearchDicInfo["lbl_Body_Attachment"]:
+            wIntSearchSelectIndex = 3;
+            break;
+        //기안자
+        case wStrSearchDicInfo["lbl_apv_drafter"]:
+            wIntSearchSelectIndex = 3;
+            break;
+        //기안부서
+        case wStrSearchDicInfo["lbl_apv_DraftDept"]:
+            wIntSearchSelectIndex = 4;
+            break;
+        //문서번호
+        case wStrSearchDicInfo["lbl_apv_DocNo"]:
+            wIntSearchSelectIndex = 5;
+            break;
+        //문서번호
+        case wStrSearchDicInfo["lbl_AttachFile"]:
+            wIntSearchSelectIndex = 6;
+            break;
+        default:
+            wIntSearchSelectIndex = 0;
+            break;
+    }
+
+    $("#divMasterSearchSelect > a").removeAttr("style");
+    $("#divMasterSearchSelect > a").eq(wIntSearchSelectIndex).css("background-color", "#f7fafc;");
+}
+
+// LNB 검색 MouseOut 처리
+function Master_btnSearch_OnMouseOut(pStrSearchType) {
+    wIntSearchSelectIndex = 0;
+    $("#divMasterSearchSelect > a").removeAttr("style");
+}
+
+
+// LNB 검색 처리
+// BPM검색용
+function Master_SetSearch() {
+    // LNB 영역 검색용으로 변경
+    //$(".l-lnb-tree").hide();
+    //$(".l-often-members").hide();
+    //$(".l-capacity").hide();
+    $(".l-lnb-search").show();    
+    $(".l-lnb-tree  ").hide();
+    $(".l-lnb-button-group").hide();
+    $("#divMasterSearchSelect").hide();
+
+    if ($("#hidMasterSearchDateType").val() == "")
+    {
+        $("#hidMasterSearchDateType").val($("input[name='rdMasterDateType']:checked").val())
+    }
+
+    var oParam = "&SearchText=" + encodeURIComponent($("#hidMasterSearchText").val()) + "&SearchType=" + $("#hidMasterSearchType").val() + "&SearchValue=" + encodeURIComponent($("#hidMasterSearchValue").val()) + "&BoxType=" + $('input[name=rdMasterDocType]:checked').val() + "&SearchStartDate=" + $("#hidMasterSearchStartDate").val() + "&SearchEndDate=" + $("#hidMasterSearchEndDate").val() + "&SearchDateType=" + $("#hidMasterSearchDateType").val()
+
+    var pStrURL = '/Approval/Approval_Search.aspx?system=Approval&alias=P.SEARCH.APPROVAL&AjaxPageMove=Y&mnid=2031' + oParam; //'/Approval/Approval_Search.aspx?system=Approval&alias=WV_FS.CODE.PEPLE&mnid=1706&AjaxPageMove=Y';
+
+    var oOnloadFunction = null; // 각 페이지의 Load 이벤트 함수
+
+    Common.Loading(Common.GetDic("lbl_Loding")); // 로딩중입니다
+
+    Common.AjaxLoad("divContentes", pStrURL, "", function () {
+    });
+
+    
+    wBolMasterIsSearching = false;
+}
+// 통합검색용
+function Master_SetUnifiedSearch() {
+    $(".l-lnb-unifiedsearch").show();
+    $(".l-lnb-tree  ").hide();
+    $(".l-lnb-button-group").hide();
+    $("#divMasterSearchSelect").hide();
+
+    if ($("#hidMasterSearchDateType").val() == "") {
+        $("#hidMasterSearchDateType").val($("input[name='rdMasterDateType']:checked").val())
+    }
+
+    var checkFormCnt = $("[id^='chkMasterDocType_']:checked").length;
+    var checkForm = "";
+    $("[id^='chkMasterDocType_']:checked").each(function () {
+        if (checkForm == "") {
+            checkForm = $(this).val();
+        } else {
+            checkForm = checkForm + "|" + $(this).val();
+        }
+    });
+    //if (!$("#chkUnifiedMasterIncludeResult").is(":checked")) {
+    //    $("#hidMasterReSearchValue").val("");
+    //}
+    $("#chkUnifiedMasterIncludeResult").prop("checked", false);
+    //debugger;
+    var oParam = "&SearchText=" + encodeURIComponent($("#hidMasterSearchText").val());
+    oParam = oParam + "&SearchType=" + $("#hidMasterSearchType").val();
+    oParam = oParam + "&SearchValue=" + encodeURIComponent($("#hidMasterSearchValue").val());
+    oParam = oParam + "&BoxType=" + checkForm;
+    oParam = oParam + "&SearchStartDate=" + $("#hidMasterSearchStartDate").val();
+    oParam = oParam + "&SearchEndDate=" + $("#hidMasterSearchEndDate").val();
+    oParam = oParam + "&SearchDateType=" + $("#hidMasterSearchDateType").val();
+    oParam = oParam + "&ReSearchValue=" + encodeURIComponent($("#hidMasterReSearchValue").val());
+
+    var pStrURL = '/Approval/Approval_UnifiedSearch.aspx?system=Approval&alias=P.SEARCH.APPROVAL&AjaxPageMove=Y&mnid=2031' + oParam; //'/Approval/Approval_Search.aspx?system=Approval&alias=WV_FS.CODE.PEPLE&mnid=1706&AjaxPageMove=Y';
+
+    var oOnloadFunction = null; // 각 페이지의 Load 이벤트 함수
+
+    Common.Loading(Common.GetDic("lbl_Loding")); // 로딩중입니다
+
+    Common.AjaxLoad("divContentes", pStrURL, "", function () {
+    });
+
+
+    wBolMasterIsSearching = false;
+}
+// 검색 날짜 타입 항목 클릭
+// BPM검색용
+function Master_rdMasterDateType_OnClick(pStrDateType) {
+    if (pStrDateType == "CHOICE") {
+        $("#divMasterDateChoice").show();
+        $("#hidMasterSearchDateType").val("CHOICE");
+    } else {
+        $("#divMasterDateChoice").hide();
+
+        var bCheck = true;
+        var oCheckedDateType = $("input[name='rdMasterDateType']:checked");
+        if (oCheckedDateType.length > 0) {
+            $("#hidMasterSearchDateType").val(oCheckedDateType.val());
+            if (oCheckedDateType.val() == "CHOICE") {
+                if ($("#txtMasterSearchStartDate").val() == "") {
+                    bCheck = false;
+                } else if ($("#txtMasterSearchStartDate").val() == "") {
+                    bCheck = false;
+                } else {
+                    $("#hidMasterSearchStartDate").val($("#txtMasterSearchStartDate").val());
+                    $("#hidMasterSearchEndDate").val($("#txtMasterSearchEndDate").val());
+                }
+            } else {
+                $("#hidMasterSearchStartDate").val("");
+                $("#hidMasterSearchEndDate").val("");
+            }
+        } else {
+            $("#hidMasterSearchDateType").val("ALL");
+            $("#hidMasterSearchStartDate").val("");
+            $("#hidMasterSearchEndDate").val("");
+        }
+
+        if (bCheck) {
+            Master_SetSearch();
+        }
+    }
+}
+// 통함검색용
+function Master_rdUnifiedMasterDateType_OnClick(pStrDateType) {
+    if (pStrDateType == "CHOICE") {
+        $("#divUnifiedMasterDateChoice").show();
+        $("#hidMasterSearchDateType").val("CHOICE");
+    } else {
+        $("#divUnifiedMasterDateChoice").hide();
+
+        var bCheck = true;
+        var oCheckedDateType = $("input[name='rdUnifiedMasterDateType']:checked");
+        if (oCheckedDateType.length > 0) {
+            $("#hidMasterSearchDateType").val(oCheckedDateType.val());
+            if (oCheckedDateType.val() == "CHOICE") {
+                if ($("#txtUnifiedMasterSearchStartDate").val() == "") {
+                    bCheck = false;
+                } else if ($("#txtUnifiedMasterSearchStartDate").val() == "") {
+                    bCheck = false;
+                } else {
+                    $("#hidMasterSearchStartDate").val($("#txtUnifiedMasterSearchStartDate").val());
+                    $("#hidMasterSearchEndDate").val($("#txtUnifiedMasterSearchEndDate").val());
+                }
+            } else {
+                $("#hidMasterSearchStartDate").val("");
+                $("#hidMasterSearchEndDate").val("");
+            }
+        } else {
+            $("#hidMasterSearchDateType").val("ALL");
+            $("#hidMasterSearchStartDate").val("");
+            $("#hidMasterSearchEndDate").val("");
+        }
+
+        if (bCheck) {
+            Master_SetUnifiedSearch();
+        }
+    }
+}
+
+// 범위 선택 날짜 변경(시작 날짜)
+// BPM검색용
+function Master_txtMasterSearchStartDate_OnChange() {
+    if ($("#txtMasterSearchStartDate").val() != "") {
+        if ($("#txtMasterSearchStartDate").val() != $("#hidMasterSearchStartDate").val()) {
+            $("#hidMasterSearchStartDate").val($("#txtMasterSearchStartDate").val());
+
+            if ($("#hidMasterSearchEndDate").val() != "") {
+                if (parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10) <= parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10)) {
+                    Master_SetSearch();
+                }
+            }
+        }
+    } else {
+        $("#hidMasterSearchStartDate").val("");
+    }
+}
+// 통합검색용
+
+function Master_txtUnifiedMasterSearchStartDate_OnChange() {
+    var sCommBaseDate = parseInt(Common.GetBaseConfig('Integrated_Search_CommonDate').replace(/-/gi, ""));
+    if ($("#txtUnifiedMasterSearchStartDate").val() != "") {
+        if ($("#txtUnifiedMasterSearchStartDate").val() != $("#hidMasterSearchStartDate").val()) {
+            $("#hidMasterSearchStartDate").val($("#txtUnifiedMasterSearchStartDate").val());
+
+            if ($("#hidMasterSearchEndDate").val() != "") {
+
+                var strFromDate = parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10);
+                var strToDate = parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10);
+
+                if (strFromDate <= sCommBaseDate || strToDate <= sCommBaseDate)
+                {
+                    alert(Common.GetDic("lbl_CommonDate_Search"));
+                    return;
+                }
+
+                if (parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10) <= parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10)) {
+                    Master_SetUnifiedSearch();
+                }
+            }
+        }
+    } else {
+        $("#hidMasterSearchStartDate").val("");
+    }
+}
+
+// 범위 선택 날짜 변경(종료 날짜)
+// BPM검색용
+function Master_txtMasterSearchEndDate_OnChange() {
+    if ($("#txtMasterSearchEndDate").val() != "") {
+        if ($("#txtMasterSearchEndDate").val() != $("#hidMasterSearchEndDate").val()) {
+            $("#hidMasterSearchEndDate").val($("#txtMasterSearchEndDate").val());
+
+            if ($("#hidMasterSearchStartDate").val() != "") {
+
+                if (parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10) <= parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10)) {
+                    Master_SetSearch();
+                }
+            }
+        }
+    } else {
+        $("#hidMasterSearchEndDate").val("");
+    }
+}
+// 통합검색용
+function Master_txtUnifiedMasterSearchEndDate_OnChange() {
+    var sCommBaseDate = parseInt(Common.GetBaseConfig('Integrated_Search_CommonDate').replace(/-/gi, ""));
+    if ($("#txtUnifiedMasterSearchEndDate").val() != "") {
+        if ($("#txtUnifiedMasterSearchEndDate").val() != $("#hidMasterSearchEndDate").val()) {
+            $("#hidMasterSearchEndDate").val($("#txtUnifiedMasterSearchEndDate").val());
+
+            if ($("#hidMasterSearchStartDate").val() != "") {
+
+                var strFromDate = parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10);
+                var strToDate = parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10);
+
+                if (strFromDate <= sCommBaseDate || strToDate <= sCommBaseDate) {
+                    alert(Common.GetDic("lbl_CommonDate_Search"));
+                    return;
+                }
+
+                if (parseInt($("#hidMasterSearchStartDate").val().replace(/-/gi, ""), 10) <= parseInt($("#hidMasterSearchEndDate").val().replace(/-/gi, ""), 10)) {
+                    Master_SetUnifiedSearch();
+                }
+            }
+        }
+    } else {
+        $("#hidMasterSearchEndDate").val("");
+    }
+}
+// 통합검색용
+function Master_chkMasterDocType_OnClick(pStrDocType) {
+    if (pStrDocType == 'ALL') {
+        $("[id^='chkMasterDocType_']").each(function () {
+            if ($(this).val() != "ALL") {
+                $(this).prop("checked", false);
+            }
+        });
+    } else {
+        $("[id^='chkMasterDocType_']").each(function () {
+            if ($(this).val() == "ALL") {
+                $(this).prop("checked", false);
+            }
+        });
+    }
+    Master_SetUnifiedSearch();
+}
+
+// BPM검색용
+function Master_rdMasterDocType_OnClick(pStrDocType)
+{
+    Master_SetSearch();
+}
+//통합검색용
+function Master_chkUnifiedMasterIncludeResult_OnClick() {
+    try {
+        var aStrDicInfo = Common.GetDicAll("lbl_Mail_SearchWithResults;lbl_Mail_MailSearch");
+        
+        if ($("#chkUnifiedMasterIncludeResult").is(":checked")) {
+            $("#txtMasterUnifiedSearch").attr("placeholder", aStrDicInfo["lbl_Mail_SearchWithResults"]);   // 결과 내 재검색
+        } else {
+            $("#txtMasterUnifiedSearch").attr("placeholder", $("#hidMasterSearchText").val());
+        }
+    } catch (e) {
+        alert(e.stack)
+    }
+}
+
+// 검색 종료
+function Master_btnSearchEnd_OnClick() {
+    Master_divLeftTitle_OnClick();
+    // 검색용 데이터 초기화
+    //$("#txtMasterSearch").attr("placeholder", Common.GetDic("lbl_apv_ApvSearch"));  // 메일 검색
+    //$("#txtMasterSearch").val("");
+    //$("#chkMasterIncludeResult").prop("checked", false);
+    ////$("#chkMasterHasAttachment").prop("checked", false);
+    //$("#rdMasterDateType_ALL").prop("checked", true);
+    //$("#txtMasterSearchStartDate").val("");
+    //$("#txtMasterSearchEndDate").val("");
+
+    //$("#hidMasterSearchText").val("");
+    ////$("#hidMasterSearchFolderID").val("");
+    ////$("#hidMasterSearchHasAttachment").val("N");
+    //$("#hidMasterSearchDateType").val("ALL");
+    //$("#hidMasterSearchStartDate").val("");
+    //$("#hidMasterSearchEndDate").val("");
+
+    //// LNB 영역 일반용으로 변경
+    //$(".l-lnb-tree").show();
+    //$(".l-often-members").show();
+    //$(".l-capacity").show();
+    //$(".l-lnb-search").hide();
+
+    //if ($("#hidMasterCurrentPageType").val() == "APPMAILLIST") {
+    //    var sURL = "/WebMail/ApprovalMail/List.aspx?system=Mail&AjaxPageMove=Y";
+    //    var oParam = {
+    //        Type: CFN_GetCtrlById("hidAppMailListType").value
+    //    };
+    //    Master_SetWebMailAjaxLoad("APPMAILLIST", sURL, oParam);
+    //} else {
+    //    var sFolderID = "";
+    //    var sFolderType = "";
+    //    if ($("#hidMasterCurrentMenuID").val().indexOf("leftMail_") > -1) {
+    //        sFolderID = $("#" + $("#hidMasterCurrentMenuID").val()).attr("fid");
+    //    } else {
+    //        sFolderID = $("button[id^='leftMail_'][basename='inbox']").attr("fid");
+    //    }
+    //    sFolderType = $("[id^='leftMail_'][fid='" + sFolderID + "']").attr("ftype");
+
+    //    var sURL = "/WebMail/Mail/List.aspx?system=Mail&AjaxPageMove=Y";
+    //    var oParam = {
+    //        FolderID: sFolderID
+    //        , FolderType: sFolderType
+    //    };  
+
+    //    //Master_SetWebMailAjaxLoad("MAILLIST", sURL, oParam);
+    //}
+}
+
+/*============================================검색종료================================================*/
+
+/*============================개인설정===============================*/
+
+// 하단 메뉴 클릭
+function Master_FooterMenu_OnClick() {
+    try {
+
+        Common.Loading(Common.GetDic("lbl_Loding")); // 로딩중입니다
+
+        //XFN_SetHashUrl("left_54", false);
+        //var pStrURL = '/Approval/Option/Configuration.aspx?AjaxPageMove=Y';
+
+        //TO-DO : 해외사용자 메뉴관리설정
+        var pStrURL = "";
+        if (Common.GetBaseConfig("ExternalDomainDN").indexOf(_DN_Code) == -1) {
+            pStrURL = '/Approval/Option/Configuration.aspx?AjaxPageMove=Y';
+        }
+        else {
+            pStrURL = '/Approval/Option/DeligateApproval.aspx?AjaxPageMove=Y';
+        }
+        Common.AjaxLoad("divContentes", pStrURL, "", function () {
+            XFN_LoadingClose();
+        });
+        //left_54
+
+    } catch (e) {
+        try { Common.AlertClose(); } catch (e) { }
+        alert(e.stack);
+    }
+}
+
+// 하단 메뉴 클릭
+function Master_FooterMenuGroup_OnClick() {
+    try {
+
+        Common.Loading(Common.GetDic("lbl_Loding")); // 로딩중입니다
+
+        //XFN_SetHashUrl("left_54", false);
+        var pStrURL = '/Approval/WorkView/GroupList/GroupList.aspx?AjaxPageMove=Y&mnid=2042&alias=WV_GL.GL.GL';
+        Common.AjaxLoad("divContentes", pStrURL, "", function () {
+            XFN_LoadingClose();
+        });
+        //left_54
+
+    } catch (e) {
+        try { Common.AlertClose(); } catch (e) { }
+        alert(e.stack);
+    }
+}
+
+// 하단 메뉴 클릭
+function Master_FooterMenuActiveX_OnClick() {
+    try {
+
+        var url = String.format("/Approval/Forms/Templates/popup/HPT_ActiveXDownLoad.htm");
+        var Title = Common.GetDic("lbl_InformTitle");
+        Common.Show("HPT_ActiveX", "1", Title, url, "500px", "350px", "iframe");
+        return false;
+
+    } catch (e) {
+        //try { Common.AlertClose(); } catch (e) { }
+        //alert(e.stack);
+    }
+}
+
+function OpenNewWindowFullSize(url) {
+    if (!_ie)
+        //var vwidth = 850;
+        var vwidth = window.screen.width;
+    else
+        //var vwidth = 790; //레이어 사용 
+        var vwidth = window.screen.width;
+
+    var width = vwidth + "px"; //레이어 사용
+    var height = (window.screen.height - 80) + "px";
+
+    window.open(url, "", "toolbar=no, menubar=no, status=no, resizable=yes, width=" + width + ", height=" + height + ",top=0,left=0");
+}
+//업무뷰 테스트 용도 - 주진섭
+function WorkView() {
+    var workView = true;
+    return true;
+}
+
+
+/*********************현대제철 결재 구문서함이동******************************************/
+function goHSOldApproval(_HKMCENC_ID, _LINK, _BIZID) {
+    var strHKMCENC_ID = _HKMCENC_ID;
+    var strBizID = _BIZID;
+    var strLink = _LINK
+    
+    var url = "/Common/Auth/GoToHSOldSystem.aspx?link=" + encodeURIComponent(strLink) + "&HKMCENC_ID=" + encodeURIComponent(strHKMCENC_ID) + "&BizID=" + encodeURIComponent(strBizID);
+    
+
+    try {
+        var iScreenWidht = window.screen.availWidth - 12;
+        var iScreeHeight = window.screen.availHeight - ((window.screen.height - window.screen.availHeight) + 90);
+        var strDialogStyle = "top=0,left=0,Height=" + iScreeHeight + "px,Width=" + iScreenWidht + "px,status=yes,resizable=yes,scrollbars=yes,toolbar=yes,menubar=yes,location=yes";
+        var arrTemp;
+        var arrParam;
+        var idx;
+        //fn_OpenDialog(url, "_blank", strDialogStyle);
+        return window.open(url, "_blank", strDialogStyle);
+    }
+    catch (exception) {
+        alert(exception.description);
+    }
+    return false;
+}
+
+/*********************현대건설, 엔지니어링 통합결재시스템 쓰기, 수정 페이지 이동 ******************************************/
+function goOpenIntegratedWindow(in_ComPanyCode, in_UserID, in_DeptCode, in_VersionID, in_DocID, in_PID, in_MODE, in_ApprovalPhase, in_LangType, in_IsTab, in_ReturnUrl, in_SecurityGrade, in_LastModifyDateTime, in_Token, in_Width, in_Height) {
+    var submitForm = document.createElement("FORM");
+    document.body.appendChild(submitForm);
+    submitForm.method = "GET";
+    submitForm.name = "DocModify";
+
+    var newElement = document.createElement("INPUT");
+    submitForm.appendChild(newElement);
+    newElement.id = 'CompanyCode';
+    newElement.name = 'CompanyCode';
+    newElement.value = in_ComPanyCode;
+    newElement.style.display = 'none';
+
+    var newElement1 = document.createElement("INPUT");
+    submitForm.appendChild(newElement1);
+    newElement1.id = 'UserID';
+    newElement1.name = 'UserID';
+    newElement1.value = in_UserID;
+    newElement1.style.display = 'none';
+
+    var newElement2 = document.createElement("INPUT");
+    submitForm.appendChild(newElement2);
+    newElement2.id = 'DeptCode';
+    newElement2.name = 'DeptCode';
+    newElement2.value = in_DeptCode;
+    newElement2.style.display = 'none';
+
+    var newElement3 = document.createElement("INPUT");
+    submitForm.appendChild(newElement3);
+    newElement3.id = 'VersionID';
+    newElement3.name = 'VersionID';
+    newElement3.value = in_VersionID;
+    newElement3.style.display = 'none';
+
+    var newElement4 = document.createElement("INPUT");
+    submitForm.appendChild(newElement4);
+    newElement4.id = 'DocID';
+    newElement4.name = 'DocID';
+    newElement4.value = in_DocID;
+    newElement4.style.display = 'none';
+
+    var newElement5 = document.createElement("INPUT");
+    submitForm.appendChild(newElement5);
+    newElement5.id = 'pid';
+    newElement5.name = 'pid';
+    newElement5.value = in_PID;
+    newElement5.style.display = 'none';
+
+    var newElement6 = document.createElement("INPUT");
+    submitForm.appendChild(newElement6);
+    newElement6.id = 'Mode';
+    newElement6.name = 'Mode';
+    newElement6.value = in_MODE;
+    newElement6.style.display = 'none';
+
+    var newElement7 = document.createElement("INPUT");
+    submitForm.appendChild(newElement7);
+    newElement7.id = 'ApprovalPhase';
+    newElement7.name = 'ApprovalPhase';
+    newElement7.value = in_ApprovalPhase;
+    newElement7.style.display = 'none';
+
+    var newElement8 = document.createElement("INPUT");
+    submitForm.appendChild(newElement8);
+    newElement8.id = 'ReturnUrl';
+    newElement8.name = 'ReturnUrl';
+    newElement8.value = in_ReturnUrl;
+    newElement8.style.display = 'none';
+
+    var newElement9 = document.createElement("INPUT");
+    submitForm.appendChild(newElement9);
+    newElement9.id = 'LangType';
+    newElement9.name = 'LangType';
+    newElement9.value = in_LangType;
+    newElement9.style.display = 'none';
+
+    var newElement10 = document.createElement("INPUT");
+    submitForm.appendChild(newElement10);
+    newElement10.id = 'IsTab';
+    newElement10.name = 'IsTab';
+    newElement10.value = in_IsTab;
+    newElement10.style.display = 'none';
+
+    var newElement11 = document.createElement("INPUT");
+    submitForm.appendChild(newElement11);
+    newElement11.id = 'Token';
+    newElement11.name = 'Token';
+    newElement11.value = in_Token;
+    newElement11.style.display = 'none';
+
+    var newElement12 = document.createElement("INPUT");
+    submitForm.appendChild(newElement12);
+    newElement12.id = 'securityGrade';
+    newElement12.name = 'securityGrade';
+    newElement12.value = in_SecurityGrade;
+    newElement12.style.display = 'none';
+
+    var newElement13 = document.createElement("INPUT");
+    submitForm.appendChild(newElement13);
+    newElement13.id = 'lastModifyDateTime';
+    newElement13.name = 'lastModifyDateTime';
+    newElement13.value = in_LastModifyDateTime;
+    newElement13.style.display = 'none';
+    
+
+    var x = Number(in_Width);
+    var y = Number(in_Height);
+    // 화면 사이즈 보다 팝업이 큰경우 높이값 조정
+    if (window.screen.height < (y + 82)) {
+        y = window.screen.height - 82;
+    }
+
+    var sy = window.screen.height / 2 - parseInt(y) / 2 - 70;
+    var sx = window.screen.width / 2 - parseInt(x) / 2;
+    
+    var win_name = "IntegratedWindow" + "_" + (Math.random() * (1 << 30)).toString(16).replace('.', '');
+
+    var IntegratedWindow = window.open("", win_name, "width=" + x + ", height=" + y + ", left=" + sx + ", top=" + sy + ", scrollbars=yes");
+
+    //submitForm.target = "IntegratedWindow";
+    submitForm.target = win_name;
+    //submitForm.action = "http://hdecwfdev.hdec.co.kr/Interface/Write";
+    submitForm.action = Common.GetBaseConfig("IntegratedSystem_InterfaceURL");
+    submitForm.submit();
+}
+
+/****************************************************************
+    //현대 엔지니어링 구)문서함 이동 S
+****************************************************************/
+function mf_GoOldDoc_H139() {
+    var strBizSystemID = Common.GetBaseConfig("BizSystemID_HEC_OldDocument");
+    var szURL = Common.GetBaseConfig('WebServicePath') + "/ClientWebService.asmx/GetToken";
+    var Param = String.format("{ _BizSystemID:'{0}', _CompanyCode:'{1}', _UserID:'{2}', _UserIP:'{3}' }", strBizSystemID, G_dncode, usercode, G_clientip);
+    CFN_CallAjaxJson(szURL, Param, false, function (pObjData) {
+        var sResult = $.parseJSON($.parseJSON(pObjData).d);
+        var sResultCode, sResultMessage;
+        sResultCode = sResult.ResultCode;
+        sResultMessage = sResult.ResultMessage;
+        var strToken = "";
+        if (sResultCode == "1000") {
+            strToken = sResultMessage;
+            mf_GoOldDoc_H139_PopUp(strToken);
+        } else {
+            alert("보안토큰 생성실패 : [" + sResultCode + "] " + sResultMessage);
+            return;
+        }
+    });
+}
+
+function mf_GoOldDoc_H139_PopUp(paramKey){
+    var CompanyCode = G_dncode;
+    var HKMCENC_ID = Common.GetBaseConfig("HEC_OldDocument_HKMCENC_ID");
+    var BizSystemState = Common.GetBaseConfig("HEC_OldDocument_BizSystemState");
+    var Encode = encodeURIComponent(paramKey);
+    var URL = Common.GetBaseConfig("HEC_OldDocument_URL");
+    URL += "?Encode=" + Encode + "&CompanyCode=" + CompanyCode + "&HKMCENC_ID=" + HKMCENC_ID + "&BizSystemState=" + BizSystemState;
+
+    var win = window.open(URL);
+
+}
+function getArtifact(targetID, artifactParam) {
+    try {
+        var url = "RequestArtifact.aspx";
+        var param = "targetID=" + targetID + "&artifactParam=" + artifactParam + "&time=" + new Date().getTime();
+        return doAjax(url, param);
+    } catch (e) {
+        return null;
+    }
+}
+function doAjax(requestUrl, requestParam) {
+
+
+    var returnData = null;
+    $.ajax({
+        url: requestUrl,
+        type: 'GET',
+        async: false,
+        data: requestParam,
+        dataType: "json",
+        timeout: 10000,
+        contentType: "application/x-www-form-urlencoded",
+        success: function (data) {
+            returnData = data;
+        },
+        error: function (request, status, error) {
+            alert("에러" + status + " " + " 로그 : " + error);
+        },
+        fail: function () {
+            alert("인터넷 연결 상태를 확인해주세요.");
+        }
+    });
+    return returnData;
+}
+/****************************************************************
+    //현대 엔지니어링 구)문서함 이동 E
+****************************************************************/

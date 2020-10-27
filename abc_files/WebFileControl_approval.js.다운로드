@@ -1,0 +1,109 @@
+﻿//[HTML5 첨부 파일 컨트롤 적용]
+// 0.None, 1.DEXTUploadX, 2.CoviFileTrans, 3.CoviSilverlightTrans, 4.CoviUploadNSlvTrans, 5.HTML5
+switch (Common.GetBaseConfig('FileAttachType')) {
+/*var sFileAttachType = "";
+if (this._CurrentPageUrl.indexOf("Form.aspx") == -1) {
+    sFileAttachType = Common.GetBaseConfig('FileAttachType');
+} else {
+    if (typeof _BaseConfigApv != "undefined") sFileAttachType = _BaseConfigApv.FileAttachType;
+}
+
+switch (sFileAttachType) {*/
+    case "0":       // .NET Control
+        document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js"></script>');
+        document.write('<script type="text/javascript" src="/Common/ExControls/FileDownload/FileDownLoad.js"></script>');
+
+        break;
+    case "1":
+        document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js"></script>');
+        document.write('<script type="text/javascript" src="/Common/ExControls/FileDownload/FileDownLoad.js"></script>');
+        break;
+    case "3":
+        document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js"></script>');
+        document.write('<script type="text/javascript" src="/Common/ExControls/FileDownload/FileDownLoad.js"></script>');
+        break;
+    case "2":
+    case "4": // IE : CoviFileTrans, IE 외 : SilverlightTrans        
+        if (_ie) {
+            document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadCoviTrans_approval.js"></script>');
+        } else {
+            document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js"></script>');
+            document.write('<script type="text/javascript" src="/Common/ExControls/FileDownload/FileDownLoad.js"></script>');
+        }
+        break;
+    case "5": // IE 10이상: HTML5, IE10 미만: CoviFileTrans, IE 외 : HTML5, IE 외 HTML5 File API 지원X: Basic
+        if (_ie) {
+            if (_ieVer >= 10) {     // IE 10 이상
+                document.write('<script src="/Common/ExControls/None/FileUploadHTML5_Approval.js" type="text/javascript"></script>');
+            }
+            else {                  // IE 10 미만
+                document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadCoviTrans_approval.js"></script>');
+            }
+        }
+        else {                      // HTML5 File API를 지원.
+            //if (typeof FileReader == 'function') {
+            //    document.write('<script src="/Common/ExControls/None/FileUploadHTML5_Approval.js" type="text/javascript"></script>');
+            //}
+            //else {                  // HTML5 File API를 지원 안함.
+            //    document.write('<script type="text/javascript" src="/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js"></script>');
+            //    document.write('<script type="text/javascript" src="/Common/ExControls/FileDownload/FileDownLoad.js"></script>');
+            //}
+            document.write('<script src="/Common/ExControls/None/FileUploadHTML5_Approval.js" type="text/javascript"></script>');
+        }
+        break;
+    case "6":
+        document.write('<script src="/Common/ExControls/dext5upload/dext5UploadHTML_Approval.js?v='+Common.GetBaseConfig("CacheManagedStyleVersion")+'" type="text/javascript"></script>');
+       // document.write('<script src="/Common/ExControls/dext5upload/js/dext5Upload.js" type="text/javascript"></script>');
+        break;
+    default:
+        break;
+}
+
+//[HTML5 첨부 파일 컨트롤 적용]
+function ChkIsValidationCheck_After() {
+    return true;
+}
+
+function LoadFileControl(elm) {
+    //[HTML5 첨부 파일 컨트롤 적용]
+    //// 0.None, 1.DEXTUploadX, 2.CoviFileTrans, 3.CoviSilverlightTrans, 4.CoviUploadNSlvTrans
+    //switch (Common.GetBaseConfig('FileAttachType')) {
+    //    case "0": // .NET Control
+    //        //document.write('<script src="/Common/ExControls/None/FileUploadBasic.js" type="text/javascript"></script>');
+    //        makeScriptBlock("/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js", $('#' + elm).html(LoadFileUploadBasic()));
+    //        /*
+    //        $.getScript("/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js", function () {
+    //            // 동적 스크립트 로드 후
+    //            $('#' + elm).html(LoadFileUploadBasic());
+    //        });
+    //        */
+    //        break;
+    //    case "1":
+    //        //document.write('<script src="/Common/ExControls/None/FileUploadBasic.js" type="text/javascript"></script>');
+    //        makeScriptBlock("/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js", $('#' + elm).html(LoadFileUploadBasic()));
+    //        break;
+    //    case "3":
+    //        //document.write('<script src="/Common/ExControls/None/FileUploadBasic.js" type="text/javascript"></script>');
+    //        makeScriptBlock("/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js", $('#' + elm).html(LoadFileUploadBasic()));
+    //        break;
+    //    case "2":
+    //    case "4": // IE : CoviFileTrans, IE 외 : SilverlightTrans
+    //        if (_ie) {
+    //            //document.write('<script src="/Common/ExControls/CoviFileTrans/FileUploadCoviTrans.js" type="text/javascript"></script>');
+    //            makeScriptBlock("/Approval/Forms/Libs/js/coviForm/FileUploadCoviTrans_approval.js", $('#' + elm).html(LoadCoviUpload()));
+    //        } else {
+    //            //document.write('<script src="/Common/ExControls/None/FileUploadBasic.js" type="text/javascript"></script>'); // 임시대체
+    //            makeScriptBlock("/Approval/Forms/Libs/js/coviForm/FileUploadBasic_approval.js", $('#' + elm).html(LoadFileUploadBasic()));
+    //        }
+    //        break;
+    //    default:
+    //        break;
+    //}
+}
+
+function makeScriptBlock(src, fnLoad) {
+    //[HTML5 첨부 파일 컨트롤 적용]
+    //var script = document.createElement('script');
+    //script.src = src;
+    //script.onload = fnLoad;
+}
